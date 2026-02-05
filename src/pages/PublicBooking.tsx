@@ -12,13 +12,14 @@ import { Scissors, Clock, DollarSign, Calendar as CalendarIcon, User, ArrowLeft,
  import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
  
- interface Service {
-   id: string;
-   name: string;
-   description: string | null;
-   duration_minutes: number;
-   price: number;
- }
+interface Service {
+  id: string;
+  name: string;
+  description: string | null;
+  duration_minutes: number;
+  price: number;
+  image_url?: string | null;
+}
  
  interface Barber {
    id: string;
@@ -117,13 +118,13 @@ import { useAuth } from "@/contexts/AuthContext";
  
      setBarber(barberData);
  
-     // Fetch services
-     const { data: servicesData } = await supabase
-       .from("services")
-       .select("id, name, description, duration_minutes, price")
-       .eq("barber_id", barberData.id)
-       .eq("is_active", true)
-       .order("name");
+      // Fetch services
+      const { data: servicesData } = await supabase
+        .from("services")
+        .select("id, name, description, duration_minutes, price, image_url")
+        .eq("barber_id", barberData.id)
+        .eq("is_active", true)
+        .order("name");
  
      if (servicesData) setServices(servicesData);
  
@@ -504,40 +505,55 @@ import { useAuth } from "@/contexts/AuthContext";
                      Nenhum serviço disponível
                    </p>
                  ) : (
-                   services.map((service) => (
-                     <button
-                       key={service.id}
-                       onClick={() => setSelectedService(service)}
-                       className={`w-full rounded-xl border p-4 text-left transition-all ${
-                         selectedService?.id === service.id
-                           ? "bg-opacity-10"
-                           : "border-border hover:border-muted-foreground"
-                       }`}
-                         style={selectedService?.id === service.id ? { 
-                           borderColor: primaryColor, 
-                           backgroundColor: `${primaryColor}10` 
-                         } : {}}
-                     >
-                       <div className="flex items-center justify-between">
-                         <div>
-                           <p className="font-medium">{service.name}</p>
-                           {service.description && (
-                             <p className="text-sm text-muted-foreground">
-                               {service.description}
-                             </p>
-                           )}
-                         </div>
-                         <div className="text-right">
-                           <p className="font-semibold" style={{ color: primaryColor }}>
-                             R$ {Number(service.price).toFixed(2)}
-                           </p>
-                           <p className="text-xs text-muted-foreground">
-                             {service.duration_minutes} min
-                           </p>
-                         </div>
-                       </div>
-                     </button>
-                   ))
+                    services.map((service) => (
+                      <button
+                        key={service.id}
+                        onClick={() => setSelectedService(service)}
+                        className={`w-full rounded-xl border p-4 text-left transition-all ${
+                          selectedService?.id === service.id
+                            ? "bg-opacity-10"
+                            : "border-border hover:border-muted-foreground"
+                        }`}
+                          style={selectedService?.id === service.id ? { 
+                            borderColor: primaryColor, 
+                            backgroundColor: `${primaryColor}10` 
+                          } : {}}
+                      >
+                        <div className="flex items-start gap-4">
+                          {service.image_url ? (
+                            <img
+                              src={service.image_url}
+                              alt={service.name}
+                              className="h-20 w-20 rounded-lg object-cover border border-border flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-secondary flex-shrink-0">
+                              <Scissors className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="font-medium">{service.name}</p>
+                                {service.description && (
+                                  <p className="text-sm text-muted-foreground line-clamp-2">
+                                    {service.description}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className="font-semibold" style={{ color: primaryColor }}>
+                                  R$ {Number(service.price).toFixed(2)}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {service.duration_minutes} min
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    ))
                  )}
                </CardContent>
              </Card>
