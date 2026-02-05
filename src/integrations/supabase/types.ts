@@ -123,7 +123,10 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
+          public_id: number | null
           role: Database["public"]["Enums"]["user_role"]
+          slug_final: string | null
+          slug_nome: string | null
           updated_at: string
           user_id: string
         }
@@ -133,7 +136,10 @@ export type Database = {
           full_name: string
           id?: string
           phone?: string | null
+          public_id?: number | null
           role?: Database["public"]["Enums"]["user_role"]
+          slug_final?: string | null
+          slug_nome?: string | null
           updated_at?: string
           user_id: string
         }
@@ -143,7 +149,10 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
+          public_id?: number | null
           role?: Database["public"]["Enums"]["user_role"]
+          slug_final?: string | null
+          slug_nome?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -198,7 +207,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_slug: { Args: { name: string }; Returns: string }
+      get_next_public_id: { Args: never; Returns: number }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       user_role: "barber" | "client"
