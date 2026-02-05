@@ -568,7 +568,7 @@ const SubscriptionManager = () => {
                                 Pago
                               </Button>
                             )}
-                            {sub && sub.payment_status !== "trial" && (
+                            {sub && (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -576,7 +576,7 @@ const SubscriptionManager = () => {
                                   ? "border-primary text-primary" 
                                   : "border-muted-foreground text-muted-foreground"}
                                 onClick={() => togglePause(sub)}
-                                title={sub.payment_status === "paused" ? "Reativar conta" : "Pausar conta"}
+                                title={sub.payment_status === "paused" ? "Reativar conta" : "Suspender conta"}
                               >
                                 {sub.payment_status === "paused" ? (
                                   <>
@@ -586,7 +586,7 @@ const SubscriptionManager = () => {
                                 ) : (
                                   <>
                                     <Pause className="mr-1 h-3 w-3" />
-                                    Pausar
+                                    Suspender
                                   </>
                                 )}
                               </Button>
