@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Scissors, MapPin, Phone, MessageCircle, ArrowDown } from "lucide-react";
+import { Scissors, MapPin, Phone, MessageCircle } from "lucide-react";
 
 interface HeroSectionProps {
   displayName: string;
@@ -126,16 +126,11 @@ const HeroSection = ({
         }}
       >
         <span
-          className={`inline-flex items-center gap-2 transition-all duration-500 ${
+          className={`transition-all duration-500 ${
             isAnimating ? "translate-y-0 opacity-100" : "-translate-y-0.5 opacity-95"
           }`}
         >
           {buttonText}
-          <ArrowDown
-            className={`h-4 w-4 transition-transform duration-500 ${
-              isAnimating ? "translate-y-1" : "translate-y-0"
-            }`}
-          />
         </span>
       </Button>
 
