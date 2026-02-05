@@ -27,6 +27,7 @@ import ScheduleModal from "./ScheduleModal";
  import SettingsModal from "./SettingsModal";
 import { useToast } from "@/hooks/use-toast";
  import UpcomingAppointments from "./UpcomingAppointments";
+import SubscriptionAlert from "./SubscriptionAlert";
 import AccountPaused from "@/pages/AccountPaused";
 
 interface Service {
@@ -247,6 +248,9 @@ const BarberDashboard = () => {
   return (
     <DashboardLayout navItems={navItems}>
       <div className="space-y-6">
+        {/* Subscription Alert */}
+        <SubscriptionAlert barberId={profile?.id || ""} />
+
         {/* Header */}
          <div className="flex items-start justify-between">
            <div className="flex items-center gap-4">
