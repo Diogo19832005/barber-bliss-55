@@ -12,7 +12,8 @@
    DialogTitle,
  } from "@/components/ui/dialog";
  import { useToast } from "@/hooks/use-toast";
- import { Loader2, Upload, Palette, Store, X, MapPin, Phone } from "lucide-react";
+import { Loader2, Upload, Palette, Store, X, MapPin, Phone, Sparkles } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
  
 interface SettingsModalProps {
   isOpen: boolean;
@@ -30,6 +31,9 @@ interface SettingsModalProps {
     endereco: string | null;
     cidade: string | null;
     estado: string | null;
+    hero_enabled: boolean | null;
+    hero_button_text: string | null;
+    hero_button_color: string | null;
   };
 }
  
@@ -56,6 +60,9 @@ interface SettingsModalProps {
   const [endereco, setEndereco] = useState(profile.endereco || "");
   const [cidade, setCidade] = useState(profile.cidade || "");
   const [estado, setEstado] = useState(profile.estado || "");
+  const [heroEnabled, setHeroEnabled] = useState(profile.hero_enabled !== false);
+  const [heroButtonText, setHeroButtonText] = useState(profile.hero_button_text || "Agendar agora mesmo");
+  const [heroButtonColor, setHeroButtonColor] = useState(profile.hero_button_color || "#D97706");
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
  
@@ -159,6 +166,9 @@ interface SettingsModalProps {
         endereco: endereco.trim() || null,
         cidade: cidade.trim() || null,
         estado: estado.trim() || null,
+        hero_enabled: heroEnabled,
+        hero_button_text: heroButtonText.trim() || "Agendar agora mesmo",
+        hero_button_color: heroButtonColor,
       })
       .eq("id", profile.id);
  
@@ -421,7 +431,90 @@ interface SettingsModalProps {
                      </p>
                    )}
                  </div>
-               </div>
+            </div>
+
+            {/* Hero Section Settings */}
+            <div className="space-y-4">
+              <Label className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                Página de Boas-vindas
+              </Label>
+              
+              {/* Toggle Hero */}
+              <div className="flex items-center justify-between rounded-xl border border-border p-4">
+                <div>
+                  <p className="font-medium">Exibir página de boas-vindas</p>
+                  <p className="text-sm text-muted-foreground">
+                    Mostra uma página inicial com botão antes dos serviços
+                  </p>
+                </div>
+                <Switch
+                  checked={heroEnabled}
+                  onCheckedChange={setHeroEnabled}
+                />
+              </div>
+
+              {/* Hero Button Settings - Only show if hero is enabled */}
+              {heroEnabled && (
+                <div className="space-y-4 rounded-xl border border-border p-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="heroButtonText" className="text-sm text-muted-foreground">
+                      Texto do Botão
+                    </Label>
+                    <Input
+                      id="heroButtonText"
+                      value={heroButtonText}
+                      onChange={(e) => setHeroButtonText(e.target.value)}
+                      placeholder="Agendar agora mesmo"
+                      className="bg-secondary/50"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Cor do Botão</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {predefinedColors.map((color) => (
+                        <button
+                          key={color.value}
+                          type="button"
+                          onClick={() => setHeroButtonColor(color.value)}
+                          className={`h-10 w-10 rounded-lg transition-all ${
+                            heroButtonColor === color.value
+                              ? "ring-2 ring-offset-2 ring-offset-background ring-foreground scale-110"
+                              : "hover:scale-105"
+                          }`}
+                          style={{ backgroundColor: color.value }}
+                          title={color.name}
+                        />
+                      ))}
+                      <div className="relative">
+                        <input
+                          type="color"
+                          value={heroButtonColor}
+                          onChange={(e) => setHeroButtonColor(e.target.value)}
+                          className="h-10 w-10 cursor-pointer rounded-lg border-0 p-0"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Hero Preview */}
+                  <div className="rounded-xl border border-dashed border-border p-4 text-center">
+                    <p className="text-xs text-muted-foreground mb-3">Pré-visualização do botão</p>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-semibold text-white shadow-lg transition-transform hover:scale-105"
+                      style={{
+                        backgroundColor: heroButtonColor,
+                        boxShadow: `0 10px 40px -10px ${heroButtonColor}80`,
+                      }}
+                    >
+                      {heroButtonText || "Agendar agora mesmo"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
              </div>
            </div>
  
