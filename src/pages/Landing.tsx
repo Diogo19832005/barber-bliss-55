@@ -13,7 +13,7 @@ const Landing = () => {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-gold">
               <Scissors className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold">BarberPro</span>
+            <span className="text-xl font-bold">Barber Office</span>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/login">
@@ -109,7 +109,7 @@ const Landing = () => {
       {/* Footer */}
       <footer className="border-t border-border py-8">
         <div className="container text-center text-sm text-muted-foreground">
-          <p>© 2024 BarberPro. Todos os direitos reservados.</p>
+          <p>© 2024 Barber Office. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>
