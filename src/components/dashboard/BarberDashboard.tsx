@@ -11,12 +11,13 @@ import {
   TrendingUp,
   Plus,
   Edit2,
-   Trash2,
-   Link as LinkIcon,
-   Copy,
-    Check,
-    Settings,
-    Loader2
+  Trash2,
+  Link as LinkIcon,
+  Copy,
+  Check,
+  Settings,
+  Loader2,
+  MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +46,7 @@ interface Appointment {
   start_time: string;
   end_time: string;
   status: string;
-  client: { full_name: string } | null;
+  client: { full_name: string; phone: string | null } | null;
   service: { name: string; price: number } | null;
 }
 
@@ -119,7 +120,7 @@ const BarberDashboard = () => {
       .from("appointments")
       .select(`
         *,
-        client:profiles!appointments_client_id_fkey(full_name),
+        client:profiles!appointments_client_id_fkey(full_name, phone),
         service:services(name, price)
       `)
       .eq("barber_id", profile.id)
@@ -405,7 +406,21 @@ const BarberDashboard = () => {
                         </p>
                       </div>
                       <div>
-                        <p className="font-medium">{apt.client?.full_name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{apt.client?.full_name}</p>
+                          {apt.client?.phone && (
+                            <a
+                              href={`https://wa.me/${apt.client.phone.replace(/\D/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 text-xs text-success hover:bg-success/30 transition-colors"
+                              title="Enviar mensagem no WhatsApp"
+                            >
+                              <MessageCircle className="h-3 w-3" />
+                              WhatsApp
+                            </a>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
                         </p>
