@@ -160,14 +160,11 @@
 
     setIsAddingAdmin(true);
 
-    // First get the user_id from auth by looking up the profile
-    // We need to find the user by their email, which is stored in auth.users
-    // Since we can't query auth.users directly, we'll use a workaround
-    // We'll call a database function to find the user by email
-    
-    const { data: authUser, error: authError } = await supabase.rpc('get_user_id_by_email', { 
-      email_input: email 
-    });
+    // Find the user by email using the database function
+    const { data: authUser, error: authError } = await supabase.rpc(
+      'get_user_id_by_email' as any,
+      { email_input: email }
+    );
 
     if (authError || !authUser) {
       toast({
@@ -179,11 +176,13 @@
       return;
     }
 
+    const userId = authUser as string;
+
     // Check if already admin
     const { data: existingAdmin } = await supabase
       .from("user_roles")
       .select("id")
-      .eq("user_id", authUser)
+      .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
 
@@ -199,7 +198,7 @@
 
     const { error } = await supabase
       .from("user_roles")
-      .insert({ user_id: authUser, role: "admin" });
+      .insert([{ user_id: userId, role: "admin" as const }]);
 
     if (error) {
       toast({
