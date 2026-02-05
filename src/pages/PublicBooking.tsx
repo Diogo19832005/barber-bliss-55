@@ -71,7 +71,7 @@ import { useAuth } from "@/contexts/AuthContext";
    const [bookingSuccess, setBookingSuccess] = useState(false);
   
   // Auth states
-  const [authMode, setAuthMode] = useState<"guest" | "login" | "register">("guest");
+  const [authMode, setAuthMode] = useState<"login" | "register">("register");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
@@ -88,7 +88,6 @@ import { useAuth } from "@/contexts/AuthContext";
       setClientName(profile.full_name || "");
       setClientPhone(profile.phone || "");
       setClientEmail(user.email || "");
-      setAuthMode("guest");
     }
   }, [user, profile]);
 
@@ -290,36 +289,9 @@ import { useAuth } from "@/contexts/AuthContext";
 
         clientProfileId = userProfile.id;
         setIsAuthLoading(false);
-       } else {
-        // Guest mode
-        const { data: existingProfile } = await supabase
-           .from("profiles")
-          .select("id")
-          .eq("full_name", clientName.trim())
-          .eq("role", "client")
-          .maybeSingle();
- 
-        if (existingProfile) {
-          clientProfileId = existingProfile.id;
-        } else {
-          const { data: newProfile, error: profileError } = await supabase
-            .from("profiles")
-            .insert({
-              user_id: crypto.randomUUID(),
-              full_name: clientName.trim(),
-              phone: clientPhone.trim() || null,
-              role: "client",
-            })
-            .select("id")
-            .single();
-
-          if (profileError || !newProfile) {
-            throw new Error("Erro ao criar perfil. Tente criar uma conta.");
-          }
-
-          clientProfileId = newProfile.id;
-         }
-       }
+      } else {
+        throw new Error("Por favor, faça login ou crie uma conta para agendar.");
+      }
  
        // Create appointment
        const endTime = format(
@@ -606,7 +578,7 @@ import { useAuth } from "@/contexts/AuthContext";
                    </CardTitle>
                   {!user && (
                     <p className="text-sm text-muted-foreground">
-                      Crie uma conta para gerenciar seus agendamentos
+                      Crie uma conta ou faça login para agendar
                     </p>
                   )}
                  </CardHeader>
@@ -614,18 +586,6 @@ import { useAuth } from "@/contexts/AuthContext";
                   {/* Auth Mode Toggle - only show if not logged in */}
                   {!user && (
                     <div className="mb-4 flex rounded-lg border border-border p-1">
-                      <button
-                        type="button"
-                        onClick={() => setAuthMode("guest")}
-                        className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                          authMode === "guest"
-                            ? "text-white"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                        style={authMode === "guest" ? { backgroundColor: primaryColor } : {}}
-                      >
-                        Sem conta
-                      </button>
                       <button
                         type="button"
                         onClick={() => setAuthMode("login")}
@@ -663,8 +623,8 @@ import { useAuth } from "@/contexts/AuthContext";
                       </div>
                     ) : (
                       <>
-                        {/* Name field - show for guest and register */}
-                        {(authMode === "guest" || authMode === "register") && (
+                        {/* Name field - show for register */}
+                        {authMode === "register" && (
                           <div className="space-y-2">
                             <Label htmlFor="name">Nome completo *</Label>
                             <Input
@@ -691,11 +651,11 @@ import { useAuth } from "@/contexts/AuthContext";
                           />
                         </div>
 
-                        {/* Phone field - show for guest and register */}
-                        {(authMode === "guest" || authMode === "register") && (
+                        {/* Phone field - show for register */}
+                        {authMode === "register" && (
                           <div className="space-y-2">
                             <Label htmlFor="phone">
-                              Telefone {authMode === "register" ? "*" : "(opcional)"}
+                              Telefone *
                             </Label>
                             <div className="relative">
                               <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -705,38 +665,36 @@ import { useAuth } from "@/contexts/AuthContext";
                                 value={clientPhone}
                                 onChange={(e) => setClientPhone(e.target.value)}
                                 placeholder="(00) 00000-0000"
-                                required={authMode === "register"}
+                                required
                                 className="bg-secondary/50 pl-11"
                               />
                             </div>
                           </div>
                         )}
 
-                        {/* Password field - show for login and register */}
-                        {(authMode === "login" || authMode === "register") && (
-                          <div className="space-y-2">
-                            <Label htmlFor="password">Senha *</Label>
-                            <div className="relative">
-                              <Input
-                                id="password"
-                                type={showPassword ? "text" : "password"}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder={authMode === "register" ? "Mínimo 6 caracteres" : "Sua senha"}
-                                required
-                                minLength={authMode === "register" ? 6 : undefined}
-                                className="bg-secondary/50 pr-12"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                              >
-                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                              </button>
-                            </div>
+                        {/* Password field */}
+                        <div className="space-y-2">
+                          <Label htmlFor="password">Senha *</Label>
+                          <div className="relative">
+                            <Input
+                              id="password"
+                              type={showPassword ? "text" : "password"}
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              placeholder={authMode === "register" ? "Mínimo 6 caracteres" : "Sua senha"}
+                              required
+                              minLength={authMode === "register" ? 6 : undefined}
+                              className="bg-secondary/50 pr-12"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            >
+                              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
                           </div>
-                        )}
+                        </div>
                       </>
                     )}
  
@@ -776,7 +734,7 @@ import { useAuth } from "@/contexts/AuthContext";
                      </Button>
 
                     {/* Switch auth mode links */}
-                    {!user && authMode !== "guest" && (
+                    {!user && (
                       <div className="text-center text-sm text-muted-foreground">
                         {authMode === "login" ? (
                           <>
