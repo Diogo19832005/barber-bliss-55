@@ -47,7 +47,7 @@ const DashboardLayout = ({ children, navItems }: DashboardLayoutProps) => {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-gold">
             <Scissors className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="font-semibold">BarberPro</span>
+              <span className="font-semibold">Barber Office</span>
         </div>
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -112,7 +112,7 @@ const DashboardLayout = ({ children, navItems }: DashboardLayoutProps) => {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-gold">
                 <Scissors className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-semibold">BarberPro</span>
+              <span className="font-semibold">Barber Office</span>
             </div>
 
             <nav className="flex-1 space-y-1 p-4">
