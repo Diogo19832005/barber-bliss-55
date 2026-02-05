@@ -62,7 +62,7 @@ import { useAuth } from "@/contexts/AuthContext";
    const [selectedService, setSelectedService] = useState<Service | null>(null);
    const [selectedDate, setSelectedDate] = useState<Date | undefined>();
    const [selectedTime, setSelectedTime] = useState<string | null>(null);
-   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [allSlots, setAllSlots] = useState<{ time: string; available: boolean }[]>([]);
    
    const [clientName, setClientName] = useState("");
    const [clientEmail, setClientEmail] = useState("");
@@ -146,7 +146,7 @@ import { useAuth } from "@/contexts/AuthContext";
      const schedule = schedules.find((s) => s.day_of_week === dayOfWeek);
  
      if (!schedule) {
-       setAvailableSlots([]);
+        setAllSlots([]);
        return;
      }
  
@@ -161,8 +161,8 @@ import { useAuth } from "@/contexts/AuthContext";
  
      const bookedAppointments = appointmentsData || [];
  
-     // Generate time slots
-     const slots: string[] = [];
+      // Generate all time slots with availability status
+      const slots: { time: string; available: boolean }[] = [];
      const startTime = parse(schedule.start_time, "HH:mm:ss", new Date());
      const endTime = parse(schedule.end_time, "HH:mm:ss", new Date());
      const serviceDuration = selectedService.duration_minutes;
@@ -188,14 +188,15 @@ import { useAuth } from "@/contexts/AuthContext";
          new Date()
        );
  
-       if (!hasConflict && !isPast) {
-         slots.push(slotStart);
-       }
+        slots.push({
+          time: slotStart,
+          available: !hasConflict && !isPast,
+        });
  
        currentSlot = addMinutes(currentSlot, 30);
      }
  
-     setAvailableSlots(slots);
+      setAllSlots(slots);
      setSelectedTime(null);
    };
  
@@ -529,37 +530,47 @@ import { useAuth } from "@/contexts/AuthContext";
                    </CardTitle>
                  </CardHeader>
                  <CardContent>
-                   {availableSlots.length === 0 ? (
+                    {allSlots.length === 0 ? (
                      <p className="py-4 text-center text-muted-foreground">
                        Nenhum horário disponível para esta data
                      </p>
                    ) : (
                      <div className="grid grid-cols-4 gap-2">
-                       {availableSlots.map((time) => (
+                        {allSlots.map((slot) => (
                          <button
-                           key={time}
-                           onClick={() => setSelectedTime(time)}
-                           className={`rounded-lg border p-3 text-center text-sm font-medium transition-all ${
-                             selectedTime === time
-                             ? "text-white"
-                             : "border-border"
+                            key={slot.time}
+                            onClick={() => slot.available && setSelectedTime(slot.time)}
+                            disabled={!slot.available}
+                            className={`rounded-lg border p-2 text-center transition-all ${
+                              selectedTime === slot.time
+                                ? "text-white"
+                                : slot.available
+                                ? "border-border"
+                                : "cursor-not-allowed border-border/30 opacity-40"
                            }`}
-                           style={selectedTime === time ? { 
+                            style={selectedTime === slot.time ? { 
                              backgroundColor: primaryColor, 
                              borderColor: primaryColor 
                            } : {}}
                            onMouseEnter={(e) => {
-                             if (selectedTime !== time) {
+                              if (selectedTime !== slot.time && slot.available) {
                                e.currentTarget.style.borderColor = primaryColor;
                              }
                            }}
                            onMouseLeave={(e) => {
-                             if (selectedTime !== time) {
+                              if (selectedTime !== slot.time) {
                                e.currentTarget.style.borderColor = "";
                              }
                            }}
                          >
-                           {time}
+                            <span className={`text-sm font-medium ${!slot.available ? "text-muted-foreground/50" : ""}`}>
+                              {slot.time}
+                            </span>
+                            {!slot.available && (
+                              <span className="block text-[10px] text-muted-foreground/50">
+                                Já ocupado
+                              </span>
+                            )}
                          </button>
                        ))}
                      </div>
