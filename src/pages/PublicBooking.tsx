@@ -295,7 +295,7 @@ import { useAuth } from "@/contexts/AuthContext";
         clientProfileId = userProfile.id;
         setIsAuthLoading(false);
       } else {
-        throw new Error("Por favor, faça login ou crie uma conta para agendar.");
+       throw new Error("Por favor, faça login ou crie uma conta para agendar.");
       }
  
        // Create appointment
@@ -303,6 +303,33 @@ import { useAuth } from "@/contexts/AuthContext";
          addMinutes(parse(selectedTime, "HH:mm", new Date()), selectedService.duration_minutes),
          "HH:mm"
        );
+
+       const dateStr = format(selectedDate, "yyyy-MM-dd");
+
+       // CRITICAL: Re-validate availability right before booking to prevent double-bookings
+       const { data: existingAppointments } = await supabase
+         .from("appointments")
+         .select("id, start_time, end_time")
+         .eq("barber_id", barber.id)
+         .eq("appointment_date", dateStr)
+         .neq("status", "cancelled");
+
+       // Check if slot overlaps with existing appointments
+       const hasConflict = existingAppointments?.some((apt) => {
+         const aptStart = apt.start_time.slice(0, 5);
+         const aptEnd = apt.end_time.slice(0, 5);
+         return (
+           (selectedTime >= aptStart && selectedTime < aptEnd) ||
+           (endTime > aptStart && endTime <= aptEnd) ||
+           (selectedTime <= aptStart && endTime >= aptEnd)
+         );
+       });
+
+       if (hasConflict) {
+         // Refresh available slots to show updated availability
+         await fetchAvailableSlots();
+         throw new Error("Este horário acabou de ser reservado. Por favor, escolha outro horário.");
+       }
  
        const { error: appointmentError } = await supabase
          .from("appointments")
@@ -310,7 +337,7 @@ import { useAuth } from "@/contexts/AuthContext";
            client_id: clientProfileId,
            barber_id: barber.id,
            service_id: selectedService.id,
-           appointment_date: format(selectedDate, "yyyy-MM-dd"),
+           appointment_date: dateStr,
            start_time: selectedTime,
            end_time: endTime,
            notes: `Email: ${clientEmail}${clientPhone ? `, Tel: ${clientPhone}` : ""}`,
