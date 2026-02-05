@@ -314,7 +314,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       payment_status: "trial" | "paid" | "pending" | "overdue"
-      subscription_plan: "monthly" | "yearly"
+      subscription_plan: "monthly" | "yearly" | "quarterly" | "semiannual"
       user_role: "barber" | "client"
     }
     CompositeTypes: {
@@ -445,7 +445,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       payment_status: ["trial", "paid", "pending", "overdue"],
-      subscription_plan: ["monthly", "yearly"],
+      subscription_plan: ["monthly", "yearly", "quarterly", "semiannual"],
       user_role: ["barber", "client"],
     },
   },
