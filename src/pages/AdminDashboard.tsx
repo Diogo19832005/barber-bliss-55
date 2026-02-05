@@ -135,55 +135,87 @@
      setProcessingId(null);
    };
  
-   const handleAddAdmin = async () => {
-     if (!newAdminEmail.trim()) return;
- 
-     setIsAddingAdmin(true);
- 
-     // Find user by email in profiles
-     const { data: userData, error: userError } = await supabase
-       .from("profiles")
-       .select("user_id")
-       .eq("full_name", newAdminEmail.trim())
-       .maybeSingle();
- 
-     // Try to find by checking auth (we'll need to lookup differently)
-     // Since we can't directly query auth.users, we'll add by user_id from profiles
-     const { data: profileData } = await supabase
-       .from("profiles")
-       .select("user_id, full_name")
-       .ilike("full_name", `%${newAdminEmail.trim()}%`)
-       .maybeSingle();
- 
-     if (!profileData) {
-       toast({
-         title: "Usuário não encontrado",
-         description: "Nenhum usuário encontrado com esse nome",
-         variant: "destructive",
-       });
-       setIsAddingAdmin(false);
-       return;
-     }
- 
-     const { error } = await supabase
-       .from("user_roles")
-       .insert({ user_id: profileData.user_id, role: "admin" });
- 
-     if (error) {
-       toast({
-         title: "Erro ao adicionar admin",
-         description: error.message,
-         variant: "destructive",
-       });
-     } else {
-       toast({ title: "Administrador adicionado!" });
-       setNewAdminEmail("");
-       setIsAddAdminOpen(false);
-       fetchData();
-     }
- 
-     setIsAddingAdmin(false);
-   };
+  const handleAddAdmin = async () => {
+    const email = newAdminEmail.trim().toLowerCase();
+    
+    if (!email) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Digite o email do usuário",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "Email inválido",
+        description: "Digite um email válido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAddingAdmin(true);
+
+    // First get the user_id from auth by looking up the profile
+    // We need to find the user by their email, which is stored in auth.users
+    // Since we can't query auth.users directly, we'll use a workaround
+    // We'll call a database function to find the user by email
+    
+    const { data: authUser, error: authError } = await supabase.rpc('get_user_id_by_email', { 
+      email_input: email 
+    });
+
+    if (authError || !authUser) {
+      toast({
+        title: "Usuário não encontrado",
+        description: "Nenhum usuário cadastrado com esse email",
+        variant: "destructive",
+      });
+      setIsAddingAdmin(false);
+      return;
+    }
+
+    // Check if already admin
+    const { data: existingAdmin } = await supabase
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", authUser)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (existingAdmin) {
+      toast({
+        title: "Já é administrador",
+        description: "Este usuário já possui permissões de administrador",
+        variant: "destructive",
+      });
+      setIsAddingAdmin(false);
+      return;
+    }
+
+    const { error } = await supabase
+      .from("user_roles")
+      .insert({ user_id: authUser, role: "admin" });
+
+    if (error) {
+      toast({
+        title: "Erro ao adicionar admin",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Administrador adicionado!" });
+      setNewAdminEmail("");
+      setIsAddAdminOpen(false);
+      fetchData();
+    }
+
+    setIsAddingAdmin(false);
+  };
  
    const handleRemoveAdmin = async (adminId: string, adminUserId: string) => {
      // Can't remove yourself
@@ -469,27 +501,33 @@
          </Card>
        </div>
  
-       {/* Add Admin Dialog */}
-       <Dialog open={isAddAdminOpen} onOpenChange={setIsAddAdminOpen}>
-         <DialogContent>
-           <DialogHeader>
-             <DialogTitle>Adicionar Administrador</DialogTitle>
-             <DialogDescription>
-               Digite o nome do usuário que deseja tornar administrador
-             </DialogDescription>
-           </DialogHeader>
-           <div className="space-y-4 py-4">
-             <div className="space-y-2">
-               <Label htmlFor="adminName">Nome do usuário</Label>
-               <Input
-                 id="adminName"
-                 value={newAdminEmail}
-                 onChange={(e) => setNewAdminEmail(e.target.value)}
-                 placeholder="Nome completo do usuário"
-                 className="bg-secondary/50"
-               />
-             </div>
-           </div>
+        {/* Add Admin Dialog */}
+        <Dialog open={isAddAdminOpen} onOpenChange={setIsAddAdminOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Adicionar Administrador</DialogTitle>
+              <DialogDescription>
+                Digite o email do usuário que deseja tornar administrador
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="adminEmail">
+                  Email do usuário <span className="text-destructive">*</span>
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="adminEmail"
+                    type="email"
+                    value={newAdminEmail}
+                    onChange={(e) => setNewAdminEmail(e.target.value)}
+                    placeholder="email@exemplo.com"
+                    className="bg-secondary/50 pl-10"
+                  />
+                </div>
+              </div>
+            </div>
            <DialogFooter>
              <Button variant="outline" onClick={() => setIsAddAdminOpen(false)}>
                Cancelar
