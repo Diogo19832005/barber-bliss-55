@@ -2,16 +2,17 @@
  import { useAuth } from "@/contexts/AuthContext";
  import { supabase } from "@/lib/supabase";
  import DashboardLayout from "@/components/dashboard/DashboardLayout";
- import { 
-   Shield, 
-   Users, 
-   CheckCircle, 
-   XCircle, 
-   Clock, 
-   UserPlus,
-   Mail,
-   Loader2
- } from "lucide-react";
+import { 
+  Shield, 
+  Users, 
+  CheckCircle, 
+  XCircle, 
+  Clock, 
+  UserPlus,
+  Mail,
+  Loader2,
+  CalendarDays
+} from "lucide-react";
  import { Button } from "@/components/ui/button";
  import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
  import { Badge } from "@/components/ui/badge";
@@ -411,11 +412,15 @@
                          <p className="font-medium">{barber.full_name}</p>
                          {getStatusBadge(barber.barber_status)}
                        </div>
-                       <p className="text-sm text-muted-foreground">
-                         {barber.phone || "Sem telefone"}
-                         {barber.slug_final && ` • /${barber.slug_final}`}
-                       </p>
-                     </div>
+                        <p className="text-sm text-muted-foreground">
+                          {barber.phone || "Sem telefone"}
+                          {barber.slug_final && ` • /${barber.slug_final}`}
+                        </p>
+                        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                          <CalendarDays className="h-3 w-3" />
+                          Cadastro: {new Date(barber.created_at).toLocaleDateString("pt-BR")}
+                        </p>
+                      </div>
                      {barber.barber_status !== "approved" && (
                        <Button
                          size="sm"
