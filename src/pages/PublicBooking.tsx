@@ -200,26 +200,30 @@ import { useAuth } from "@/contexts/AuthContext";
      setSelectedTime(null);
    };
  
-   const handleSubmit = async (e: React.FormEvent) => {
-     e.preventDefault();
-     
-     if (!barber || !selectedService || !selectedDate || !selectedTime) {
-       toast({
-         title: "Erro",
-         description: "Preencha todos os campos obrigatórios",
-         variant: "destructive",
-       });
-       return;
-     }
- 
-     if (!clientName.trim() || !clientEmail.trim()) {
-       toast({
-         title: "Erro",
-         description: "Nome e email são obrigatórios",
-         variant: "destructive",
-       });
-       return;
-     }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!barber || !selectedService || !selectedDate || !selectedTime) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Get the name and email to use (from profile if logged in, otherwise from form)
+    const nameToUse = user && profile ? profile.full_name : clientName.trim();
+    const emailToUse = user ? user.email : clientEmail.trim();
+
+    if (!nameToUse || !emailToUse) {
+      toast({
+        title: "Erro",
+        description: "Nome e email são obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
  
     // If registering, validate password
     if (authMode === "register" && password.length < 6) {
