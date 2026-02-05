@@ -11,7 +11,10 @@ import {
   TrendingUp,
   Plus,
   Edit2,
-  Trash2
+   Trash2,
+   Link as LinkIcon,
+   Copy,
+   Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,6 +68,8 @@ const BarberDashboard = () => {
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [earnings, setEarnings] = useState({ daily: 0, weekly: 0, monthly: 0 });
+   const [publicLink, setPublicLink] = useState<string | null>(null);
+   const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     if (profile?.id) {
@@ -108,6 +113,12 @@ const BarberDashboard = () => {
 
     if (schedulesData) setSchedules(schedulesData);
 
+     // Get public link
+     if (profile.slug_final) {
+       const baseUrl = window.location.origin;
+       setPublicLink(`${baseUrl}/${profile.slug_final}`);
+     }
+ 
     // Calculate earnings
     await calculateEarnings();
   };
@@ -206,6 +217,45 @@ const BarberDashboard = () => {
           </p>
         </div>
 
+         {/* Public Link Card */}
+         {publicLink && (
+           <Card className="glass-card border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
+             <CardContent className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center">
+               <div className="flex items-center gap-3">
+                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20">
+                   <LinkIcon className="h-5 w-5 text-primary" />
+                 </div>
+                 <div>
+                   <p className="text-sm font-medium text-muted-foreground">Seu Link Público</p>
+                   <p className="font-mono text-sm text-foreground break-all">{publicLink}</p>
+                 </div>
+               </div>
+               <Button
+                 variant="gold"
+                 size="sm"
+                 onClick={() => {
+                   navigator.clipboard.writeText(publicLink);
+                   setLinkCopied(true);
+                   toast({ title: "Link copiado!" });
+                   setTimeout(() => setLinkCopied(false), 2000);
+                 }}
+               >
+                 {linkCopied ? (
+                   <>
+                     <Check className="mr-2 h-4 w-4" />
+                     Copiado!
+                   </>
+                 ) : (
+                   <>
+                     <Copy className="mr-2 h-4 w-4" />
+                     Copiar Link
+                   </>
+                 )}
+               </Button>
+             </CardContent>
+           </Card>
+         )}
+ 
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card className="glass-card">

@@ -209,7 +209,6 @@ export type Database = {
     Functions: {
       generate_slug: { Args: { name: string }; Returns: string }
       get_next_public_id: { Args: never; Returns: number }
-      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       user_role: "barber" | "client"
