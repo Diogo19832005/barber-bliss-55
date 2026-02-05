@@ -42,13 +42,15 @@ import {
 interface Subscription {
   id: string;
   barber_id: string;
-  plan_type: "monthly" | "yearly";
+  plan_type: "monthly" | "quarterly" | "semiannual" | "yearly";
   trial_start_date: string;
   trial_end_date: string;
   subscription_start_date: string | null;
   next_payment_date: string | null;
   payment_status: "trial" | "paid" | "pending" | "overdue";
   monthly_price: number;
+  quarterly_price?: number;
+  semiannual_price?: number;
   yearly_price: number;
   last_payment_date: string | null;
   barber?: {
@@ -74,8 +76,10 @@ const SubscriptionManager = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   // Edit form state
-  const [editPlanType, setEditPlanType] = useState<"monthly" | "yearly">("monthly");
+  const [editPlanType, setEditPlanType] = useState<"monthly" | "quarterly" | "semiannual" | "yearly">("monthly");
   const [editMonthlyPrice, setEditMonthlyPrice] = useState("49.90");
+  const [editQuarterlyPrice, setEditQuarterlyPrice] = useState("134.90");
+  const [editSemiannualPrice, setEditSemiannualPrice] = useState("254.90");
   const [editYearlyPrice, setEditYearlyPrice] = useState("499.90");
   const [editPaymentStatus, setEditPaymentStatus] = useState<"trial" | "paid" | "pending" | "overdue">("trial");
 
@@ -148,11 +152,15 @@ const SubscriptionManager = () => {
     if (barber.subscription) {
       setEditPlanType(barber.subscription.plan_type);
       setEditMonthlyPrice(barber.subscription.monthly_price?.toString() || "49.90");
+      setEditQuarterlyPrice(barber.subscription.quarterly_price?.toString() || "134.90");
+      setEditSemiannualPrice(barber.subscription.semiannual_price?.toString() || "254.90");
       setEditYearlyPrice(barber.subscription.yearly_price?.toString() || "499.90");
       setEditPaymentStatus(barber.subscription.payment_status);
     } else {
       setEditPlanType("monthly");
       setEditMonthlyPrice("49.90");
+      setEditQuarterlyPrice("134.90");
+      setEditSemiannualPrice("254.90");
       setEditYearlyPrice("499.90");
       setEditPaymentStatus("trial");
     }
@@ -172,6 +180,10 @@ const SubscriptionManager = () => {
       const nextDate = new Date();
       if (editPlanType === "monthly") {
         nextDate.setMonth(nextDate.getMonth() + 1);
+      } else if (editPlanType === "quarterly") {
+        nextDate.setMonth(nextDate.getMonth() + 3);
+      } else if (editPlanType === "semiannual") {
+        nextDate.setMonth(nextDate.getMonth() + 6);
       } else {
         nextDate.setFullYear(nextDate.getFullYear() + 1);
       }
@@ -185,6 +197,8 @@ const SubscriptionManager = () => {
         .update({
           plan_type: editPlanType,
           monthly_price: parseFloat(editMonthlyPrice),
+          quarterly_price: parseFloat(editQuarterlyPrice),
+          semiannual_price: parseFloat(editSemiannualPrice),
           yearly_price: parseFloat(editYearlyPrice),
           payment_status: editPaymentStatus,
           subscription_start_date: editPaymentStatus !== "trial" ? today : null,
@@ -215,6 +229,8 @@ const SubscriptionManager = () => {
         trial_start_date: today,
         trial_end_date: trialEnd.toISOString().split("T")[0],
         monthly_price: parseFloat(editMonthlyPrice),
+        quarterly_price: parseFloat(editQuarterlyPrice),
+        semiannual_price: parseFloat(editSemiannualPrice),
         yearly_price: parseFloat(editYearlyPrice),
         payment_status: editPaymentStatus,
         subscription_start_date: editPaymentStatus !== "trial" ? today : null,
@@ -244,6 +260,10 @@ const SubscriptionManager = () => {
     
     if (subscription.plan_type === "monthly") {
       nextDate.setMonth(nextDate.getMonth() + 1);
+    } else if (subscription.plan_type === "quarterly") {
+      nextDate.setMonth(nextDate.getMonth() + 3);
+    } else if (subscription.plan_type === "semiannual") {
+      nextDate.setMonth(nextDate.getMonth() + 6);
     } else {
       nextDate.setFullYear(nextDate.getFullYear() + 1);
     }
@@ -424,7 +444,9 @@ const SubscriptionManager = () => {
                         <TableCell>
                           {sub ? (
                             <Badge variant="secondary">
-                              {sub.plan_type === "monthly" ? "Mensal" : "Anual"}
+                              {sub.plan_type === "monthly" ? "Mensal" : 
+                               sub.plan_type === "quarterly" ? "Trimestral" :
+                               sub.plan_type === "semiannual" ? "Semestral" : "Anual"}
                             </Badge>
                           ) : (
                             <span className="text-muted-foreground">—</span>
@@ -464,6 +486,10 @@ const SubscriptionManager = () => {
                             <span className="font-medium">
                               R$ {sub.plan_type === "monthly"
                                 ? Number(sub.monthly_price).toFixed(2)
+                                : sub.plan_type === "quarterly"
+                                ? Number(sub.quarterly_price || 134.90).toFixed(2)
+                                : sub.plan_type === "semiannual"
+                                ? Number(sub.semiannual_price || 254.90).toFixed(2)
                                 : Number(sub.yearly_price).toFixed(2)}
                             </span>
                           ) : (
@@ -515,12 +541,24 @@ const SubscriptionManager = () => {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Tipo de Plano</Label>
-              <Select value={editPlanType} onValueChange={(v) => setEditPlanType(v as "monthly" | "yearly")}>
+              <Select value={editPlanType} onValueChange={(v) => setEditPlanType(v as "monthly" | "quarterly" | "semiannual" | "yearly")}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="monthly">Mensal</SelectItem>
+                  <SelectItem value="quarterly">
+                    <div className="flex items-center gap-2">
+                      <span>Trimestral</span>
+                      <Badge variant="outline" className="border-warning text-warning text-xs">Não recomendado</Badge>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="semiannual">
+                    <div className="flex items-center gap-2">
+                      <span>Semestral</span>
+                      <Badge variant="outline" className="border-warning text-warning text-xs">Não recomendado</Badge>
+                    </div>
+                  </SelectItem>
                   <SelectItem value="yearly">Anual</SelectItem>
                 </SelectContent>
               </Select>
@@ -534,6 +572,24 @@ const SubscriptionManager = () => {
                   step="0.01"
                   value={editMonthlyPrice}
                   onChange={(e) => setEditMonthlyPrice(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Valor Trimestral (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editQuarterlyPrice}
+                  onChange={(e) => setEditQuarterlyPrice(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Valor Semestral (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editSemiannualPrice}
+                  onChange={(e) => setEditSemiannualPrice(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
