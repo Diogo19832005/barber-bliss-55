@@ -84,6 +84,7 @@
        .select("id, full_name, avatar_url, public_id, slug_final")
        .eq("slug_final", slugFinal)
        .eq("role", "barber")
+       .eq("barber_status", "approved")
        .maybeSingle();
  
      if (error || !barberData) {

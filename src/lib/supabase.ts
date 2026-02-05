@@ -14,6 +14,7 @@ export interface Profile {
    public_id: number | null;
    slug_nome: string | null;
    slug_final: string | null;
+   barber_status: 'pending' | 'approved' | 'rejected' | null;
   created_at: string;
   updated_at: string;
 }

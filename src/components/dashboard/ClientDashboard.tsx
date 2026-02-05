@@ -58,7 +58,8 @@ const ClientDashboard = () => {
     const { data: barbersData } = await supabase
       .from("profiles")
       .select("id, full_name, avatar_url")
-      .eq("role", "barber");
+       .eq("role", "barber")
+       .eq("barber_status", "approved");
 
     if (barbersData) {
       const barbersWithServices = await Promise.all(

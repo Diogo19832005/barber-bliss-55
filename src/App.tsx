@@ -10,6 +10,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
  import PublicBooking from "./pages/PublicBooking";
+ import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,8 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/*" element={<Dashboard />} />
+             <Route path="/admin" element={<AdminDashboard />} />
+             <Route path="/admin/*" element={<AdminDashboard />} />
              <Route path="/:slugFinal" element={<PublicBooking />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
