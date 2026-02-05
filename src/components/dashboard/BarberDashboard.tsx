@@ -14,7 +14,8 @@ import {
    Trash2,
    Link as LinkIcon,
    Copy,
-   Check
+    Check,
+    Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,7 @@ import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-f
 import { ptBR } from "date-fns/locale";
 import ServiceModal from "./ServiceModal";
 import ScheduleModal from "./ScheduleModal";
+ import SettingsModal from "./SettingsModal";
 import { useToast } from "@/hooks/use-toast";
 
 interface Service {
@@ -70,6 +72,7 @@ const BarberDashboard = () => {
   const [earnings, setEarnings] = useState({ daily: 0, weekly: 0, monthly: 0 });
    const [publicLink, setPublicLink] = useState<string | null>(null);
    const [linkCopied, setLinkCopied] = useState(false);
+   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   useEffect(() => {
     if (profile?.id) {
@@ -204,17 +207,46 @@ const BarberDashboard = () => {
 
   const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
+   const displayName = profile?.nome_exibido || profile?.full_name?.split(" ")[0];
+   const primaryColor = profile?.cor_primaria || "#D97706";
+ 
   return (
     <DashboardLayout navItems={navItems}>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold md:text-3xl">
-            Olá, {profile?.full_name?.split(" ")[0]}! 👋
-          </h1>
-          <p className="text-muted-foreground">
-            {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
-          </p>
+         <div className="flex items-start justify-between">
+           <div className="flex items-center gap-4">
+             {profile?.logo_url ? (
+               <img
+                 src={profile.logo_url}
+                 alt="Logo"
+                 className="h-14 w-14 rounded-xl object-cover border border-border"
+               />
+             ) : (
+               <div 
+                 className="flex h-14 w-14 items-center justify-center rounded-xl text-white font-bold text-xl"
+                 style={{ backgroundColor: primaryColor }}
+               >
+                 {displayName?.charAt(0).toUpperCase()}
+               </div>
+             )}
+             <div>
+               <h1 className="text-2xl font-bold md:text-3xl">
+                 Olá, {displayName}! 👋
+               </h1>
+               <p className="text-muted-foreground">
+                 {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
+               </p>
+             </div>
+           </div>
+           <Button
+             variant="outline"
+             size="icon"
+             onClick={() => setIsSettingsModalOpen(true)}
+             title="Configurações"
+           >
+             <Settings className="h-4 w-4" />
+           </Button>
         </div>
 
          {/* Public Link Card */}
@@ -488,6 +520,23 @@ const BarberDashboard = () => {
         schedules={schedules}
         barberId={profile?.id || ""}
       />
+       
+       {profile && (
+         <SettingsModal
+           isOpen={isSettingsModalOpen}
+           onClose={() => setIsSettingsModalOpen(false)}
+           onSuccess={fetchData}
+           profile={{
+             id: profile.id,
+             user_id: profile.user_id,
+             full_name: profile.full_name,
+             nome_exibido: profile.nome_exibido,
+             logo_url: profile.logo_url,
+             cor_primaria: profile.cor_primaria,
+             cor_secundaria: profile.cor_secundaria,
+           }}
+         />
+       )}
     </DashboardLayout>
   );
 };
