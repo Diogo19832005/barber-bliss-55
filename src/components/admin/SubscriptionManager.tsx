@@ -83,6 +83,26 @@ const SubscriptionManager = () => {
   const [editYearlyPrice, setEditYearlyPrice] = useState("499.90");
   const [editPaymentStatus, setEditPaymentStatus] = useState<"trial" | "paid" | "pending" | "overdue">("trial");
 
+  // Auto-calculate prices based on monthly price with progressive discounts
+  const calculatePricesFromMonthly = (monthlyValue: string) => {
+    const monthly = parseFloat(monthlyValue) || 0;
+    // Quarterly: 3 months with ~9% discount
+    const quarterly = (monthly * 3 * 0.91).toFixed(2);
+    // Semiannual: 6 months with ~15% discount
+    const semiannual = (monthly * 6 * 0.85).toFixed(2);
+    // Yearly: 12 months with ~17% discount
+    const yearly = (monthly * 12 * 0.83).toFixed(2);
+    
+    setEditQuarterlyPrice(quarterly);
+    setEditSemiannualPrice(semiannual);
+    setEditYearlyPrice(yearly);
+  };
+
+  const handleMonthlyPriceChange = (value: string) => {
+    setEditMonthlyPrice(value);
+    calculatePricesFromMonthly(value);
+  };
+
   useEffect(() => {
     fetchSubscriptions();
   }, []);
@@ -564,42 +584,52 @@ const SubscriptionManager = () => {
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Valor Mensal (R$)</Label>
+                <Label>Valor Mensal (R$) <span className="text-xs text-muted-foreground">(base para cálculo)</span></Label>
                 <Input
                   type="number"
                   step="0.01"
                   value={editMonthlyPrice}
-                  onChange={(e) => setEditMonthlyPrice(e.target.value)}
+                  onChange={(e) => handleMonthlyPriceChange(e.target.value)}
+                  className="font-medium"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Valor Trimestral (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={editQuarterlyPrice}
-                  onChange={(e) => setEditQuarterlyPrice(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Valor Semestral (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={editSemiannualPrice}
-                  onChange={(e) => setEditSemiannualPrice(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Valor Anual (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={editYearlyPrice}
-                  onChange={(e) => setEditYearlyPrice(e.target.value)}
-                />
+              
+              <div className="rounded-lg border border-border bg-secondary/30 p-3">
+                <p className="mb-2 text-xs font-medium text-muted-foreground">Valores calculados automaticamente:</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Trimestral <span className="text-warning">(~9% desc.)</span></Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={editQuarterlyPrice}
+                      onChange={(e) => setEditQuarterlyPrice(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Semestral <span className="text-warning">(~15% desc.)</span></Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={editSemiannualPrice}
+                      onChange={(e) => setEditSemiannualPrice(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Anual <span className="text-success">(~17% desc.)</span></Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={editYearlyPrice}
+                      onChange={(e) => setEditYearlyPrice(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
