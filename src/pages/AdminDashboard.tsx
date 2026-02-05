@@ -12,7 +12,8 @@ import {
   Mail,
   Loader2,
   CalendarDays,
-  CreditCard
+  CreditCard,
+  Store
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +41,8 @@ interface Barber {
   created_at: string;
   public_id: number | null;
   slug_final: string | null;
+  is_barbershop_admin: boolean;
+  barbershop_owner_id: string | null;
 }
 
 interface Admin {
@@ -75,12 +78,12 @@ const navItems = [
    const fetchData = async () => {
      setIsLoading(true);
  
-     // Fetch all barbers
-     const { data: barbersData } = await supabase
-       .from("profiles")
-       .select("id, user_id, full_name, phone, barber_status, created_at, public_id, slug_final")
-       .eq("role", "barber")
-       .order("created_at", { ascending: false });
+      // Fetch all barbers
+      const { data: barbersData } = await supabase
+        .from("profiles")
+        .select("id, user_id, full_name, phone, barber_status, created_at, public_id, slug_final, is_barbershop_admin, barbershop_owner_id")
+        .eq("role", "barber")
+        .order("created_at", { ascending: false });
  
      if (barbersData) setBarbers(barbersData);
  
@@ -135,13 +138,38 @@ const navItems = [
        toast({ title: "Barbeiro recusado" });
        fetchData();
      }
- 
-     setProcessingId(null);
-   };
+  
+      setProcessingId(null);
+    };
+
+    const handleToggleBarbershopAdmin = async (barberId: string, currentStatus: boolean) => {
+      setProcessingId(barberId);
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_barbershop_admin: !currentStatus })
+        .eq("id", barberId);
+
+      if (error) {
+        toast({
+          title: "Erro",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: !currentStatus
+            ? "Barbeiro definido como administrador da barbearia!"
+            : "Permissão de administrador removida",
+        });
+        fetchData();
+      }
+
+      setProcessingId(null);
+    };
  
   const handleAddAdmin = async () => {
     const email = newAdminEmail.trim().toLowerCase();
-    
     if (!email) {
       toast({
         title: "Campo obrigatório",
@@ -405,51 +433,79 @@ const navItems = [
                </p>
              ) : (
                <div className="space-y-3">
-                 {barbers.map((barber) => (
-                   <div
-                     key={barber.id}
-                     className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
-                   >
-                     <div className="flex-1">
-                       <div className="flex items-center gap-2">
-                         <p className="font-medium">{barber.full_name}</p>
-                         {getStatusBadge(barber.barber_status)}
+                  {barbers.map((barber) => (
+                    <div
+                      key={barber.id}
+                      className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium">{barber.full_name}</p>
+                          {getStatusBadge(barber.barber_status)}
+                          {barber.is_barbershop_admin && !barber.barbershop_owner_id && (
+                            <Badge variant="outline" className="border-primary text-primary">
+                              <Store className="mr-1 h-3 w-3" />
+                              Admin Barbearia
+                            </Badge>
+                          )}
+                          {barber.barbershop_owner_id && (
+                            <Badge variant="outline" className="border-muted-foreground text-muted-foreground">
+                              Membro de equipe
+                            </Badge>
+                          )}
+                        </div>
+                         <p className="text-sm text-muted-foreground">
+                           {barber.phone || "Sem telefone"}
+                           {barber.slug_final && ` • /${barber.slug_final}`}
+                         </p>
+                         <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                           <CalendarDays className="h-3 w-3" />
+                           Cadastro: {new Date(barber.created_at).toLocaleDateString("pt-BR")}
+                         </p>
                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {barber.phone || "Sem telefone"}
-                          {barber.slug_final && ` • /${barber.slug_final}`}
-                        </p>
-                        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                          <CalendarDays className="h-3 w-3" />
-                          Cadastro: {new Date(barber.created_at).toLocaleDateString("pt-BR")}
-                        </p>
+                      <div className="flex flex-wrap gap-2">
+                        {/* Barbershop Admin toggle - only for approved barbers without owner */}
+                        {barber.barber_status === "approved" && !barber.barbershop_owner_id && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className={barber.is_barbershop_admin 
+                              ? "border-muted-foreground text-muted-foreground" 
+                              : "border-primary text-primary"}
+                            onClick={() => handleToggleBarbershopAdmin(barber.id, barber.is_barbershop_admin)}
+                            disabled={processingId === barber.id}
+                          >
+                            <Store className="mr-1 h-4 w-4" />
+                            {barber.is_barbershop_admin ? "Remover Admin" : "Definir Admin"}
+                          </Button>
+                        )}
+                        {barber.barber_status !== "approved" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-success text-success"
+                            onClick={() => handleApprove(barber.id)}
+                            disabled={processingId === barber.id}
+                          >
+                            <CheckCircle className="mr-1 h-4 w-4" />
+                            Aprovar
+                          </Button>
+                        )}
+                        {barber.barber_status === "approved" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-destructive text-destructive"
+                            onClick={() => handleReject(barber.id)}
+                            disabled={processingId === barber.id}
+                          >
+                            <XCircle className="mr-1 h-4 w-4" />
+                            Suspender
+                          </Button>
+                        )}
                       </div>
-                     {barber.barber_status !== "approved" && (
-                       <Button
-                         size="sm"
-                         variant="outline"
-                         className="border-success text-success"
-                         onClick={() => handleApprove(barber.id)}
-                         disabled={processingId === barber.id}
-                       >
-                         <CheckCircle className="mr-1 h-4 w-4" />
-                         Aprovar
-                       </Button>
-                     )}
-                     {barber.barber_status === "approved" && (
-                       <Button
-                         size="sm"
-                         variant="outline"
-                         className="border-destructive text-destructive"
-                         onClick={() => handleReject(barber.id)}
-                         disabled={processingId === barber.id}
-                       >
-                         <XCircle className="mr-1 h-4 w-4" />
-                         Suspender
-                       </Button>
-                     )}
-                   </div>
-                 ))}
+                    </div>
+                  ))}
                </div>
              )}
            </CardContent>

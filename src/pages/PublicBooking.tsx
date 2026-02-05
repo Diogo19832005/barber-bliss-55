@@ -37,6 +37,12 @@ interface Barber {
   estado: string | null;
 }
 
+interface TeamMember {
+  id: string;
+  full_name: string;
+  avatar_url: string | null;
+}
+
 interface Schedule {
   day_of_week: number;
   start_time: string;
@@ -57,6 +63,8 @@ const PublicBooking = () => {
   const { user, profile, signUp, signIn } = useAuth();
   
   const [barber, setBarber] = useState<Barber | null>(null);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [selectedBarber, setSelectedBarber] = useState<TeamMember | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -98,10 +106,10 @@ const PublicBooking = () => {
   }, [user, profile]);
 
   useEffect(() => {
-    if (selectedDate && selectedService && barber) {
+    if (selectedDate && selectedService && selectedBarber) {
       fetchAvailableSlots();
     }
-  }, [selectedDate, selectedService, barber]);
+  }, [selectedDate, selectedService, selectedBarber]);
 
   const fetchBarberData = async () => {
     setIsLoading(true);
@@ -123,7 +131,28 @@ const PublicBooking = () => {
 
     setBarber(barberData);
 
-    // Fetch services
+    // Fetch team members (barbers who belong to this barbershop)
+    const { data: teamData } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .eq("barbershop_owner_id", barberData.id)
+      .eq("role", "barber")
+      .eq("barber_status", "approved")
+      .order("full_name");
+
+    // Team includes the owner plus all team members
+    const allBarbers: TeamMember[] = [
+      { id: barberData.id, full_name: barberData.full_name, avatar_url: barberData.avatar_url },
+      ...(teamData || [])
+    ];
+    setTeamMembers(allBarbers);
+
+    // If only one barber, auto-select
+    if (allBarbers.length === 1) {
+      setSelectedBarber(allBarbers[0]);
+    }
+
+    // Fetch services (from the barbershop owner)
     const { data: servicesData } = await supabase
       .from("services")
       .select("id, name, description, duration_minutes, price, image_url")
@@ -133,20 +162,39 @@ const PublicBooking = () => {
 
     if (servicesData) setServices(servicesData);
 
-    // Fetch schedules
-    const { data: schedulesData } = await supabase
-      .from("barber_schedules")
-      .select("day_of_week, start_time, end_time, is_active")
-      .eq("barber_id", barberData.id)
-      .eq("is_active", true);
+    // If only one barber, fetch their schedules
+    if (allBarbers.length === 1) {
+      const { data: schedulesData } = await supabase
+        .from("barber_schedules")
+        .select("day_of_week, start_time, end_time, is_active")
+        .eq("barber_id", barberData.id)
+        .eq("is_active", true);
 
-    if (schedulesData) setSchedules(schedulesData);
+      if (schedulesData) setSchedules(schedulesData);
+    }
 
     setIsLoading(false);
   };
 
+  const fetchBarberSchedules = async (barberId: string) => {
+    const { data: schedulesData } = await supabase
+      .from("barber_schedules")
+      .select("day_of_week, start_time, end_time, is_active")
+      .eq("barber_id", barberId)
+      .eq("is_active", true);
+
+    if (schedulesData) {
+      setSchedules(schedulesData);
+    } else {
+      setSchedules([]);
+    }
+    // Reset date and time selection when barber changes
+    setSelectedDate(undefined);
+    setSelectedTime(null);
+  };
+
   const fetchAvailableSlots = async () => {
-    if (!selectedDate || !selectedService || !barber) return;
+    if (!selectedDate || !selectedService || !selectedBarber) return;
 
     const dayOfWeek = selectedDate.getDay();
     const schedule = schedules.find((s) => s.day_of_week === dayOfWeek);
@@ -156,12 +204,12 @@ const PublicBooking = () => {
       return;
     }
 
-    // Fetch appointments for the selected date
+    // Fetch appointments for the selected date and selected barber
     const dateStr = format(selectedDate, "yyyy-MM-dd");
     const { data: appointmentsData } = await supabase
       .from("appointments")
       .select("appointment_date, start_time, end_time")
-      .eq("barber_id", barber.id)
+      .eq("barber_id", selectedBarber.id)
       .eq("appointment_date", dateStr)
       .neq("status", "cancelled");
 
@@ -218,7 +266,7 @@ const PublicBooking = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!barber || !selectedService || !selectedDate || !selectedTime) {
+    if (!selectedBarber || !selectedService || !selectedDate || !selectedTime) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios",
@@ -337,7 +385,7 @@ const PublicBooking = () => {
       const { data: existingAppointments } = await supabase
         .from("appointments")
         .select("id, start_time, end_time")
-        .eq("barber_id", barber.id)
+        .eq("barber_id", selectedBarber.id)
         .eq("appointment_date", dateStr)
         .neq("status", "cancelled");
 
@@ -362,7 +410,7 @@ const PublicBooking = () => {
         .from("appointments")
         .insert({
           client_id: clientProfileId,
-          barber_id: barber.id,
+          barber_id: selectedBarber.id,
           service_id: selectedService.id,
           appointment_date: dateStr,
           start_time: selectedTime,
@@ -445,7 +493,7 @@ const PublicBooking = () => {
         </div>
         <h1 className="mt-6 text-2xl font-bold">Agendamento Confirmado!</h1>
         <p className="mt-2 text-center text-muted-foreground">
-          Seu horário com {barber?.nome_exibido || barber?.full_name} foi reservado para
+          Seu horário com {selectedBarber?.full_name || barber?.nome_exibido || barber?.full_name} foi reservado para
           <br />
           <span className="font-semibold text-foreground">
             {selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })} às {selectedTime}
@@ -460,6 +508,7 @@ const PublicBooking = () => {
           onClick={() => {
             setBookingSuccess(false);
             setSelectedService(null);
+            setSelectedBarber(teamMembers.length === 1 ? teamMembers[0] : null);
             setSelectedDate(undefined);
             setSelectedTime(null);
             setShowBookingForm(false);
@@ -506,25 +555,75 @@ const PublicBooking = () => {
         </header>
 
         <main className="container mx-auto max-w-lg px-4 py-6 space-y-6">
-          {/* Date Selection */}
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5" style={{ color: primaryColor }} />
-                Escolha a Data
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                disabled={isDateDisabled}
-                locale={ptBR}
-                className="rounded-xl border"
-              />
-            </CardContent>
-          </Card>
+          {/* Barber Selection - Only show if there are multiple barbers */}
+          {teamMembers.length > 1 && (
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" style={{ color: primaryColor }} />
+                  Escolha o Barbeiro
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-3">
+                  {teamMembers.map((member) => (
+                    <button
+                      key={member.id}
+                      onClick={() => {
+                        setSelectedBarber(member);
+                        fetchBarberSchedules(member.id);
+                      }}
+                      className={`flex flex-col items-center gap-2 rounded-xl border p-4 transition-all ${
+                        selectedBarber?.id === member.id
+                          ? "border-primary bg-primary/10"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      {member.avatar_url ? (
+                        <img
+                          src={member.avatar_url}
+                          alt={member.full_name}
+                          className="h-16 w-16 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div
+                          className="flex h-16 w-16 items-center justify-center rounded-full text-white text-xl font-bold"
+                          style={{ backgroundColor: primaryColor }}
+                        >
+                          {member.full_name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <span className="text-sm font-medium text-center">
+                        {member.full_name.split(" ")[0]}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Date Selection - Only show after barber is selected */}
+          {selectedBarber && (
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarIcon className="h-5 w-5" style={{ color: primaryColor }} />
+                  Escolha a Data
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  disabled={isDateDisabled}
+                  locale={ptBR}
+                  className="rounded-xl border"
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Time Selection */}
           {selectedDate && (

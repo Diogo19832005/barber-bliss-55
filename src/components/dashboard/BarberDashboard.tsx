@@ -25,9 +25,10 @@ import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-f
 import { ptBR } from "date-fns/locale";
 import ServiceModal from "./ServiceModal";
 import ScheduleModal from "./ScheduleModal";
- import SettingsModal from "./SettingsModal";
+import SettingsModal from "./SettingsModal";
+import TeamManagement from "./TeamManagement";
 import { useToast } from "@/hooks/use-toast";
- import UpcomingAppointments from "./UpcomingAppointments";
+import UpcomingAppointments from "./UpcomingAppointments";
 import SubscriptionAlert from "./SubscriptionAlert";
 import AccountPaused from "@/pages/AccountPaused";
 
@@ -64,6 +65,7 @@ const navItems = [
   { label: "Agenda", href: "/dashboard/agenda", icon: <Calendar className="h-4 w-4" /> },
   { label: "Serviços", href: "/dashboard/services", icon: <Scissors className="h-4 w-4" /> },
   { label: "Horários", href: "/dashboard/schedule", icon: <Clock className="h-4 w-4" /> },
+  { label: "Equipe", href: "/dashboard/team", icon: <Users className="h-4 w-4" /> },
 ];
 
 const BarberDashboard = () => {
@@ -570,6 +572,11 @@ const BarberDashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Team Management - Only for barbershop admins */}
+        {profile?.is_barbershop_admin && (
+          <TeamManagement barbershopOwnerId={profile.id} />
+        )}
       </div>
 
       <ServiceModal
