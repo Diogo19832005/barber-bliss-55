@@ -25,6 +25,7 @@ import ServiceModal from "./ServiceModal";
 import ScheduleModal from "./ScheduleModal";
  import SettingsModal from "./SettingsModal";
 import { useToast } from "@/hooks/use-toast";
+ import UpcomingAppointments from "./UpcomingAppointments";
 
 interface Service {
   id: string;
@@ -392,6 +393,9 @@ const BarberDashboard = () => {
           </CardContent>
         </Card>
 
+       {/* Upcoming Appointments */}
+       <UpcomingAppointments barberId={profile?.id || ""} />
+ 
         {/* Services */}
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between">
