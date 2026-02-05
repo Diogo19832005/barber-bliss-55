@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Clock, Scissors } from "lucide-react";
 import { format, addDays, isSameDay, parseISO, addMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ interface Service {
   name: string;
   duration_minutes: number;
   price: number;
+  image_url?: string | null;
 }
 
 interface Barber {
@@ -242,15 +243,26 @@ const BookingModal = ({
                     "border-border hover:border-primary/50 hover:bg-primary/5"
                   )}
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
+                  <div className="flex items-center gap-4">
+                    {service.image_url ? (
+                      <img
+                        src={service.image_url}
+                        alt={service.name}
+                        className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-secondary flex-shrink-0">
+                        <Scissors className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
                       <p className="font-medium">{service.name}</p>
                       <p className="text-sm text-muted-foreground">
                         <Clock className="mr-1 inline h-3 w-3" />
                         {service.duration_minutes} min
                       </p>
                     </div>
-                    <p className="text-lg font-semibold text-primary">
+                    <p className="text-lg font-semibold text-primary flex-shrink-0">
                       R$ {Number(service.price).toFixed(2)}
                     </p>
                   </div>
