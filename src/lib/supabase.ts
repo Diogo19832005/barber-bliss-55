@@ -11,14 +11,17 @@ export interface Profile {
   role: UserRole;
   phone: string | null;
   avatar_url: string | null;
-   public_id: number | null;
-   slug_nome: string | null;
-   slug_final: string | null;
-   barber_status: 'pending' | 'approved' | 'rejected' | null;
-   nome_exibido: string | null;
-   logo_url: string | null;
-   cor_primaria: string | null;
-   cor_secundaria: string | null;
+  public_id: number | null;
+  slug_nome: string | null;
+  slug_final: string | null;
+  barber_status: 'pending' | 'approved' | 'rejected' | null;
+  nome_exibido: string | null;
+  logo_url: string | null;
+  cor_primaria: string | null;
+  cor_secundaria: string | null;
+  endereco: string | null;
+  cidade: string | null;
+  estado: string | null;
   created_at: string;
   updated_at: string;
 }

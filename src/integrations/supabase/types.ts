@@ -182,9 +182,12 @@ export type Database = {
         Row: {
           avatar_url: string | null
           barber_status: string | null
+          cidade: string | null
           cor_primaria: string | null
           cor_secundaria: string | null
           created_at: string
+          endereco: string | null
+          estado: string | null
           full_name: string
           id: string
           logo_url: string | null
@@ -200,9 +203,12 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           barber_status?: string | null
+          cidade?: string | null
           cor_primaria?: string | null
           cor_secundaria?: string | null
           created_at?: string
+          endereco?: string | null
+          estado?: string | null
           full_name: string
           id?: string
           logo_url?: string | null
@@ -218,9 +224,12 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           barber_status?: string | null
+          cidade?: string | null
           cor_primaria?: string | null
           cor_secundaria?: string | null
           created_at?: string
+          endereco?: string | null
+          estado?: string | null
           full_name?: string
           id?: string
           logo_url?: string | null
