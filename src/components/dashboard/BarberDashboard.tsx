@@ -38,6 +38,7 @@ interface Service {
   duration_minutes: number;
   price: number;
   is_active: boolean;
+  image_url?: string | null;
 }
 
 interface Appointment {
@@ -479,11 +480,24 @@ const BarberDashboard = () => {
                     key={service.id}
                     className="flex items-center justify-between rounded-xl border border-border p-4"
                   >
-                    <div>
-                      <p className="font-medium">{service.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {service.duration_minutes} min • R$ {Number(service.price).toFixed(2)}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      {service.image_url ? (
+                        <img
+                          src={service.image_url}
+                          alt={service.name}
+                          className="h-14 w-14 rounded-lg object-cover border border-border"
+                        />
+                      ) : (
+                        <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-secondary">
+                          <Scissors className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-medium">{service.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {service.duration_minutes} min • R$ {Number(service.price).toFixed(2)}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <Button
