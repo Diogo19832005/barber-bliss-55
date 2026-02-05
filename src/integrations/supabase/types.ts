@@ -190,6 +190,7 @@ export type Database = {
           endereco: string | null
           estado: string | null
           full_name: string
+          hero_animation_speed: number | null
           hero_button_color: string | null
           hero_button_text: string | null
           hero_enabled: boolean | null
@@ -216,6 +217,7 @@ export type Database = {
           endereco?: string | null
           estado?: string | null
           full_name: string
+          hero_animation_speed?: number | null
           hero_button_color?: string | null
           hero_button_text?: string | null
           hero_enabled?: boolean | null
@@ -242,6 +244,7 @@ export type Database = {
           endereco?: string | null
           estado?: string | null
           full_name?: string
+          hero_animation_speed?: number | null
           hero_button_color?: string | null
           hero_button_text?: string | null
           hero_enabled?: boolean | null

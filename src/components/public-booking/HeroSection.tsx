@@ -11,6 +11,7 @@ interface HeroSectionProps {
   address?: string | null;
   buttonText: string;
   buttonColor: string;
+  animationSpeed?: number;
   onContinue: () => void;
 }
 
@@ -23,16 +24,20 @@ const HeroSection = ({
   address,
   buttonText,
   buttonColor,
+  animationSpeed = 1.0,
   onContinue,
 }: HeroSectionProps) => {
   const [isAnimating, setIsAnimating] = useState(true);
 
   useEffect(() => {
+    // Convert speed multiplier to interval: lower speed = faster animation
+    // Speed 1.0 = 2000ms, Speed 0.2 = 400ms, Speed 2.0 = 4000ms
+    const intervalMs = Math.round(2000 * animationSpeed);
     const interval = setInterval(() => {
       setIsAnimating((prev) => !prev);
-    }, 2000);
+    }, intervalMs);
     return () => clearInterval(interval);
-  }, []);
+  }, [animationSpeed]);
 
   const formatPhoneForWhatsApp = (phone: string) => {
     return phone.replace(/\D/g, "");

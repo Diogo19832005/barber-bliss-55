@@ -618,6 +618,7 @@ const BarberDashboard = () => {
             hero_enabled: (profile as any).hero_enabled ?? true,
             hero_button_text: (profile as any).hero_button_text || "Agendar agora mesmo",
             hero_button_color: (profile as any).hero_button_color || "#D97706",
+            hero_animation_speed: (profile as any).hero_animation_speed ?? 1.0,
           }}
          />
        )}
