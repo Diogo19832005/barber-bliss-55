@@ -109,21 +109,26 @@ const HeroSection = ({
       <Button
         size="xl"
         onClick={onContinue}
-        className="relative overflow-hidden font-semibold text-white shadow-2xl transition-all duration-300 hover:scale-105"
+        className={`relative overflow-hidden font-semibold text-white shadow-2xl transition-all duration-300 hover:scale-105 ${
+          isAnimating ? "scale-105" : "scale-100"
+        }`}
         style={{
           backgroundColor: buttonColor,
-          boxShadow: `0 10px 40px -10px ${buttonColor}80`,
+          boxShadow: isAnimating 
+            ? `0 15px 50px -5px ${buttonColor}` 
+            : `0 10px 40px -10px ${buttonColor}80`,
+          transition: "all 0.5s ease-in-out",
         }}
       >
         <span
-          className={`inline-flex items-center gap-2 transition-transform duration-500 ${
-            isAnimating ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-90"
+          className={`inline-flex items-center gap-2 transition-all duration-500 ${
+            isAnimating ? "translate-y-0 opacity-100" : "-translate-y-0.5 opacity-95"
           }`}
         >
           {buttonText}
           <ArrowDown
             className={`h-4 w-4 transition-transform duration-500 ${
-              isAnimating ? "translate-y-0" : "translate-y-1"
+              isAnimating ? "translate-y-1" : "translate-y-0"
             }`}
           />
         </span>
