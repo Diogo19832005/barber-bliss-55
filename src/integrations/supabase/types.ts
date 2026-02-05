@@ -120,9 +120,13 @@ export type Database = {
         Row: {
           avatar_url: string | null
           barber_status: string | null
+          cor_primaria: string | null
+          cor_secundaria: string | null
           created_at: string
           full_name: string
           id: string
+          logo_url: string | null
+          nome_exibido: string | null
           phone: string | null
           public_id: number | null
           role: Database["public"]["Enums"]["user_role"]
@@ -134,9 +138,13 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           barber_status?: string | null
+          cor_primaria?: string | null
+          cor_secundaria?: string | null
           created_at?: string
           full_name: string
           id?: string
+          logo_url?: string | null
+          nome_exibido?: string | null
           phone?: string | null
           public_id?: number | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -148,9 +156,13 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           barber_status?: string | null
+          cor_primaria?: string | null
+          cor_secundaria?: string | null
           created_at?: string
           full_name?: string
           id?: string
+          logo_url?: string | null
+          nome_exibido?: string | null
           phone?: string | null
           public_id?: number | null
           role?: Database["public"]["Enums"]["user_role"]

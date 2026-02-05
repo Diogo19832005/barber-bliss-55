@@ -15,6 +15,10 @@ export interface Profile {
    slug_nome: string | null;
    slug_final: string | null;
    barber_status: 'pending' | 'approved' | 'rejected' | null;
+   nome_exibido: string | null;
+   logo_url: string | null;
+   cor_primaria: string | null;
+   cor_secundaria: string | null;
   created_at: string;
   updated_at: string;
 }

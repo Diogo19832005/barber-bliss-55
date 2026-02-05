@@ -25,6 +25,10 @@
    avatar_url: string | null;
    public_id: number;
    slug_final: string;
+   nome_exibido: string | null;
+   logo_url: string | null;
+   cor_primaria: string | null;
+   cor_secundaria: string | null;
  }
  
  interface Schedule {
@@ -81,7 +85,7 @@
      // Fetch barber by slug_final
      const { data: barberData, error } = await supabase
        .from("profiles")
-       .select("id, full_name, avatar_url, public_id, slug_final")
+       .select("id, full_name, avatar_url, public_id, slug_final, nome_exibido, logo_url, cor_primaria, cor_secundaria")
        .eq("slug_final", slugFinal)
        .eq("role", "barber")
        .eq("barber_status", "approved")
@@ -281,7 +285,7 @@
    if (isLoading) {
      return (
        <div className="flex min-h-screen items-center justify-center">
-         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+         <Loader2 className="h-8 w-8 animate-spin" style={{ color: barber?.cor_primaria || "#D97706" }} />
        </div>
      );
    }
@@ -340,24 +344,38 @@
      );
    }
  
+   const displayName = barber?.nome_exibido || barber?.full_name;
+   const primaryColor = barber?.cor_primaria || "#D97706";
+ 
    return (
-     <div className="min-h-screen bg-background">
+     <div className="min-h-screen bg-background" style={{ "--barber-primary": primaryColor } as React.CSSProperties}>
        {/* Header */}
-       <header className="border-b border-border bg-card/50 backdrop-blur-xl">
+       <header 
+         className="border-b border-border backdrop-blur-xl"
+         style={{ backgroundColor: `${primaryColor}10` }}
+       >
          <div className="container mx-auto flex items-center gap-4 px-4 py-4">
-           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary">
-             {barber?.avatar_url ? (
+           <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: `${primaryColor}20` }}>
+             {barber?.logo_url ? (
+               <img
+                 src={barber.logo_url}
+                 alt={displayName || ""}
+                 className="h-full w-full rounded-full object-cover"
+               />
+             ) : barber?.avatar_url ? (
                <img
                  src={barber.avatar_url}
-                 alt={barber.full_name}
+                 alt={displayName || ""}
                  className="h-full w-full rounded-full object-cover"
                />
              ) : (
-               <User className="h-6 w-6 text-muted-foreground" />
+               <span className="text-lg font-bold" style={{ color: primaryColor }}>
+                 {displayName?.charAt(0).toUpperCase()}
+               </span>
              )}
            </div>
            <div>
-             <h1 className="text-xl font-bold">{barber?.full_name}</h1>
+             <h1 className="text-xl font-bold" style={{ color: primaryColor }}>{displayName}</h1>
              <p className="text-sm text-muted-foreground">Agende seu horário</p>
            </div>
          </div>
@@ -371,7 +389,7 @@
              <Card className="glass-card">
                <CardHeader>
                  <CardTitle className="flex items-center gap-2">
-                   <Scissors className="h-5 w-5 text-primary" />
+                   <Scissors className="h-5 w-5" style={{ color: primaryColor }} />
                    Escolha o Serviço
                  </CardTitle>
                </CardHeader>
@@ -387,9 +405,13 @@
                        onClick={() => setSelectedService(service)}
                        className={`w-full rounded-xl border p-4 text-left transition-all ${
                          selectedService?.id === service.id
-                           ? "border-primary bg-primary/10"
+                           ? "bg-opacity-10"
                            : "border-border hover:border-muted-foreground"
                        }`}
+                         style={selectedService?.id === service.id ? { 
+                           borderColor: primaryColor, 
+                           backgroundColor: `${primaryColor}10` 
+                         } : {}}
                      >
                        <div className="flex items-center justify-between">
                          <div>
@@ -401,7 +423,7 @@
                            )}
                          </div>
                          <div className="text-right">
-                           <p className="font-semibold text-primary">
+                           <p className="font-semibold" style={{ color: primaryColor }}>
                              R$ {Number(service.price).toFixed(2)}
                            </p>
                            <p className="text-xs text-muted-foreground">
@@ -420,7 +442,7 @@
                <Card className="glass-card">
                  <CardHeader>
                    <CardTitle className="flex items-center gap-2">
-                     <CalendarIcon className="h-5 w-5 text-primary" />
+                   <CalendarIcon className="h-5 w-5" style={{ color: primaryColor }} />
                      Escolha a Data
                    </CardTitle>
                  </CardHeader>
@@ -445,7 +467,7 @@
                <Card className="glass-card">
                  <CardHeader>
                    <CardTitle className="flex items-center gap-2">
-                     <Clock className="h-5 w-5 text-primary" />
+                   <Clock className="h-5 w-5" style={{ color: primaryColor }} />
                      Horários Disponíveis
                    </CardTitle>
                  </CardHeader>
@@ -462,9 +484,23 @@
                            onClick={() => setSelectedTime(time)}
                            className={`rounded-lg border p-3 text-center text-sm font-medium transition-all ${
                              selectedTime === time
-                               ? "border-primary bg-primary text-primary-foreground"
-                               : "border-border hover:border-primary"
+                             ? "text-white"
+                             : "border-border"
                            }`}
+                           style={selectedTime === time ? { 
+                             backgroundColor: primaryColor, 
+                             borderColor: primaryColor 
+                           } : {}}
+                           onMouseEnter={(e) => {
+                             if (selectedTime !== time) {
+                               e.currentTarget.style.borderColor = primaryColor;
+                             }
+                           }}
+                           onMouseLeave={(e) => {
+                             if (selectedTime !== time) {
+                               e.currentTarget.style.borderColor = "";
+                             }
+                           }}
                          >
                            {time}
                          </button>
@@ -480,7 +516,7 @@
                <Card className="glass-card">
                  <CardHeader>
                    <CardTitle className="flex items-center gap-2">
-                     <User className="h-5 w-5 text-primary" />
+                   <User className="h-5 w-5" style={{ color: primaryColor }} />
                      Seus Dados
                    </CardTitle>
                  </CardHeader>
@@ -529,7 +565,7 @@
                          <p>
                            {selectedDate && format(selectedDate, "dd/MM/yyyy")} às {selectedTime}
                          </p>
-                         <p className="font-semibold text-primary">
+                           <p className="font-semibold" style={{ color: primaryColor }}>
                            R$ {selectedService?.price.toFixed(2)}
                          </p>
                        </div>
@@ -537,10 +573,10 @@
  
                      <Button
                        type="submit"
-                       variant="gold"
                        size="lg"
                        className="w-full"
                        disabled={isSubmitting}
+                         style={{ backgroundColor: primaryColor, color: "white" }}
                      >
                        {isSubmitting ? (
                          <>
