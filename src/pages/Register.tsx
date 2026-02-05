@@ -22,6 +22,26 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate all required fields
+    if (!fullName.trim() || !email.trim() || !phone.trim() || !password.trim()) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos para criar sua conta",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Senha muito curta",
+        description: "A senha deve ter no mínimo 6 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     const { error } = await signUp(email, password, fullName, role, phone);
@@ -94,7 +114,9 @@ const Register = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="fullName">Nome completo</Label>
+              <Label htmlFor="fullName">
+                Nome completo <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="fullName"
                 type="text"
@@ -107,7 +129,9 @@ const Register = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">
+                Email <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -120,7 +144,9 @@ const Register = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
+              <Label htmlFor="phone">
+                Telefone <span className="text-destructive">*</span>
+              </Label>
               <div className="relative">
                 <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -136,7 +162,9 @@ const Register = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password">
+                Senha <span className="text-destructive">*</span>
+              </Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -157,6 +185,10 @@ const Register = () => {
                 </button>
               </div>
             </div>
+
+            <p className="text-xs text-muted-foreground">
+              <span className="text-destructive">*</span> Campos obrigatórios
+            </p>
 
             <Button
               type="submit"
