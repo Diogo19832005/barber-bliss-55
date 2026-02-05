@@ -78,6 +78,41 @@ export type Database = {
           },
         ]
       }
+      barber_gallery: {
+        Row: {
+          barber_id: string
+          caption: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          image_url: string
+        }
+        Insert: {
+          barber_id: string
+          caption?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url: string
+        }
+        Update: {
+          barber_id?: string
+          caption?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_gallery_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       barber_schedules: {
         Row: {
           barber_id: string
@@ -183,12 +218,14 @@ export type Database = {
           avatar_url: string | null
           barber_status: string | null
           barbershop_owner_id: string | null
+          bio: string | null
           cidade: string | null
           cor_primaria: string | null
           cor_secundaria: string | null
           created_at: string
           endereco: string | null
           estado: string | null
+          foto_apresentacao: string | null
           full_name: string
           hero_animation_speed: number | null
           hero_button_color: string | null
@@ -210,12 +247,14 @@ export type Database = {
           avatar_url?: string | null
           barber_status?: string | null
           barbershop_owner_id?: string | null
+          bio?: string | null
           cidade?: string | null
           cor_primaria?: string | null
           cor_secundaria?: string | null
           created_at?: string
           endereco?: string | null
           estado?: string | null
+          foto_apresentacao?: string | null
           full_name: string
           hero_animation_speed?: number | null
           hero_button_color?: string | null
@@ -237,12 +276,14 @@ export type Database = {
           avatar_url?: string | null
           barber_status?: string | null
           barbershop_owner_id?: string | null
+          bio?: string | null
           cidade?: string | null
           cor_primaria?: string | null
           cor_secundaria?: string | null
           created_at?: string
           endereco?: string | null
           estado?: string | null
+          foto_apresentacao?: string | null
           full_name?: string
           hero_animation_speed?: number | null
           hero_button_color?: string | null
