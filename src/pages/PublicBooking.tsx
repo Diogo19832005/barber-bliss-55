@@ -1,15 +1,16 @@
  import { useState, useEffect } from "react";
- import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
  import { supabase } from "@/lib/supabase";
  import { Button } from "@/components/ui/button";
  import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
  import { Calendar } from "@/components/ui/calendar";
  import { Input } from "@/components/ui/input";
  import { Label } from "@/components/ui/label";
- import { Scissors, Clock, DollarSign, Calendar as CalendarIcon, User, ArrowLeft, Loader2, Check } from "lucide-react";
+import { Scissors, Clock, DollarSign, Calendar as CalendarIcon, User, ArrowLeft, Loader2, Check, Eye, EyeOff, Phone } from "lucide-react";
  import { format, addMinutes, parse, isBefore, isAfter, parseISO } from "date-fns";
  import { ptBR } from "date-fns/locale";
  import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
  
  interface Service {
    id: string;
@@ -47,6 +48,8 @@
  const PublicBooking = () => {
    const { slugFinal } = useParams<{ slugFinal: string }>();
    const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user, profile, signUp, signIn } = useAuth();
    
    const [barber, setBarber] = useState<Barber | null>(null);
    const [services, setServices] = useState<Service[]>([]);
@@ -66,6 +69,12 @@
    const [clientPhone, setClientPhone] = useState("");
    const [isSubmitting, setIsSubmitting] = useState(false);
    const [bookingSuccess, setBookingSuccess] = useState(false);
+  
+  // Auth states
+  const [authMode, setAuthMode] = useState<"guest" | "login" | "register">("guest");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
  
    useEffect(() => {
      if (slugFinal) {
@@ -73,6 +82,16 @@
      }
    }, [slugFinal]);
  
+  // Pre-fill form if user is logged in
+  useEffect(() => {
+    if (user && profile) {
+      setClientName(profile.full_name || "");
+      setClientPhone(profile.phone || "");
+      setClientEmail(user.email || "");
+      setAuthMode("guest");
+    }
+  }, [user, profile]);
+
    useEffect(() => {
      if (selectedDate && selectedService && barber) {
        fetchAvailableSlots();
@@ -202,39 +221,104 @@
        return;
      }
  
+    // If registering, validate password
+    if (authMode === "register" && password.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
      setIsSubmitting(true);
  
      try {
-       // First check if user exists or create guest profile
-       const { data: existingProfile } = await supabase
-         .from("profiles")
-         .select("id")
-         .eq("full_name", clientName.trim())
-         .eq("role", "client")
-         .maybeSingle();
- 
        let clientProfileId: string;
  
-       if (existingProfile) {
-         clientProfileId = existingProfile.id;
+      // If user is already logged in, use their profile
+      if (user && profile) {
+        clientProfileId = profile.id;
+      } else if (authMode === "register") {
+        // Register new user
+        setIsAuthLoading(true);
+        const { error: signUpError } = await signUp(
+          clientEmail.trim(),
+          password,
+          clientName.trim(),
+          "client",
+          clientPhone.trim() || undefined
+        );
+
+        if (signUpError) {
+          throw new Error(signUpError.message);
+        }
+
+        toast({
+          title: "Conta criada!",
+          description: "Verifique seu email para confirmar a conta e depois faça login para agendar.",
+        });
+        setIsAuthLoading(false);
+        setIsSubmitting(false);
+        setAuthMode("login");
+        return;
+      } else if (authMode === "login") {
+        // Login existing user
+        setIsAuthLoading(true);
+        const { error: signInError } = await signIn(clientEmail.trim(), password);
+
+        if (signInError) {
+          throw new Error(signInError.message);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const { data: { user: loggedUser } } = await supabase.auth.getUser();
+        if (!loggedUser) {
+          throw new Error("Erro ao obter usuário");
+        }
+
+        const { data: userProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", loggedUser.id)
+          .maybeSingle();
+
+        if (!userProfile) {
+          throw new Error("Perfil não encontrado");
+        }
+
+        clientProfileId = userProfile.id;
+        setIsAuthLoading(false);
        } else {
-         // Create a guest client profile
-         const { data: newProfile, error: profileError } = await supabase
+        // Guest mode
+        const { data: existingProfile } = await supabase
            .from("profiles")
-           .insert({
-             user_id: crypto.randomUUID(), // Generate a unique ID for guest
-             full_name: clientName.trim(),
-             phone: clientPhone.trim() || null,
-             role: "client",
-           })
-           .select("id")
-           .single();
+          .select("id")
+          .eq("full_name", clientName.trim())
+          .eq("role", "client")
+          .maybeSingle();
  
-         if (profileError || !newProfile) {
-           throw new Error("Erro ao criar perfil");
+        if (existingProfile) {
+          clientProfileId = existingProfile.id;
+        } else {
+          const { data: newProfile, error: profileError } = await supabase
+            .from("profiles")
+            .insert({
+              user_id: crypto.randomUUID(),
+              full_name: clientName.trim(),
+              phone: clientPhone.trim() || null,
+              role: "client",
+            })
+            .select("id")
+            .single();
+
+          if (profileError || !newProfile) {
+            throw new Error("Erro ao criar perfil. Tente criar uma conta.");
+          }
+
+          clientProfileId = newProfile.id;
          }
- 
-         clientProfileId = newProfile.id;
        }
  
        // Create appointment
@@ -270,6 +354,7 @@
          description: error.message,
          variant: "destructive",
        });
+      setIsAuthLoading(false);
      } finally {
        setIsSubmitting(false);
      }
@@ -519,43 +604,141 @@
                    <User className="h-5 w-5" style={{ color: primaryColor }} />
                      Seus Dados
                    </CardTitle>
+                  {!user && (
+                    <p className="text-sm text-muted-foreground">
+                      Crie uma conta para gerenciar seus agendamentos
+                    </p>
+                  )}
                  </CardHeader>
                  <CardContent>
+                  {/* Auth Mode Toggle - only show if not logged in */}
+                  {!user && (
+                    <div className="mb-4 flex rounded-lg border border-border p-1">
+                      <button
+                        type="button"
+                        onClick={() => setAuthMode("guest")}
+                        className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                          authMode === "guest"
+                            ? "text-white"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                        style={authMode === "guest" ? { backgroundColor: primaryColor } : {}}
+                      >
+                        Sem conta
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAuthMode("login")}
+                        className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                          authMode === "login"
+                            ? "text-white"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                        style={authMode === "login" ? { backgroundColor: primaryColor } : {}}
+                      >
+                        Entrar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAuthMode("register")}
+                        className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                          authMode === "register"
+                            ? "text-white"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                        style={authMode === "register" ? { backgroundColor: primaryColor } : {}}
+                      >
+                        Criar conta
+                      </button>
+                    </div>
+                  )}
+
                    <form onSubmit={handleSubmit} className="space-y-4">
-                     <div className="space-y-2">
-                       <Label htmlFor="name">Nome completo *</Label>
-                       <Input
-                         id="name"
-                         value={clientName}
-                         onChange={(e) => setClientName(e.target.value)}
-                         placeholder="Seu nome"
-                         required
-                         className="bg-secondary/50"
-                       />
-                     </div>
-                     <div className="space-y-2">
-                       <Label htmlFor="email">Email *</Label>
-                       <Input
-                         id="email"
-                         type="email"
-                         value={clientEmail}
-                         onChange={(e) => setClientEmail(e.target.value)}
-                         placeholder="seu@email.com"
-                         required
-                         className="bg-secondary/50"
-                       />
-                     </div>
-                     <div className="space-y-2">
-                       <Label htmlFor="phone">Telefone (opcional)</Label>
-                       <Input
-                         id="phone"
-                         type="tel"
-                         value={clientPhone}
-                         onChange={(e) => setClientPhone(e.target.value)}
-                         placeholder="(00) 00000-0000"
-                         className="bg-secondary/50"
-                       />
-                     </div>
+                    {/* Show user info if logged in */}
+                    {user && profile ? (
+                      <div className="rounded-xl bg-secondary/50 p-4">
+                        <p className="text-sm text-muted-foreground">Logado como</p>
+                        <p className="font-medium">{profile.full_name}</p>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Name field - show for guest and register */}
+                        {(authMode === "guest" || authMode === "register") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="name">Nome completo *</Label>
+                            <Input
+                              id="name"
+                              value={clientName}
+                              onChange={(e) => setClientName(e.target.value)}
+                              placeholder="Seu nome"
+                              required
+                              className="bg-secondary/50"
+                            />
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email *</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={clientEmail}
+                            onChange={(e) => setClientEmail(e.target.value)}
+                            placeholder="seu@email.com"
+                            required
+                            className="bg-secondary/50"
+                          />
+                        </div>
+
+                        {/* Phone field - show for guest and register */}
+                        {(authMode === "guest" || authMode === "register") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="phone">
+                              Telefone {authMode === "register" ? "*" : "(opcional)"}
+                            </Label>
+                            <div className="relative">
+                              <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                              <Input
+                                id="phone"
+                                type="tel"
+                                value={clientPhone}
+                                onChange={(e) => setClientPhone(e.target.value)}
+                                placeholder="(00) 00000-0000"
+                                required={authMode === "register"}
+                                className="bg-secondary/50 pl-11"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Password field - show for login and register */}
+                        {(authMode === "login" || authMode === "register") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="password">Senha *</Label>
+                            <div className="relative">
+                              <Input
+                                id="password"
+                                type={showPassword ? "text" : "password"}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder={authMode === "register" ? "Mínimo 6 caracteres" : "Sua senha"}
+                                required
+                                minLength={authMode === "register" ? 6 : undefined}
+                                className="bg-secondary/50 pr-12"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                              >
+                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
  
                      {/* Summary */}
                      <div className="rounded-xl bg-secondary/50 p-4">
@@ -575,18 +758,53 @@
                        type="submit"
                        size="lg"
                        className="w-full"
-                       disabled={isSubmitting}
+                      disabled={isSubmitting || isAuthLoading}
                          style={{ backgroundColor: primaryColor, color: "white" }}
                      >
-                       {isSubmitting ? (
+                      {isSubmitting || isAuthLoading ? (
                          <>
                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                           Agendando...
+                          {isAuthLoading ? "Autenticando..." : "Agendando..."}
                          </>
                        ) : (
-                         "Confirmar Agendamento"
+                        authMode === "register" 
+                          ? "Criar conta" 
+                          : authMode === "login" 
+                            ? "Entrar e Agendar" 
+                            : "Confirmar Agendamento"
                        )}
                      </Button>
+
+                    {/* Switch auth mode links */}
+                    {!user && authMode !== "guest" && (
+                      <div className="text-center text-sm text-muted-foreground">
+                        {authMode === "login" ? (
+                          <>
+                            Não tem conta?{" "}
+                            <button
+                              type="button"
+                              onClick={() => setAuthMode("register")}
+                              className="font-medium hover:underline"
+                              style={{ color: primaryColor }}
+                            >
+                              Criar conta
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            Já tem conta?{" "}
+                            <button
+                              type="button"
+                              onClick={() => setAuthMode("login")}
+                              className="font-medium hover:underline"
+                              style={{ color: primaryColor }}
+                            >
+                              Entrar
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
                    </form>
                  </CardContent>
                </Card>
