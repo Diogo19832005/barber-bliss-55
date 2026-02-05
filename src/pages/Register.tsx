@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/lib/supabase";
-import { Scissors, Eye, EyeOff, Loader2, User, ScissorsIcon } from "lucide-react";
+ import { Scissors, Eye, EyeOff, Loader2, User, ScissorsIcon, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Register = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [role, setRole] = useState<UserRole>("client");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +24,7 @@ const Register = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await signUp(email, password, fullName, role);
+    const { error } = await signUp(email, password, fullName, role, phone);
 
     if (error) {
       toast({
@@ -116,6 +117,22 @@ const Register = () => {
                 required
                 className="h-12 bg-secondary/50"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefone</Label>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="(11) 99999-9999"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                  className="h-12 bg-secondary/50 pl-11"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
