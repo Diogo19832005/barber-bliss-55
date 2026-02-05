@@ -341,6 +341,7 @@ export type Database = {
     }
     Functions: {
       generate_slug: { Args: { name: string }; Returns: string }
+      get_my_profile_id: { Args: never; Returns: string }
       get_next_public_id: { Args: never; Returns: number }
       get_user_id_by_email: { Args: { email_input: string }; Returns: string }
       has_role: {
@@ -351,6 +352,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_barbershop_admin_of: {
+        Args: { team_member_owner_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"
