@@ -633,9 +633,11 @@ const PublicBooking = () => {
                       {/* Name field - show for register */}
                       {authMode === "register" && (
                         <div className="space-y-2">
-                          <Label htmlFor="name">Nome completo *</Label>
+                          <Label htmlFor="booking-client-name">Nome completo *</Label>
                           <Input
-                            id="name"
+                            id="booking-client-name"
+                            name="booking-client-name"
+                            autoComplete="name"
                             value={clientName}
                             onChange={(e) => setClientName(e.target.value)}
                             placeholder="Seu nome"
@@ -646,10 +648,12 @@ const PublicBooking = () => {
                       )}
 
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email *</Label>
+                        <Label htmlFor="booking-client-email">Email *</Label>
                         <Input
-                          id="email"
+                          id="booking-client-email"
+                          name="booking-client-email"
                           type="email"
+                          autoComplete="email"
                           value={clientEmail}
                           onChange={(e) => setClientEmail(e.target.value)}
                           placeholder="seu@email.com"
@@ -661,14 +665,16 @@ const PublicBooking = () => {
                       {/* Phone field - show for register */}
                       {authMode === "register" && (
                         <div className="space-y-2">
-                          <Label htmlFor="phone">
+                          <Label htmlFor="booking-client-phone">
                             Telefone *
                           </Label>
                           <div className="relative">
                             <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
-                              id="phone"
+                              id="booking-client-phone"
+                              name="booking-client-phone"
                               type="tel"
+                              autoComplete="tel"
                               value={clientPhone}
                               onChange={(e) => setClientPhone(e.target.value)}
                               placeholder="(00) 00000-0000"
@@ -681,11 +687,13 @@ const PublicBooking = () => {
 
                       {/* Password field */}
                       <div className="space-y-2">
-                        <Label htmlFor="password">Senha *</Label>
+                        <Label htmlFor="booking-client-password">Senha *</Label>
                         <div className="relative">
                           <Input
-                            id="password"
+                            id="booking-client-password"
+                            name="booking-client-password"
                             type={showPassword ? "text" : "password"}
+                            autoComplete={authMode === "register" ? "new-password" : "current-password"}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder={authMode === "register" ? "Mínimo 6 caracteres" : "Sua senha"}
