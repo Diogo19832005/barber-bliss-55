@@ -62,7 +62,7 @@ import { useAuth } from "@/contexts/AuthContext";
    const [selectedService, setSelectedService] = useState<Service | null>(null);
    const [selectedDate, setSelectedDate] = useState<Date | undefined>();
    const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [allSlots, setAllSlots] = useState<{ time: string; available: boolean }[]>([]);
+  const [allSlots, setAllSlots] = useState<{ time: string; available: boolean; isBooked: boolean }[]>([]);
    
    const [clientName, setClientName] = useState("");
    const [clientEmail, setClientEmail] = useState("");
@@ -161,42 +161,46 @@ import { useAuth } from "@/contexts/AuthContext";
  
      const bookedAppointments = appointmentsData || [];
  
-      // Generate all time slots with availability status
-      const slots: { time: string; available: boolean }[] = [];
-     const startTime = parse(schedule.start_time, "HH:mm:ss", new Date());
-     const endTime = parse(schedule.end_time, "HH:mm:ss", new Date());
-     const serviceDuration = selectedService.duration_minutes;
- 
-     let currentSlot = startTime;
- 
-     while (isBefore(addMinutes(currentSlot, serviceDuration), endTime) || 
-            format(addMinutes(currentSlot, serviceDuration), "HH:mm") === format(endTime, "HH:mm")) {
-       const slotStart = format(currentSlot, "HH:mm");
-       const slotEnd = format(addMinutes(currentSlot, serviceDuration), "HH:mm");
- 
-       // Check if slot conflicts with existing appointments
-       const hasConflict = bookedAppointments.some((apt) => {
-         const aptStart = apt.start_time.slice(0, 5);
-         const aptEnd = apt.end_time.slice(0, 5);
-         return (slotStart < aptEnd && slotEnd > aptStart);
-       });
- 
-       // Check if slot is in the past (for today)
-       const isToday = format(selectedDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
-       const isPast = isToday && isBefore(
-         parse(slotStart, "HH:mm", new Date()),
-         new Date()
-       );
- 
-        slots.push({
-          time: slotStart,
-          available: !hasConflict && !isPast,
+       // Generate all time slots with availability status
+       const slots: { time: string; available: boolean; isBooked: boolean }[] = [];
+      const startTime = parse(schedule.start_time, "HH:mm:ss", new Date());
+      const endTime = parse(schedule.end_time, "HH:mm:ss", new Date());
+      const serviceDuration = selectedService.duration_minutes;
+
+      let currentSlot = startTime;
+
+      while (isBefore(addMinutes(currentSlot, serviceDuration), endTime) || 
+             format(addMinutes(currentSlot, serviceDuration), "HH:mm") === format(endTime, "HH:mm")) {
+        const slotStart = format(currentSlot, "HH:mm");
+        const slotEnd = format(addMinutes(currentSlot, serviceDuration), "HH:mm");
+
+        // Check if slot conflicts with existing appointments
+        const hasConflict = bookedAppointments.some((apt) => {
+          const aptStart = apt.start_time.slice(0, 5);
+          const aptEnd = apt.end_time.slice(0, 5);
+          return (slotStart < aptEnd && slotEnd > aptStart);
         });
- 
-       currentSlot = addMinutes(currentSlot, 30);
-     }
- 
-      setAllSlots(slots);
+
+        // Check if slot is in the past (for today)
+        const isToday = format(selectedDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+        const isPast = isToday && isBefore(
+          parse(slotStart, "HH:mm", new Date()),
+          new Date()
+        );
+
+        // Only add slots that are NOT in the past
+        if (!isPast) {
+          slots.push({
+            time: slotStart,
+            available: !hasConflict,
+            isBooked: hasConflict,
+          });
+        }
+
+        currentSlot = addMinutes(currentSlot, 30);
+      }
+
+       setAllSlots(slots);
      setSelectedTime(null);
    };
  
@@ -606,14 +610,14 @@ import { useAuth } from "@/contexts/AuthContext";
                              }
                            }}
                          >
-                            <span className={`text-sm font-medium ${!slot.available ? "text-muted-foreground/50" : ""}`}>
-                              {slot.time}
-                            </span>
-                            {!slot.available && (
-                              <span className="block text-[10px] text-muted-foreground/50">
-                                Já ocupado
-                              </span>
-                            )}
+                             <span className={`text-sm font-medium ${slot.isBooked ? "text-muted-foreground/50" : ""}`}>
+                               {slot.time}
+                             </span>
+                             {slot.isBooked && (
+                               <span className="block text-[10px] text-muted-foreground/50">
+                                 Já ocupado
+                               </span>
+                             )}
                          </button>
                        ))}
                      </div>
