@@ -29,10 +29,16 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children, navItems }: DashboardLayoutProps) => {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, isAdmin } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const getRoleLabel = () => {
+    if (isAdmin) return "Administrador";
+    if (profile?.role === "barber") return "Barbeiro";
+    return "Cliente";
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -87,7 +93,7 @@ const DashboardLayout = ({ children, navItems }: DashboardLayoutProps) => {
                 <div>
                   <p className="text-sm font-medium">{profile?.full_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {profile?.role === "barber" ? "Barbeiro" : "Cliente"}
+                    {getRoleLabel()}
                   </p>
                 </div>
               </div>
@@ -141,7 +147,7 @@ const DashboardLayout = ({ children, navItems }: DashboardLayoutProps) => {
                 <div>
                   <p className="text-sm font-medium">{profile?.full_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {profile?.role === "barber" ? "Barbeiro" : "Cliente"}
+                    {getRoleLabel()}
                   </p>
                 </div>
               </div>
