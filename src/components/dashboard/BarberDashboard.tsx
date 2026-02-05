@@ -596,15 +596,19 @@ const BarberDashboard = () => {
            isOpen={isSettingsModalOpen}
            onClose={() => setIsSettingsModalOpen(false)}
            onSuccess={fetchData}
-           profile={{
-             id: profile.id,
-             user_id: profile.user_id,
-             full_name: profile.full_name,
-             nome_exibido: profile.nome_exibido,
-             logo_url: profile.logo_url,
-             cor_primaria: profile.cor_primaria,
-             cor_secundaria: profile.cor_secundaria,
-           }}
+          profile={{
+            id: profile.id,
+            user_id: profile.user_id,
+            full_name: profile.full_name,
+            nome_exibido: profile.nome_exibido,
+            logo_url: profile.logo_url,
+            cor_primaria: profile.cor_primaria,
+            cor_secundaria: profile.cor_secundaria,
+            phone: profile.phone,
+            endereco: profile.endereco,
+            cidade: profile.cidade,
+            estado: profile.estado,
+          }}
          />
        )}
     </DashboardLayout>

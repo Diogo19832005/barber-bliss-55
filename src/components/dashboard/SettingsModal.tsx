@@ -12,22 +12,26 @@
    DialogTitle,
  } from "@/components/ui/dialog";
  import { useToast } from "@/hooks/use-toast";
- import { Loader2, Upload, Palette, Store, X } from "lucide-react";
+ import { Loader2, Upload, Palette, Store, X, MapPin, Phone } from "lucide-react";
  
- interface SettingsModalProps {
-   isOpen: boolean;
-   onClose: () => void;
-   onSuccess: () => void;
-   profile: {
-     id: string;
-     user_id: string;
-     full_name: string;
-     nome_exibido: string | null;
-     logo_url: string | null;
-     cor_primaria: string | null;
-     cor_secundaria: string | null;
-   };
- }
+interface SettingsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  profile: {
+    id: string;
+    user_id: string;
+    full_name: string;
+    nome_exibido: string | null;
+    logo_url: string | null;
+    cor_primaria: string | null;
+    cor_secundaria: string | null;
+    phone: string | null;
+    endereco: string | null;
+    cidade: string | null;
+    estado: string | null;
+  };
+}
  
  const predefinedColors = [
    { name: "Dourado", value: "#D97706" },
@@ -44,12 +48,16 @@
    const { toast } = useToast();
    const fileInputRef = useRef<HTMLInputElement>(null);
    
-   const [nomeExibido, setNomeExibido] = useState(profile.nome_exibido || "");
-   const [corPrimaria, setCorPrimaria] = useState(profile.cor_primaria || "#D97706");
-   const [corSecundaria, setCorSecundaria] = useState(profile.cor_secundaria || "");
-   const [logoUrl, setLogoUrl] = useState(profile.logo_url || "");
-   const [isLoading, setIsLoading] = useState(false);
-   const [isUploading, setIsUploading] = useState(false);
+  const [nomeExibido, setNomeExibido] = useState(profile.nome_exibido || "");
+  const [corPrimaria, setCorPrimaria] = useState(profile.cor_primaria || "#D97706");
+  const [corSecundaria, setCorSecundaria] = useState(profile.cor_secundaria || "");
+  const [logoUrl, setLogoUrl] = useState(profile.logo_url || "");
+  const [telefone, setTelefone] = useState(profile.phone || "");
+  const [endereco, setEndereco] = useState(profile.endereco || "");
+  const [cidade, setCidade] = useState(profile.cidade || "");
+  const [estado, setEstado] = useState(profile.estado || "");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
  
    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
      const file = e.target.files?.[0];
@@ -140,15 +148,19 @@
      e.preventDefault();
      setIsLoading(true);
  
-     const { error } = await supabase
-       .from("profiles")
-       .update({
-         nome_exibido: nomeExibido.trim() || null,
-         logo_url: logoUrl || null,
-         cor_primaria: corPrimaria,
-         cor_secundaria: corSecundaria || null,
-       })
-       .eq("id", profile.id);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        nome_exibido: nomeExibido.trim() || null,
+        logo_url: logoUrl || null,
+        cor_primaria: corPrimaria,
+        cor_secundaria: corSecundaria || null,
+        phone: telefone.trim() || null,
+        endereco: endereco.trim() || null,
+        cidade: cidade.trim() || null,
+        estado: estado.trim() || null,
+      })
+      .eq("id", profile.id);
  
      if (error) {
        toast({
@@ -192,9 +204,69 @@
              <p className="text-xs text-muted-foreground">
                Nome exibido no painel e na página de agendamento
              </p>
-           </div>
- 
-           {/* Logo */}
+          </div>
+
+          {/* Contato e Endereço */}
+          <div className="space-y-4">
+            <Label className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Contato e Localização
+            </Label>
+            
+            <div className="space-y-2">
+              <Label htmlFor="telefone" className="text-sm text-muted-foreground">Telefone / WhatsApp</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="telefone"
+                  value={telefone}
+                  onChange={(e) => setTelefone(e.target.value)}
+                  placeholder="(00) 00000-0000"
+                  className="bg-secondary/50 pl-10"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Exibido na página pública para contato via WhatsApp
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endereco" className="text-sm text-muted-foreground">Endereço</Label>
+              <Input
+                id="endereco"
+                value={endereco}
+                onChange={(e) => setEndereco(e.target.value)}
+                placeholder="Rua, número"
+                className="bg-secondary/50"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="cidade" className="text-sm text-muted-foreground">Cidade</Label>
+                <Input
+                  id="cidade"
+                  value={cidade}
+                  onChange={(e) => setCidade(e.target.value)}
+                  placeholder="Cidade"
+                  className="bg-secondary/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="estado" className="text-sm text-muted-foreground">Estado</Label>
+                <Input
+                  id="estado"
+                  value={estado}
+                  onChange={(e) => setEstado(e.target.value)}
+                  placeholder="UF"
+                  maxLength={2}
+                  className="bg-secondary/50"
+                />
+              </div>
+            </div>
+          </div>
+
+
            <div className="space-y-2">
              <Label>Logo da Barbearia</Label>
              <div className="flex items-center gap-4">
