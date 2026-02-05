@@ -126,6 +126,8 @@ export type Database = {
           next_payment_date: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           plan_type: Database["public"]["Enums"]["subscription_plan"]
+          quarterly_price: number | null
+          semiannual_price: number | null
           subscription_start_date: string | null
           trial_end_date: string
           trial_start_date: string
@@ -141,6 +143,8 @@ export type Database = {
           next_payment_date?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           plan_type?: Database["public"]["Enums"]["subscription_plan"]
+          quarterly_price?: number | null
+          semiannual_price?: number | null
           subscription_start_date?: string | null
           trial_end_date?: string
           trial_start_date?: string
@@ -156,6 +160,8 @@ export type Database = {
           next_payment_date?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           plan_type?: Database["public"]["Enums"]["subscription_plan"]
+          quarterly_price?: number | null
+          semiannual_price?: number | null
           subscription_start_date?: string | null
           trial_end_date?: string
           trial_start_date?: string
