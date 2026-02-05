@@ -1,7 +1,7 @@
- import { useState, useEffect } from "react";
- import { useAuth } from "@/contexts/AuthContext";
- import { supabase } from "@/lib/supabase";
- import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { 
   Shield, 
   Users, 
@@ -11,46 +11,49 @@ import {
   UserPlus,
   Mail,
   Loader2,
-  CalendarDays
+  CalendarDays,
+  CreditCard
 } from "lucide-react";
- import { Button } from "@/components/ui/button";
- import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
- import { Badge } from "@/components/ui/badge";
- import { useToast } from "@/hooks/use-toast";
- import {
-   Dialog,
-   DialogContent,
-   DialogDescription,
-   DialogFooter,
-   DialogHeader,
-   DialogTitle,
- } from "@/components/ui/dialog";
- import { Input } from "@/components/ui/input";
- import { Label } from "@/components/ui/label";
- import { Navigate } from "react-router-dom";
- 
- interface Barber {
-   id: string;
-   user_id: string;
-   full_name: string;
-   phone: string | null;
-   barber_status: string;
-   created_at: string;
-   public_id: number | null;
-   slug_final: string | null;
- }
- 
- interface Admin {
-   id: string;
-   user_id: string;
-   created_at: string;
-   email?: string;
- }
- 
- const navItems = [
-   { label: "Barbeiros", href: "/admin", icon: <Users className="h-4 w-4" /> },
-   { label: "Administradores", href: "/admin/admins", icon: <Shield className="h-4 w-4" /> },
- ];
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Navigate } from "react-router-dom";
+import SubscriptionManager from "@/components/admin/SubscriptionManager";
+
+interface Barber {
+  id: string;
+  user_id: string;
+  full_name: string;
+  phone: string | null;
+  barber_status: string;
+  created_at: string;
+  public_id: number | null;
+  slug_final: string | null;
+}
+
+interface Admin {
+  id: string;
+  user_id: string;
+  created_at: string;
+  email?: string;
+}
+
+const navItems = [
+  { label: "Barbeiros", href: "/admin", icon: <Users className="h-4 w-4" /> },
+  { label: "Mensalidades", href: "/admin/subscriptions", icon: <CreditCard className="h-4 w-4" /> },
+  { label: "Administradores", href: "/admin/admins", icon: <Shield className="h-4 w-4" /> },
+];
  
  const AdminDashboard = () => {
    const { profile, user, isAdmin, isLoading: authLoading } = useAuth();
@@ -450,9 +453,12 @@ import {
                </div>
              )}
            </CardContent>
-         </Card>
- 
-         {/* Admins */}
+          </Card>
+
+          {/* Subscriptions */}
+          <SubscriptionManager />
+
+          {/* Admins */}
          <Card className="glass-card">
            <CardHeader className="flex flex-row items-center justify-between">
              <CardTitle className="flex items-center gap-2">

@@ -116,6 +116,62 @@ export type Database = {
           },
         ]
       }
+      barber_subscriptions: {
+        Row: {
+          barber_id: string
+          created_at: string
+          id: string
+          last_payment_date: string | null
+          monthly_price: number | null
+          next_payment_date: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          plan_type: Database["public"]["Enums"]["subscription_plan"]
+          subscription_start_date: string | null
+          trial_end_date: string
+          trial_start_date: string
+          updated_at: string
+          yearly_price: number | null
+        }
+        Insert: {
+          barber_id: string
+          created_at?: string
+          id?: string
+          last_payment_date?: string | null
+          monthly_price?: number | null
+          next_payment_date?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          plan_type?: Database["public"]["Enums"]["subscription_plan"]
+          subscription_start_date?: string | null
+          trial_end_date?: string
+          trial_start_date?: string
+          updated_at?: string
+          yearly_price?: number | null
+        }
+        Update: {
+          barber_id?: string
+          created_at?: string
+          id?: string
+          last_payment_date?: string | null
+          monthly_price?: number | null
+          next_payment_date?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          plan_type?: Database["public"]["Enums"]["subscription_plan"]
+          subscription_start_date?: string | null
+          trial_end_date?: string
+          trial_start_date?: string
+          updated_at?: string
+          yearly_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_subscriptions_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -257,6 +313,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      payment_status: "trial" | "paid" | "pending" | "overdue"
+      subscription_plan: "monthly" | "yearly"
       user_role: "barber" | "client"
     }
     CompositeTypes: {
@@ -386,6 +444,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      payment_status: ["trial", "paid", "pending", "overdue"],
+      subscription_plan: ["monthly", "yearly"],
       user_role: ["barber", "client"],
     },
   },
