@@ -11,6 +11,7 @@ import { format, addMinutes, parse, isBefore, isAfter, parseISO } from "date-fns
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import HeroSection from "@/components/public-booking/HeroSection";
 
 interface Service {
   id: string;
@@ -35,6 +36,9 @@ interface Barber {
   endereco: string | null;
   cidade: string | null;
   estado: string | null;
+  hero_enabled: boolean | null;
+  hero_button_text: string | null;
+  hero_button_color: string | null;
 }
 
 interface TeamMember {
@@ -77,6 +81,7 @@ const PublicBooking = () => {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [allSlots, setAllSlots] = useState<{ time: string; available: boolean; isBooked: boolean }[]>([]);
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [showHero, setShowHero] = useState(true);
   
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
@@ -117,7 +122,7 @@ const PublicBooking = () => {
     // Fetch barber by slug_final
     const { data: barberData, error } = await supabase
       .from("profiles")
-      .select("id, full_name, avatar_url, public_id, slug_final, nome_exibido, logo_url, cor_primaria, cor_secundaria, phone, endereco, cidade, estado")
+      .select("id, full_name, avatar_url, public_id, slug_final, nome_exibido, logo_url, cor_primaria, cor_secundaria, phone, endereco, cidade, estado, hero_enabled, hero_button_text, hero_button_color")
       .eq("slug_final", slugFinal)
       .eq("role", "barber")
       .eq("barber_status", "approved")
@@ -130,6 +135,8 @@ const PublicBooking = () => {
     }
 
     setBarber(barberData);
+    // Set showHero based on barber's preference
+    setShowHero(barberData.hero_enabled !== false);
 
     // Fetch team members (barbers who belong to this barbershop)
     const { data: teamData } = await supabase
@@ -882,6 +889,28 @@ const PublicBooking = () => {
             </Card>
           )}
         </main>
+      </div>
+    );
+  }
+
+  // Show Hero Section if enabled
+  if (showHero && barber?.hero_enabled !== false) {
+    const heroButtonText = barber?.hero_button_text || "Agendar agora mesmo";
+    const heroButtonColor = barber?.hero_button_color || primaryColor;
+
+    return (
+      <div className="min-h-screen bg-background">
+        <HeroSection
+          displayName={displayName || ""}
+          logoUrl={barber?.logo_url || null}
+          primaryColor={primaryColor}
+          secondaryColor={barber?.cor_secundaria}
+          phone={barber?.phone}
+          address={fullAddress || undefined}
+          buttonText={heroButtonText}
+          buttonColor={heroButtonColor}
+          onContinue={() => setShowHero(false)}
+        />
       </div>
     );
   }

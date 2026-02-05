@@ -24,6 +24,9 @@ export interface Profile {
   estado: string | null;
   barbershop_owner_id: string | null;
   is_barbershop_admin: boolean;
+  hero_enabled: boolean | null;
+  hero_button_text: string | null;
+  hero_button_color: string | null;
   created_at: string;
   updated_at: string;
 }

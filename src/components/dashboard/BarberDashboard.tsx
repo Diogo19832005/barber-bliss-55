@@ -615,6 +615,9 @@ const BarberDashboard = () => {
             endereco: profile.endereco,
             cidade: profile.cidade,
             estado: profile.estado,
+            hero_enabled: (profile as any).hero_enabled ?? true,
+            hero_button_text: (profile as any).hero_button_text || "Agendar agora mesmo",
+            hero_button_color: (profile as any).hero_button_color || "#D97706",
           }}
          />
        )}

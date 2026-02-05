@@ -190,6 +190,9 @@ export type Database = {
           endereco: string | null
           estado: string | null
           full_name: string
+          hero_button_color: string | null
+          hero_button_text: string | null
+          hero_enabled: boolean | null
           id: string
           is_barbershop_admin: boolean | null
           logo_url: string | null
@@ -213,6 +216,9 @@ export type Database = {
           endereco?: string | null
           estado?: string | null
           full_name: string
+          hero_button_color?: string | null
+          hero_button_text?: string | null
+          hero_enabled?: boolean | null
           id?: string
           is_barbershop_admin?: boolean | null
           logo_url?: string | null
@@ -236,6 +242,9 @@ export type Database = {
           endereco?: string | null
           estado?: string | null
           full_name?: string
+          hero_button_color?: string | null
+          hero_button_text?: string | null
+          hero_enabled?: boolean | null
           id?: string
           is_barbershop_admin?: boolean | null
           logo_url?: string | null
