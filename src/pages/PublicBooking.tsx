@@ -258,14 +258,26 @@ import { useAuth } from "@/contexts/AuthContext";
           throw new Error(signUpError.message);
         }
 
-        toast({
-          title: "Conta criada!",
-          description: "Verifique seu email para confirmar a conta e depois faça login para agendar.",
-        });
+        // Wait for session to be established after signup
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const { data: { user: newUser } } = await supabase.auth.getUser();
+        if (!newUser) {
+          throw new Error("Erro ao criar conta. Tente novamente.");
+        }
+
+        const { data: newProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", newUser.id)
+          .maybeSingle();
+
+        if (!newProfile) {
+          throw new Error("Perfil não encontrado. Tente novamente.");
+        }
+
+        clientProfileId = newProfile.id;
         setIsAuthLoading(false);
-        setIsSubmitting(false);
-        setAuthMode("login");
-        return;
       } else if (authMode === "login") {
         // Login existing user
         setIsAuthLoading(true);
