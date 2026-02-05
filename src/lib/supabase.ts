@@ -11,6 +11,9 @@ export interface Profile {
   role: UserRole;
   phone: string | null;
   avatar_url: string | null;
+   public_id: number | null;
+   slug_nome: string | null;
+   slug_final: string | null;
   created_at: string;
   updated_at: string;
 }
