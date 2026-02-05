@@ -22,6 +22,8 @@ export interface Profile {
   endereco: string | null;
   cidade: string | null;
   estado: string | null;
+  barbershop_owner_id: string | null;
+  is_barbershop_admin: boolean;
   created_at: string;
   updated_at: string;
 }

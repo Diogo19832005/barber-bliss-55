@@ -182,6 +182,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           barber_status: string | null
+          barbershop_owner_id: string | null
           cidade: string | null
           cor_primaria: string | null
           cor_secundaria: string | null
@@ -190,6 +191,7 @@ export type Database = {
           estado: string | null
           full_name: string
           id: string
+          is_barbershop_admin: boolean | null
           logo_url: string | null
           nome_exibido: string | null
           phone: string | null
@@ -203,6 +205,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           barber_status?: string | null
+          barbershop_owner_id?: string | null
           cidade?: string | null
           cor_primaria?: string | null
           cor_secundaria?: string | null
@@ -211,6 +214,7 @@ export type Database = {
           estado?: string | null
           full_name: string
           id?: string
+          is_barbershop_admin?: boolean | null
           logo_url?: string | null
           nome_exibido?: string | null
           phone?: string | null
@@ -224,6 +228,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           barber_status?: string | null
+          barbershop_owner_id?: string | null
           cidade?: string | null
           cor_primaria?: string | null
           cor_secundaria?: string | null
@@ -232,6 +237,7 @@ export type Database = {
           estado?: string | null
           full_name?: string
           id?: string
+          is_barbershop_admin?: boolean | null
           logo_url?: string | null
           nome_exibido?: string | null
           phone?: string | null
@@ -242,7 +248,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_barbershop_owner_id_fkey"
+            columns: ["barbershop_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       services: {
         Row: {
