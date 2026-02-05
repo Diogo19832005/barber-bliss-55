@@ -29,6 +29,8 @@ import {
   AlertCircle,
   Loader2,
   Settings,
+  Pause,
+  Play,
 } from "lucide-react";
 import {
   Table,
@@ -47,7 +49,7 @@ interface Subscription {
   trial_end_date: string;
   subscription_start_date: string | null;
   next_payment_date: string | null;
-  payment_status: "trial" | "paid" | "pending" | "overdue";
+  payment_status: "trial" | "paid" | "pending" | "overdue" | "paused";
   monthly_price: number;
   quarterly_price?: number;
   semiannual_price?: number;
@@ -81,7 +83,7 @@ const SubscriptionManager = () => {
   const [editQuarterlyPrice, setEditQuarterlyPrice] = useState("134.90");
   const [editSemiannualPrice, setEditSemiannualPrice] = useState("254.90");
   const [editYearlyPrice, setEditYearlyPrice] = useState("499.90");
-  const [editPaymentStatus, setEditPaymentStatus] = useState<"trial" | "paid" | "pending" | "overdue">("trial");
+  const [editPaymentStatus, setEditPaymentStatus] = useState<"trial" | "paid" | "pending" | "overdue" | "paused">("trial");
 
   // Auto-calculate prices based on monthly price with progressive discounts
   const calculatePricesFromMonthly = (monthlyValue: string) => {
@@ -310,6 +312,35 @@ const SubscriptionManager = () => {
     }
   };
 
+  const togglePause = async (subscription: Subscription) => {
+    const isPaused = subscription.payment_status === "paused";
+    
+    // If currently paused, restore to pending (admin will need to mark as paid)
+    // If not paused, set to paused
+    const newStatus = isPaused ? "pending" : "paused";
+    
+    const { error } = await supabase
+      .from("barber_subscriptions")
+      .update({ payment_status: newStatus })
+      .eq("id", subscription.id);
+
+    if (error) {
+      toast({
+        title: `Erro ao ${isPaused ? 'reativar' : 'pausar'}`,
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ 
+        title: isPaused ? "Conta reativada!" : "Conta pausada!",
+        description: isPaused 
+          ? "O barbeiro pode acessar a conta novamente" 
+          : "O barbeiro não terá acesso até ser reativado"
+      });
+      fetchSubscriptions();
+    }
+  };
+
   const getStatusBadge = (status: string, trialEndDate?: string) => {
     const today = new Date();
     const trialEnd = trialEndDate ? new Date(trialEndDate) : null;
@@ -351,6 +382,13 @@ const SubscriptionManager = () => {
           <Badge variant="outline" className="border-destructive text-destructive">
             <AlertCircle className="mr-1 h-3 w-3" />
             Vencido
+          </Badge>
+        );
+      case "paused":
+        return (
+          <Badge variant="outline" className="border-muted-foreground text-muted-foreground">
+            <Pause className="mr-1 h-3 w-3" />
+            Pausado
           </Badge>
         );
       default:
@@ -530,6 +568,29 @@ const SubscriptionManager = () => {
                                 Pago
                               </Button>
                             )}
+                            {sub && sub.payment_status !== "trial" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className={sub.payment_status === "paused" 
+                                  ? "border-primary text-primary" 
+                                  : "border-muted-foreground text-muted-foreground"}
+                                onClick={() => togglePause(sub)}
+                                title={sub.payment_status === "paused" ? "Reativar conta" : "Pausar conta"}
+                              >
+                                {sub.payment_status === "paused" ? (
+                                  <>
+                                    <Play className="mr-1 h-3 w-3" />
+                                    Reativar
+                                  </>
+                                ) : (
+                                  <>
+                                    <Pause className="mr-1 h-3 w-3" />
+                                    Pausar
+                                  </>
+                                )}
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
@@ -644,6 +705,7 @@ const SubscriptionManager = () => {
                   <SelectItem value="paid">Pago</SelectItem>
                   <SelectItem value="pending">Pendente</SelectItem>
                   <SelectItem value="overdue">Vencido</SelectItem>
+                  <SelectItem value="paused">Pausado</SelectItem>
                 </SelectContent>
               </Select>
             </div>

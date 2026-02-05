@@ -15,7 +15,8 @@ import {
    Link as LinkIcon,
    Copy,
     Check,
-    Settings
+    Settings,
+    Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +27,7 @@ import ScheduleModal from "./ScheduleModal";
  import SettingsModal from "./SettingsModal";
 import { useToast } from "@/hooks/use-toast";
  import UpcomingAppointments from "./UpcomingAppointments";
+import AccountPaused from "@/pages/AccountPaused";
 
 interface Service {
   id: string;
@@ -74,12 +76,29 @@ const BarberDashboard = () => {
    const [publicLink, setPublicLink] = useState<string | null>(null);
    const [linkCopied, setLinkCopied] = useState(false);
    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+   const [isPaused, setIsPaused] = useState<boolean | null>(null);
+   const [isCheckingStatus, setIsCheckingStatus] = useState(true);
 
   useEffect(() => {
     if (profile?.id) {
+      checkSubscriptionStatus();
       fetchData();
     }
   }, [profile?.id]);
+
+  const checkSubscriptionStatus = async () => {
+    if (!profile?.id) return;
+    
+    setIsCheckingStatus(true);
+    const { data: subscription } = await supabase
+      .from("barber_subscriptions")
+      .select("payment_status")
+      .eq("barber_id", profile.id)
+      .maybeSingle();
+    
+    setIsPaused(subscription?.payment_status === "paused");
+    setIsCheckingStatus(false);
+  };
 
   const fetchData = async () => {
     if (!profile?.id) return;
@@ -211,6 +230,20 @@ const BarberDashboard = () => {
    const displayName = profile?.nome_exibido || profile?.full_name?.split(" ")[0];
    const primaryColor = profile?.cor_primaria || "#D97706";
  
+  // Show loading while checking status
+  if (isCheckingStatus) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show paused page if account is paused
+  if (isPaused) {
+    return <AccountPaused />;
+  }
+
   return (
     <DashboardLayout navItems={navItems}>
       <div className="space-y-6">

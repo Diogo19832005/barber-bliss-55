@@ -319,7 +319,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
-      payment_status: "trial" | "paid" | "pending" | "overdue"
+      payment_status: "trial" | "paid" | "pending" | "overdue" | "paused"
       subscription_plan: "monthly" | "yearly" | "quarterly" | "semiannual"
       user_role: "barber" | "client"
     }
@@ -450,7 +450,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
-      payment_status: ["trial", "paid", "pending", "overdue"],
+      payment_status: ["trial", "paid", "pending", "overdue", "paused"],
       subscription_plan: ["monthly", "yearly", "quarterly", "semiannual"],
       user_role: ["barber", "client"],
     },
