@@ -34,6 +34,7 @@ interface SettingsModalProps {
     hero_enabled: boolean | null;
     hero_button_text: string | null;
     hero_button_color: string | null;
+    hero_animation_speed: number | null;
   };
 }
  
@@ -63,6 +64,7 @@ interface SettingsModalProps {
   const [heroEnabled, setHeroEnabled] = useState(profile.hero_enabled !== false);
   const [heroButtonText, setHeroButtonText] = useState(profile.hero_button_text || "Agendar agora mesmo");
   const [heroButtonColor, setHeroButtonColor] = useState(profile.hero_button_color || "#D97706");
+  const [heroAnimationSpeed, setHeroAnimationSpeed] = useState(profile.hero_animation_speed || 1.0);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
  
@@ -169,6 +171,7 @@ interface SettingsModalProps {
         hero_enabled: heroEnabled,
         hero_button_text: heroButtonText.trim() || "Agendar agora mesmo",
         hero_button_color: heroButtonColor,
+        hero_animation_speed: heroAnimationSpeed,
       })
       .eq("id", profile.id);
  
@@ -511,6 +514,35 @@ interface SettingsModalProps {
                     >
                       {heroButtonText || "Agendar agora mesmo"}
                     </button>
+                  </div>
+
+                  {/* Animation Speed */}
+                  <div className="space-y-3">
+                    <Label className="text-sm text-muted-foreground">
+                      Velocidade da Animação
+                    </Label>
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="range"
+                        min="0.2"
+                        max="2"
+                        step="0.1"
+                        value={heroAnimationSpeed}
+                        onChange={(e) => setHeroAnimationSpeed(parseFloat(e.target.value))}
+                        className="flex-1 h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+                      />
+                      <span className="text-sm font-medium min-w-[60px] text-right">
+                        {heroAnimationSpeed === 1 
+                          ? "Normal" 
+                          : heroAnimationSpeed < 1 
+                            ? `${(1 / heroAnimationSpeed).toFixed(1)}x rápido`
+                            : `${heroAnimationSpeed.toFixed(1)}x lento`
+                        }
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Menor = mais rápido (0.2 é muito rápido)
+                    </p>
                   </div>
                 </div>
               )}

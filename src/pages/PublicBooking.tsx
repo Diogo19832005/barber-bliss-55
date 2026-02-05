@@ -39,6 +39,7 @@ interface Barber {
   hero_enabled: boolean | null;
   hero_button_text: string | null;
   hero_button_color: string | null;
+  hero_animation_speed: number | null;
 }
 
 interface TeamMember {
@@ -122,7 +123,7 @@ const PublicBooking = () => {
     // Fetch barber by slug_final
     const { data: barberData, error } = await supabase
       .from("profiles")
-      .select("id, full_name, avatar_url, public_id, slug_final, nome_exibido, logo_url, cor_primaria, cor_secundaria, phone, endereco, cidade, estado, hero_enabled, hero_button_text, hero_button_color")
+      .select("id, full_name, avatar_url, public_id, slug_final, nome_exibido, logo_url, cor_primaria, cor_secundaria, phone, endereco, cidade, estado, hero_enabled, hero_button_text, hero_button_color, hero_animation_speed")
       .eq("slug_final", slugFinal)
       .eq("role", "barber")
       .eq("barber_status", "approved")
@@ -909,6 +910,7 @@ const PublicBooking = () => {
           address={fullAddress || undefined}
           buttonText={heroButtonText}
           buttonColor={heroButtonColor}
+          animationSpeed={barber?.hero_animation_speed ?? 1.0}
           onContinue={() => setShowHero(false)}
         />
       </div>
