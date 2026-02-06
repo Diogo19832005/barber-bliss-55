@@ -674,24 +674,24 @@ const AdminDashboard = () => {
               <div className="space-y-3">
                 {admins.map((admin) => (
                   <div key={admin.id} className="rounded-xl border border-border p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={cn("flex h-10 w-10 items-center justify-center rounded-full", admin.role === 'admin' ? "bg-primary/20" : "bg-secondary")}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", admin.role === 'admin' ? "bg-primary/20" : "bg-secondary")}>
                           <Shield className={cn("h-5 w-5", admin.role === 'admin' ? "text-primary" : "text-muted-foreground")} />
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium">{admin.email || (admin.user_id === user?.id ? "Você" : `Admin ${admin.id.slice(0, 8)}`)}</p>
-                            <Badge variant="outline" className={admin.role === 'admin' ? "border-primary text-primary" : "border-muted-foreground text-muted-foreground"}>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <p className="font-medium truncate">{admin.email || (admin.user_id === user?.id ? "Você" : `Admin ${admin.id.slice(0, 8)}`)}</p>
+                            <Badge variant="outline" className={cn("shrink-0", admin.role === 'admin' ? "border-primary text-primary" : "border-muted-foreground text-muted-foreground")}>
                               {admin.role === 'admin' ? 'Chefe' : 'Colaborador'}
                             </Badge>
-                            {admin.user_id === user?.id && <Badge variant="secondary" className="text-xs">Você</Badge>}
+                            {admin.user_id === user?.id && <Badge variant="secondary" className="text-xs shrink-0">Você</Badge>}
                           </div>
                           <p className="text-sm text-muted-foreground">Desde {new Date(admin.created_at).toLocaleDateString("pt-BR")}</p>
                         </div>
                       </div>
                       {isChiefAdmin && admin.user_id !== user?.id && (
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <Select value={admin.role} onValueChange={(value) => handleChangeAdminRole(admin.id, value)}>
                             <SelectTrigger className="w-[140px] bg-secondary/50"><SelectValue /></SelectTrigger>
                             <SelectContent>
