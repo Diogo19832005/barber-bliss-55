@@ -237,6 +237,7 @@ export type Database = {
           is_barbershop_admin: boolean | null
           logo_url: string | null
           nome_exibido: string | null
+          pais: string | null
           phone: string | null
           public_id: number | null
           role: Database["public"]["Enums"]["user_role"]
@@ -268,6 +269,7 @@ export type Database = {
           is_barbershop_admin?: boolean | null
           logo_url?: string | null
           nome_exibido?: string | null
+          pais?: string | null
           phone?: string | null
           public_id?: number | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -299,6 +301,7 @@ export type Database = {
           is_barbershop_admin?: boolean | null
           logo_url?: string | null
           nome_exibido?: string | null
+          pais?: string | null
           phone?: string | null
           public_id?: number | null
           role?: Database["public"]["Enums"]["user_role"]
