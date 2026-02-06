@@ -12,7 +12,6 @@ import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import HeroSection from "@/components/public-booking/HeroSection";
-import BarberShowcase from "@/components/public-booking/BarberShowcase";
 
 interface Service {
   id: string;
@@ -41,8 +40,6 @@ interface Barber {
   hero_button_text: string | null;
   hero_button_color: string | null;
   hero_animation_speed: number | null;
-  bio: string | null;
-  foto_apresentacao: string | null;
 }
 
 interface TeamMember {
@@ -126,7 +123,7 @@ const PublicBooking = () => {
     // Fetch barber by slug_final
     const { data: barberData, error } = await supabase
       .from("profiles")
-      .select("id, full_name, avatar_url, public_id, slug_final, nome_exibido, logo_url, cor_primaria, cor_secundaria, phone, endereco, cidade, estado, hero_enabled, hero_button_text, hero_button_color, hero_animation_speed, bio, foto_apresentacao")
+      .select("id, full_name, avatar_url, public_id, slug_final, nome_exibido, logo_url, cor_primaria, cor_secundaria, phone, endereco, cidade, estado, hero_enabled, hero_button_text, hero_button_color, hero_animation_speed")
       .eq("slug_final", slugFinal)
       .eq("role", "barber")
       .eq("barber_status", "approved")
@@ -1014,16 +1011,6 @@ const PublicBooking = () => {
         </div>
       </div>
 
-      {/* Barber Showcase Section */}
-      {barber && (
-        <BarberShowcase
-          barberId={barber.id}
-          displayName={displayName || ""}
-          bio={barber.bio}
-          fotoApresentacao={barber.foto_apresentacao}
-          primaryColor={primaryColor}
-        />
-      )}
 
       {/* Services Section */}
       <main className="container mx-auto px-4 pb-8">
