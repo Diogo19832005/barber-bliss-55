@@ -415,6 +415,10 @@ export type Database = {
       generate_slug: { Args: { name: string }; Returns: string }
       get_my_profile_id: { Args: never; Returns: string }
       get_next_public_id: { Args: never; Returns: number }
+      get_user_email_by_id: {
+        Args: { target_user_id: string }
+        Returns: string
+      }
       get_user_id_by_email: { Args: { email_input: string }; Returns: string }
       has_role: {
         Args: {

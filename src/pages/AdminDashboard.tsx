@@ -13,7 +13,9 @@ import {
   Loader2,
   CalendarDays,
   CreditCard,
-  Store
+  Store,
+  MessageCircle,
+  Phone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +39,7 @@ interface Barber {
   user_id: string;
   full_name: string;
   phone: string | null;
+  email?: string | null;
   barber_status: string;
   created_at: string;
   public_id: number | null;
@@ -84,8 +87,20 @@ const navItems = [
         .select("id, user_id, full_name, phone, barber_status, created_at, public_id, slug_final, is_barbershop_admin, barbershop_owner_id")
         .eq("role", "barber")
         .order("created_at", { ascending: false });
- 
-     if (barbersData) setBarbers(barbersData);
+
+      // Fetch emails for each barber
+      if (barbersData) {
+        const barbersWithEmails = await Promise.all(
+          barbersData.map(async (barber) => {
+            const { data: email } = await supabase.rpc(
+              'get_user_email_by_id' as any,
+              { target_user_id: barber.user_id }
+            );
+            return { ...barber, email: email as string | null };
+          })
+        );
+        setBarbers(barbersWithEmails);
+      }
  
      // Fetch admins
      const { data: adminsData } = await supabase
@@ -378,12 +393,31 @@ const navItems = [
                    key={barber.id}
                    className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
                  >
-                   <div>
-                     <p className="font-medium">{barber.full_name}</p>
-                     <p className="text-sm text-muted-foreground">
-                       {barber.phone || "Sem telefone"} • Cadastrado em {new Date(barber.created_at).toLocaleDateString("pt-BR")}
-                     </p>
-                   </div>
+                    <div>
+                      <p className="font-medium">{barber.full_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {barber.phone ? (
+                          <a
+                            href={`https://wa.me/${barber.phone.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-success hover:underline"
+                          >
+                            <MessageCircle className="h-3 w-3" />
+                            {barber.phone}
+                          </a>
+                        ) : (
+                          "Sem telefone"
+                        )}
+                        {" • Cadastrado em "}{new Date(barber.created_at).toLocaleDateString("pt-BR")}
+                      </p>
+                      {barber.email && (
+                        <p className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Mail className="h-3 w-3" />
+                          {barber.email}
+                        </p>
+                      )}
+                    </div>
                    <div className="flex gap-2">
                      <Button
                        size="sm"
@@ -455,9 +489,27 @@ const navItems = [
                           )}
                         </div>
                          <p className="text-sm text-muted-foreground">
-                           {barber.phone || "Sem telefone"}
+                           {barber.phone ? (
+                             <a
+                               href={`https://wa.me/${barber.phone.replace(/\D/g, '')}`}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               className="inline-flex items-center gap-1 text-success hover:underline"
+                             >
+                               <MessageCircle className="h-3 w-3" />
+                               {barber.phone}
+                             </a>
+                           ) : (
+                             "Sem telefone"
+                           )}
                            {barber.slug_final && ` • /${barber.slug_final}`}
                          </p>
+                         {barber.email && (
+                           <p className="flex items-center gap-1 text-sm text-muted-foreground">
+                             <Mail className="h-3 w-3" />
+                             {barber.email}
+                           </p>
+                         )}
                          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                            <CalendarDays className="h-3 w-3" />
                            Cadastro: {new Date(barber.created_at).toLocaleDateString("pt-BR")}
