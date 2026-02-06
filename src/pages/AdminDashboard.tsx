@@ -117,6 +117,7 @@ const AdminDashboard = () => {
   const [filterYear, setFilterYear] = useState<string>(new Date().getFullYear().toString());
   const [filterMode, setFilterMode] = useState<"month" | "dateRange">("month");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "pending" | "rejected">("all");
 
   useEffect(() => {
     if (isAdmin) {
@@ -368,21 +369,32 @@ const AdminDashboard = () => {
   const isFilterActive = filterMode === "month" ? filterMonth !== "all" : !!(dateRange?.from && dateRange?.to);
 
   const filteredBarbers = useMemo(() => {
+    let result = barbers;
+    
+    // Status filter
+    if (statusFilter !== "all") {
+      result = result.filter(b => b.barber_status === statusFilter);
+    }
+    
+    // Period filter
     if (filterMode === "dateRange") {
-      if (!dateRange?.from || !dateRange?.to) return barbers;
-      const from = dateRange.from;
-      const to = dateRange.to;
-      return barbers.filter(b => {
+      if (dateRange?.from && dateRange?.to) {
+        const from = dateRange.from;
+        const to = dateRange.to;
+        result = result.filter(b => {
+          const d = new Date(b.created_at);
+          return d >= from && d <= new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59);
+        });
+      }
+    } else if (filterMonth !== "all") {
+      result = result.filter(b => {
         const d = new Date(b.created_at);
-        return d >= from && d <= new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59);
+        return d.getMonth() === parseInt(filterMonth) && d.getFullYear() === parseInt(filterYear);
       });
     }
-    if (filterMonth === "all") return barbers;
-    return barbers.filter(b => {
-      const d = new Date(b.created_at);
-      return d.getMonth() === parseInt(filterMonth) && d.getFullYear() === parseInt(filterYear);
-    });
-  }, [barbers, filterMonth, filterYear, filterMode, dateRange]);
+    
+    return result;
+  }, [barbers, filterMonth, filterYear, filterMode, dateRange, statusFilter]);
 
   const planStats = useMemo(() => {
     const filtered = filteredBarbers;
@@ -459,74 +471,33 @@ const AdminDashboard = () => {
         {activeSection === "barbeiros" && (
           <div className="space-y-6">
             {/* Stats */}
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card className="glass-card">
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+              <Card className={cn("glass-card cursor-pointer transition-all", statusFilter === "all" && "ring-2 ring-primary")} onClick={() => setStatusFilter("all")}>
                 <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-sm font-medium text-warning">
-                    <Clock className="h-4 w-4" />Pendentes
-                  </CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-sm font-medium"><Users className="h-4 w-4" />Total</CardTitle>
                 </CardHeader>
-                <CardContent><p className="text-3xl font-bold">{pendingBarbers.length}</p></CardContent>
+                <CardContent><p className="text-3xl font-bold">{barbers.length}</p></CardContent>
               </Card>
-              <Card className="glass-card">
+              <Card className={cn("glass-card cursor-pointer transition-all", statusFilter === "approved" && "ring-2 ring-success")} onClick={() => setStatusFilter("approved")}>
                 <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-sm font-medium text-success">
-                    <CheckCircle className="h-4 w-4" />Aprovados
-                  </CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-sm font-medium text-success"><CheckCircle className="h-4 w-4" />Ativos</CardTitle>
                 </CardHeader>
                 <CardContent><p className="text-3xl font-bold">{approvedBarbers.length}</p></CardContent>
               </Card>
-              <Card className="glass-card">
+              <Card className={cn("glass-card cursor-pointer transition-all", statusFilter === "pending" && "ring-2 ring-warning")} onClick={() => setStatusFilter("pending")}>
                 <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-sm font-medium text-destructive">
-                    <XCircle className="h-4 w-4" />Recusados
-                  </CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-sm font-medium text-warning"><Clock className="h-4 w-4" />Pendentes</CardTitle>
+                </CardHeader>
+                <CardContent><p className="text-3xl font-bold">{pendingBarbers.length}</p></CardContent>
+              </Card>
+              <Card className={cn("glass-card cursor-pointer transition-all", statusFilter === "rejected" && "ring-2 ring-destructive")} onClick={() => setStatusFilter("rejected")}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-sm font-medium text-destructive"><XCircle className="h-4 w-4" />Suspensos</CardTitle>
                 </CardHeader>
                 <CardContent><p className="text-3xl font-bold">{rejectedBarbers.length}</p></CardContent>
               </Card>
             </div>
 
-            {/* Pending Barbers */}
-            {pendingBarbers.length > 0 && (
-              <Card className="glass-card border-warning/30">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-warning">
-                    <Clock className="h-5 w-5" />Barbeiros Aguardando Aprovação
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {pendingBarbers.map((barber) => (
-                    <div key={barber.id} className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="font-medium">{barber.full_name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {myPermissions.can_view_contacts && barber.phone ? (
-                            <a href={`https://wa.me/${barber.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-success hover:underline">
-                              <MessageCircle className="h-3 w-3" />{barber.phone}
-                            </a>
-                          ) : myPermissions.can_view_contacts ? "Sem telefone" : null}
-                          {myPermissions.can_view_contacts && " • "}
-                          {"Cadastrado em "}{new Date(barber.created_at).toLocaleDateString("pt-BR")}
-                        </p>
-                        {myPermissions.can_view_emails && barber.email && (
-                          <p className="flex items-center gap-1 text-sm text-muted-foreground"><Mail className="h-3 w-3" />{barber.email}</p>
-                        )}
-                      </div>
-                      {myPermissions.can_approve_barbers && (
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="border-success text-success hover:bg-success hover:text-success-foreground" onClick={() => handleApprove(barber.id)} disabled={processingId === barber.id}>
-                            {processingId === barber.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle className="mr-1 h-4 w-4" />Aprovar</>}
-                          </Button>
-                          <Button size="sm" variant="outline" className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={() => handleReject(barber.id)} disabled={processingId === barber.id}>
-                            <XCircle className="mr-1 h-4 w-4" />Recusar
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
 
             {/* Period Filter */}
             <Card className="glass-card">
@@ -608,7 +579,7 @@ const AdminDashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-primary" />
-                  {isFilterActive ? `Barbeiros no período (${filteredBarbers.length})` : `Todos os Barbeiros (${barbers.length})`}
+                  {statusFilter === "all" ? "Todos os" : statusFilter === "approved" ? "Ativos" : statusFilter === "pending" ? "Pendentes" : "Suspensos"} Barbeiros ({filteredBarbers.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
