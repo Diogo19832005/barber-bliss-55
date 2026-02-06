@@ -422,61 +422,77 @@ const RegularBarberDashboard = () => {
               </p>
             ) : (
               <div className="space-y-3">
-                {appointments.map((apt) => (
-                  <div
-                    key={apt.id}
-                    className={`flex items-center justify-between rounded-xl border p-4 ${
-                      apt.status === "completed"
-                        ? "border-success/30 bg-success/5"
-                        : apt.status === "cancelled"
-                        ? "border-destructive/30 bg-destructive/5"
-                        : "border-border"
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="text-center">
-                        <p className="text-lg font-semibold">
-                          {apt.start_time.slice(0, 5)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {apt.end_time.slice(0, 5)}
-                        </p>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{apt.client?.full_name}</p>
-                          {apt.client?.phone && (
-                            <a
-                              href={`https://wa.me/${apt.client.phone.replace(/\D/g, "")}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 text-xs text-success hover:bg-success/30 transition-colors"
-                              title="Enviar mensagem no WhatsApp"
-                            >
-                              <MessageCircle className="h-3 w-3" />
-                              WhatsApp
-                            </a>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                    {apt.status === "scheduled" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleCompleteAppointment(apt.id)}
+                {(() => {
+                  const now = format(new Date(), "HH:mm:ss");
+                  const nextApt = appointments.find(
+                    (a) => a.status === "scheduled" && a.start_time >= now
+                  );
+                  return appointments.map((apt) => {
+                    const isNext = nextApt?.id === apt.id;
+                    return (
+                      <div
+                        key={apt.id}
+                        className={`relative flex items-center justify-between rounded-xl border p-4 transition-all ${
+                          apt.status === "completed"
+                            ? "border-success/30 bg-success/5"
+                            : apt.status === "cancelled"
+                            ? "border-destructive/30 bg-destructive/5"
+                            : isNext
+                            ? "border-primary bg-primary/10 ring-2 ring-primary/30 shadow-lg shadow-primary/10"
+                            : "border-border"
+                        }`}
                       >
-                        Concluir
-                      </Button>
-                    )}
-                    {apt.status === "completed" && (
-                      <span className="text-sm text-success">✓ Concluído</span>
-                    )}
-                  </div>
-                ))}
+                        {isNext && (
+                          <span className="absolute -top-2.5 left-4 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
+                            Próximo
+                          </span>
+                        )}
+                        <div className="flex items-center gap-4">
+                          <div className="text-center">
+                            <p className={`text-lg font-semibold ${isNext ? "text-primary" : ""}`}>
+                              {apt.start_time.slice(0, 5)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {apt.end_time.slice(0, 5)}
+                            </p>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{apt.client?.full_name}</p>
+                              {apt.client?.phone && (
+                                <a
+                                  href={`https://wa.me/${apt.client.phone.replace(/\D/g, "")}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 text-xs text-success hover:bg-success/30 transition-colors"
+                                  title="Enviar mensagem no WhatsApp"
+                                >
+                                  <MessageCircle className="h-3 w-3" />
+                                  WhatsApp
+                                </a>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                        {apt.status === "scheduled" && (
+                          <Button
+                            size="sm"
+                            variant={isNext ? "default" : "outline"}
+                            onClick={() => handleCompleteAppointment(apt.id)}
+                          >
+                            Concluir
+                          </Button>
+                        )}
+                        {apt.status === "completed" && (
+                          <span className="text-sm text-success">✓ Concluído</span>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             )}
           </CardContent>
