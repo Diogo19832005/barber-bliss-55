@@ -1,20 +1,22 @@
  import { useState, useEffect } from "react";
  import { supabase } from "@/lib/supabase";
  import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
- import { Badge } from "@/components/ui/badge";
- import { Calendar, Clock, User, Scissors } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Clock, User, Scissors, UserPlus } from "lucide-react";
  import { format, isToday, isTomorrow, addDays, startOfDay } from "date-fns";
  import { ptBR } from "date-fns/locale";
  
- interface UpcomingAppointment {
-   id: string;
-   appointment_date: string;
-   start_time: string;
-   end_time: string;
-   status: string;
-   client: { full_name: string } | null;
-   service: { name: string; duration_minutes: number; price: number } | null;
- }
+interface UpcomingAppointment {
+  id: string;
+  appointment_date: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  created_by: string | null;
+  client_name: string | null;
+  client: { full_name: string } | null;
+  service: { name: string; duration_minutes: number; price: number } | null;
+}
  
  interface GroupedAppointments {
    label: string;
@@ -46,15 +48,17 @@
      // Fetch future appointments (today with future time + future dates)
      const { data, error } = await supabase
        .from("appointments")
-       .select(`
-         id,
-         appointment_date,
-         start_time,
-         end_time,
-         status,
-         client:profiles!appointments_client_id_fkey(full_name),
-         service:services(name, duration_minutes, price)
-       `)
+      .select(`
+          id,
+          appointment_date,
+          start_time,
+          end_time,
+          status,
+          created_by,
+          client_name,
+          client:profiles!appointments_client_id_fkey(full_name),
+          service:services(name, duration_minutes, price)
+        `)
        .eq("barber_id", barberId)
        .neq("status", "completed")
        .neq("status", "cancelled")
@@ -170,12 +174,15 @@
                          
                          {/* Details */}
                          <div className="flex flex-col gap-1">
-                           <div className="flex items-center gap-2">
-                             <User className="h-4 w-4 text-muted-foreground" />
-                             <span className="font-medium">
-                               {apt.client?.full_name || "Cliente não identificado"}
-                             </span>
-                           </div>
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">
+                                {apt.client?.full_name || apt.client_name || "Cliente avulso"}
+                              </span>
+                              {apt.created_by && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Manual</Badge>
+                              )}
+                            </div>
                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                              <Scissors className="h-3.5 w-3.5" />
                              <span>{apt.service?.name || "Serviço não especificado"}</span>
