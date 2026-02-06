@@ -223,6 +223,7 @@ export type Database = {
           cor_primaria: string | null
           cor_secundaria: string | null
           created_at: string
+          dashboard_home_widgets: Json | null
           endereco: string | null
           estado: string | null
           foto_apresentacao: string | null
@@ -253,6 +254,7 @@ export type Database = {
           cor_primaria?: string | null
           cor_secundaria?: string | null
           created_at?: string
+          dashboard_home_widgets?: Json | null
           endereco?: string | null
           estado?: string | null
           foto_apresentacao?: string | null
@@ -283,6 +285,7 @@ export type Database = {
           cor_primaria?: string | null
           cor_secundaria?: string | null
           created_at?: string
+          dashboard_home_widgets?: Json | null
           endereco?: string | null
           estado?: string | null
           foto_apresentacao?: string | null
