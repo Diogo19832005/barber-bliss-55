@@ -480,16 +480,30 @@ const navItems = [
                           </Button>
                         )}
                         {barber.barber_status !== "approved" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-success text-success"
-                            onClick={() => handleApprove(barber.id)}
-                            disabled={processingId === barber.id}
-                          >
-                            <CheckCircle className="mr-1 h-4 w-4" />
-                            Aprovar
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-success text-success"
+                              onClick={() => handleApprove(barber.id)}
+                              disabled={processingId === barber.id}
+                            >
+                              <CheckCircle className="mr-1 h-4 w-4" />
+                              Aprovar
+                            </Button>
+                            {barber.barber_status === "pending" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-destructive text-destructive"
+                                onClick={() => handleReject(barber.id)}
+                                disabled={processingId === barber.id}
+                              >
+                                <XCircle className="mr-1 h-4 w-4" />
+                                Recusar
+                              </Button>
+                            )}
+                          </>
                         )}
                         {barber.barber_status === "approved" && (
                           <Button
