@@ -10,6 +10,7 @@ import {
   Scissors, 
   Users,
   User,
+  UserCheck,
   TrendingUp,
   Plus,
   Edit2,
@@ -37,6 +38,7 @@ import AccountPaused from "@/pages/AccountPaused";
 import EarningsChart from "./EarningsChart";
 import DashboardHome from "./DashboardHome";
 import DataExport from "./DataExport";
+import ClientsHistory from "./ClientsHistory";
 
 interface Service {
   id: string;
@@ -70,6 +72,7 @@ const navItems = [
   { label: "Página Inicial", href: "/dashboard", icon: <Home className="h-4 w-4" /> },
   { label: "Dashboard", href: "/dashboard/analytics", icon: <TrendingUp className="h-4 w-4" /> },
   { label: "Agenda", href: "/dashboard/agenda", icon: <Calendar className="h-4 w-4" /> },
+  { label: "Clientes", href: "/dashboard/clients", icon: <UserCheck className="h-4 w-4" /> },
   { label: "Serviços", href: "/dashboard/services", icon: <Scissors className="h-4 w-4" /> },
   { label: "Horários", href: "/dashboard/schedule", icon: <Clock className="h-4 w-4" /> },
   { label: "Equipe", href: "/dashboard/team", icon: <Users className="h-4 w-4" /> },
@@ -272,6 +275,7 @@ const BarberDashboard = () => {
   const isProfilePage = currentPath === "/dashboard/profile";
   const isAnalyticsPage = currentPath === "/dashboard/analytics";
   const isAgendaPage = currentPath === "/dashboard/agenda";
+  const isClientsPage = currentPath === "/dashboard/clients";
   const isServicesPage = currentPath === "/dashboard/services";
   const isSchedulePage = currentPath === "/dashboard/schedule";
   const isTeamPage = currentPath === "/dashboard/team";
@@ -423,6 +427,11 @@ const BarberDashboard = () => {
               {/* Data Export */}
               <DataExport barberId={profile?.id || ""} />
             </>
+          )}
+
+          {/* Clients Page - Client History */}
+          {isClientsPage && (
+            <ClientsHistory barberId={profile?.id || ""} />
           )}
 
           {/* Agenda Page - Today's Appointments and Upcoming */}
