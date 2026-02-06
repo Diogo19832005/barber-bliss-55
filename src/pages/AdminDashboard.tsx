@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import { useAdminPermissions, AdminPermissions, PERMISSION_LABELS } from "@/hooks/useAdminPermissions";
 import { 
   Shield, 
   Users, 
@@ -17,7 +18,8 @@ import {
   MessageCircle,
   Phone,
   Filter,
-  BarChart3
+  BarChart3,
+  Settings2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +45,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -77,6 +80,7 @@ interface Admin {
   role: string;
   created_at: string;
   email?: string;
+  permissions?: AdminPermissions;
 }
 
 const navItems = [
@@ -87,6 +91,7 @@ const navItems = [
  
  const AdminDashboard = () => {
    const { profile, user, isAdmin, isChiefAdmin, isLoading: authLoading } = useAuth();
+   const { permissions: myPermissions, isLoading: permLoading } = useAdminPermissions();
    const { toast } = useToast();
    const [barbers, setBarbers] = useState<Barber[]>([]);
    const [admins, setAdmins] = useState<Admin[]>([]);
@@ -95,7 +100,17 @@ const navItems = [
     const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
     const [newAdminEmail, setNewAdminEmail] = useState("");
     const [newAdminRole, setNewAdminRole] = useState<"admin" | "collaborator_admin">("collaborator_admin");
+    const [newAdminPermissions, setNewAdminPermissions] = useState<AdminPermissions>({
+      can_approve_barbers: false,
+      can_suspend_barbers: false,
+      can_view_emails: false,
+      can_view_contacts: false,
+      can_view_financials: false,
+      can_manage_subscriptions: false,
+    });
     const [isAddingAdmin, setIsAddingAdmin] = useState(false);
+    const [editingPermissions, setEditingPermissions] = useState<string | null>(null);
+    const [editPermValues, setEditPermValues] = useState<AdminPermissions | null>(null);
      const [filterMonth, setFilterMonth] = useState<string>("all");
      const [filterYear, setFilterYear] = useState<string>(new Date().getFullYear().toString());
      const [filterMode, setFilterMode] = useState<"month" | "dateRange">("month");
@@ -145,6 +160,21 @@ const navItems = [
       .select("id, user_id, role, created_at")
       .in("role", ["admin", "collaborator_admin"] as any);
 
+    // Fetch all admin permissions
+    const { data: allPermissions } = await supabase
+      .from("admin_permissions")
+      .select("*");
+
+    const permMap = new Map<string, AdminPermissions>();
+    allPermissions?.forEach((p: any) => permMap.set(p.user_id, {
+      can_approve_barbers: p.can_approve_barbers,
+      can_suspend_barbers: p.can_suspend_barbers,
+      can_view_emails: p.can_view_emails,
+      can_view_contacts: p.can_view_contacts,
+      can_view_financials: p.can_view_financials,
+      can_manage_subscriptions: p.can_manage_subscriptions,
+    }));
+
     if (adminsData) {
       // Fetch emails for admins
       const adminsWithEmails = await Promise.all(
@@ -153,7 +183,12 @@ const navItems = [
             'get_user_email_by_id' as any,
             { target_user_id: admin.user_id }
           );
-          return { ...admin, role: admin.role as string, email: email as string | undefined };
+          return { 
+            ...admin, 
+            role: admin.role as string, 
+            email: email as string | undefined,
+            permissions: permMap.get(admin.user_id),
+          };
         })
       );
       setAdmins(adminsWithEmails);
@@ -303,13 +338,46 @@ const navItems = [
         variant: "destructive",
       });
     } else {
+      // If collaborator, save permissions
+      if (newAdminRole === 'collaborator_admin') {
+        await supabase
+          .from("admin_permissions")
+          .upsert([{ user_id: userId, ...newAdminPermissions }] as any);
+      }
       toast({ title: "Administrador adicionado!" });
       setNewAdminEmail("");
+      setNewAdminPermissions({
+        can_approve_barbers: false,
+        can_suspend_barbers: false,
+        can_view_emails: false,
+        can_view_contacts: false,
+        can_view_financials: false,
+        can_manage_subscriptions: false,
+      });
       setIsAddAdminOpen(false);
       fetchData();
     }
 
     setIsAddingAdmin(false);
+  };
+
+  const handleSavePermissions = async (adminUserId: string, perms: AdminPermissions) => {
+    const { error } = await supabase
+      .from("admin_permissions")
+      .upsert([{ user_id: adminUserId, ...perms }] as any);
+
+    if (error) {
+      toast({
+        title: "Erro ao salvar permissões",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Permissões atualizadas!" });
+      setEditingPermissions(null);
+      setEditPermValues(null);
+      fetchData();
+    }
   };
  
    const handleRemoveAdmin = async (adminId: string, adminUserId: string) => {
@@ -429,7 +497,7 @@ const navItems = [
       return { total: filtered.length, monthly, quarterly, semiannual, yearly, trial, paid, noSub };
     }, [filteredBarbers]);
  
-   if (authLoading || isLoading) {
+   if (authLoading || isLoading || permLoading) {
      return (
        <DashboardLayout navItems={navItems}>
          <div className="flex min-h-[400px] items-center justify-center">
@@ -499,79 +567,82 @@ const navItems = [
            </Card>
          </div>
  
-         {/* Pending Barbers */}
-         {pendingBarbers.length > 0 && (
-           <Card className="glass-card border-warning/30">
-             <CardHeader>
-               <CardTitle className="flex items-center gap-2 text-warning">
-                 <Clock className="h-5 w-5" />
-                 Barbeiros Aguardando Aprovação
-               </CardTitle>
-             </CardHeader>
-             <CardContent className="space-y-3">
-               {pendingBarbers.map((barber) => (
-                 <div
-                   key={barber.id}
-                   className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
-                 >
-                    <div>
-                      <p className="font-medium">{barber.full_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {barber.phone ? (
-                          <a
-                            href={`https://wa.me/${barber.phone.replace(/\D/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-success hover:underline"
-                          >
-                            <MessageCircle className="h-3 w-3" />
-                            {barber.phone}
-                          </a>
-                        ) : (
-                          "Sem telefone"
-                        )}
-                        {" • Cadastrado em "}{new Date(barber.created_at).toLocaleDateString("pt-BR")}
-                      </p>
-                      {barber.email && (
-                        <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Mail className="h-3 w-3" />
-                          {barber.email}
-                        </p>
-                      )}
-                    </div>
-                   <div className="flex gap-2">
-                     <Button
-                       size="sm"
-                       variant="outline"
-                       className="border-success text-success hover:bg-success hover:text-success-foreground"
-                       onClick={() => handleApprove(barber.id)}
-                       disabled={processingId === barber.id}
-                     >
-                       {processingId === barber.id ? (
-                         <Loader2 className="h-4 w-4 animate-spin" />
-                       ) : (
-                         <>
-                           <CheckCircle className="mr-1 h-4 w-4" />
-                           Aprovar
-                         </>
+          {/* Pending Barbers */}
+          {pendingBarbers.length > 0 && (
+            <Card className="glass-card border-warning/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-warning">
+                  <Clock className="h-5 w-5" />
+                  Barbeiros Aguardando Aprovação
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {pendingBarbers.map((barber) => (
+                  <div
+                    key={barber.id}
+                    className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                     <div>
+                       <p className="font-medium">{barber.full_name}</p>
+                       <p className="text-sm text-muted-foreground">
+                         {myPermissions.can_view_contacts && barber.phone ? (
+                           <a
+                             href={`https://wa.me/${barber.phone.replace(/\D/g, '')}`}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="inline-flex items-center gap-1 text-success hover:underline"
+                           >
+                             <MessageCircle className="h-3 w-3" />
+                             {barber.phone}
+                           </a>
+                         ) : myPermissions.can_view_contacts ? (
+                           "Sem telefone"
+                         ) : null}
+                         {myPermissions.can_view_contacts && " • "}
+                         {"Cadastrado em "}{new Date(barber.created_at).toLocaleDateString("pt-BR")}
+                       </p>
+                       {myPermissions.can_view_emails && barber.email && (
+                         <p className="flex items-center gap-1 text-sm text-muted-foreground">
+                           <Mail className="h-3 w-3" />
+                           {barber.email}
+                         </p>
                        )}
-                     </Button>
-                     <Button
-                       size="sm"
-                       variant="outline"
-                       className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                       onClick={() => handleReject(barber.id)}
-                       disabled={processingId === barber.id}
-                     >
-                       <XCircle className="mr-1 h-4 w-4" />
-                       Recusar
-                     </Button>
-                   </div>
-                 </div>
-               ))}
-             </CardContent>
-           </Card>
-         )}
+                     </div>
+                    {myPermissions.can_approve_barbers && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-success text-success hover:bg-success hover:text-success-foreground"
+                        onClick={() => handleApprove(barber.id)}
+                        disabled={processingId === barber.id}
+                      >
+                        {processingId === barber.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <CheckCircle className="mr-1 h-4 w-4" />
+                            Aprovar
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={() => handleReject(barber.id)}
+                        disabled={processingId === barber.id}
+                      >
+                        <XCircle className="mr-1 h-4 w-4" />
+                        Recusar
+                      </Button>
+                    </div>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
  
           {/* Period Filter & Stats */}
           <Card className="glass-card">
@@ -686,7 +757,7 @@ const navItems = [
                  </div>
                )}
 
-               {isFilterActive && (
+                {isFilterActive && myPermissions.can_view_financials && (
                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                    <div className="rounded-lg border border-border bg-secondary/30 p-3 text-center">
                      <p className="text-2xl font-bold">{planStats.total}</p>
@@ -707,7 +778,7 @@ const navItems = [
                  </div>
                )}
 
-               {isFilterActive && (
+               {isFilterActive && myPermissions.can_view_financials && (
                  <div className="flex flex-wrap gap-2">
                    <Badge variant="outline" className="gap-1">
                      <BarChart3 className="h-3 w-3" />
@@ -765,8 +836,8 @@ const navItems = [
                             </Badge>
                           )}
                         </div>
-                         <p className="text-sm text-muted-foreground">
-                           {barber.phone ? (
+                          <p className="text-sm text-muted-foreground">
+                           {myPermissions.can_view_contacts && barber.phone ? (
                              <a
                                href={`https://wa.me/${barber.phone.replace(/\D/g, '')}`}
                                target="_blank"
@@ -776,12 +847,12 @@ const navItems = [
                                <MessageCircle className="h-3 w-3" />
                                {barber.phone}
                              </a>
-                           ) : (
+                           ) : myPermissions.can_view_contacts ? (
                              "Sem telefone"
-                           )}
+                           ) : null}
                            {barber.slug_final && ` • /${barber.slug_final}`}
                          </p>
-                         {barber.email && (
+                         {myPermissions.can_view_emails && barber.email && (
                            <p className="flex items-center gap-1 text-sm text-muted-foreground">
                              <Mail className="h-3 w-3" />
                              {barber.email}
@@ -792,70 +863,71 @@ const navItems = [
                            Cadastro: {new Date(barber.created_at).toLocaleDateString("pt-BR")}
                          </p>
                        </div>
-                      <div className="flex flex-wrap gap-2">
-                        {/* Barbershop Admin toggle - only for approved barbers without owner */}
-                        {barber.barber_status === "approved" && !barber.barbershop_owner_id && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className={barber.is_barbershop_admin 
-                              ? "border-muted-foreground text-muted-foreground" 
-                              : "border-primary text-primary"}
-                            onClick={() => handleToggleBarbershopAdmin(barber.id, barber.is_barbershop_admin)}
-                            disabled={processingId === barber.id}
-                          >
-                            <Store className="mr-1 h-4 w-4" />
-                            {barber.is_barbershop_admin ? "Remover Admin" : "Definir Admin"}
-                          </Button>
-                        )}
-                        {barber.barber_status !== "approved" && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="border-success text-success"
-                              onClick={() => handleApprove(barber.id)}
-                              disabled={processingId === barber.id}
-                            >
-                              <CheckCircle className="mr-1 h-4 w-4" />
-                              Aprovar
-                            </Button>
-                            {barber.barber_status === "pending" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-destructive text-destructive"
-                                onClick={() => handleReject(barber.id)}
-                                disabled={processingId === barber.id}
-                              >
-                                <XCircle className="mr-1 h-4 w-4" />
-                                Recusar
-                              </Button>
-                            )}
-                          </>
-                        )}
-                        {barber.barber_status === "approved" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-destructive text-destructive"
-                            onClick={() => handleReject(barber.id)}
-                            disabled={processingId === barber.id}
-                          >
-                            <XCircle className="mr-1 h-4 w-4" />
-                            Suspender
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-               </div>
-             )}
-           </CardContent>
-          </Card>
+                       <div className="flex flex-wrap gap-2">
+                         {/* Barbershop Admin toggle - only for approved barbers without owner */}
+                         {barber.barber_status === "approved" && !barber.barbershop_owner_id && isChiefAdmin && (
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             className={barber.is_barbershop_admin 
+                               ? "border-muted-foreground text-muted-foreground" 
+                               : "border-primary text-primary"}
+                             onClick={() => handleToggleBarbershopAdmin(barber.id, barber.is_barbershop_admin)}
+                             disabled={processingId === barber.id}
+                           >
+                             <Store className="mr-1 h-4 w-4" />
+                             {barber.is_barbershop_admin ? "Remover Admin" : "Definir Admin"}
+                           </Button>
+                         )}
+                         {barber.barber_status !== "approved" && myPermissions.can_approve_barbers && (
+                           <>
+                             <Button
+                               size="sm"
+                               variant="outline"
+                               className="border-success text-success"
+                               onClick={() => handleApprove(barber.id)}
+                               disabled={processingId === barber.id}
+                             >
+                               <CheckCircle className="mr-1 h-4 w-4" />
+                               Aprovar
+                             </Button>
+                             {barber.barber_status === "pending" && (
+                               <Button
+                                 size="sm"
+                                 variant="outline"
+                                 className="border-destructive text-destructive"
+                                 onClick={() => handleReject(barber.id)}
+                                 disabled={processingId === barber.id}
+                               >
+                                 <XCircle className="mr-1 h-4 w-4" />
+                                 Recusar
+                               </Button>
+                             )}
+                           </>
+                         )}
+                         {barber.barber_status === "approved" && myPermissions.can_suspend_barbers && (
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             className="border-destructive text-destructive"
+                             onClick={() => handleReject(barber.id)}
+                             disabled={processingId === barber.id}
+                           >
+                             <XCircle className="mr-1 h-4 w-4" />
+                             Suspender
+                           </Button>
+                         )}
+                       </div>
+                     </div>
+                   ))}
+                </div>
+              )}
+            </CardContent>
+           </Card>
 
-          {/* Subscriptions */}
-          <SubscriptionManager />
+           {/* Subscriptions - only visible with financial permissions */}
+           {myPermissions.can_view_financials && <SubscriptionManager />}
+
 
           {/* Admins */}
          <Card className="glass-card">
@@ -877,60 +949,126 @@ const navItems = [
            </CardHeader>
            <CardContent>
              <div className="space-y-3">
-               {admins.map((admin) => (
-                 <div
-                   key={admin.id}
-                   className="flex items-center justify-between rounded-xl border border-border p-4"
-                 >
-                   <div className="flex items-center gap-3">
-                     <div className={cn(
-                       "flex h-10 w-10 items-center justify-center rounded-full",
-                       admin.role === 'admin' ? "bg-primary/20" : "bg-secondary"
-                     )}>
-                       <Shield className={cn("h-5 w-5", admin.role === 'admin' ? "text-primary" : "text-muted-foreground")} />
-                     </div>
-                     <div>
-                       <div className="flex items-center gap-2">
-                         <p className="font-medium">
-                           {admin.email || (admin.user_id === user?.id ? "Você" : `Admin ${admin.id.slice(0, 8)}`)}
-                         </p>
-                         <Badge variant="outline" className={admin.role === 'admin' ? "border-primary text-primary" : "border-muted-foreground text-muted-foreground"}>
-                           {admin.role === 'admin' ? 'Chefe' : 'Colaborador'}
-                         </Badge>
-                         {admin.user_id === user?.id && (
-                           <Badge variant="secondary" className="text-xs">Você</Badge>
-                         )}
-                       </div>
-                       <p className="text-sm text-muted-foreground">
-                         Desde {new Date(admin.created_at).toLocaleDateString("pt-BR")}
-                       </p>
-                     </div>
-                   </div>
-                   {isChiefAdmin && admin.user_id !== user?.id && (
-                     <div className="flex gap-2">
-                       <Select
-                         value={admin.role}
-                         onValueChange={(value) => handleChangeAdminRole(admin.id, value)}
-                       >
-                         <SelectTrigger className="w-[140px] bg-secondary/50">
-                           <SelectValue />
-                         </SelectTrigger>
-                         <SelectContent>
-                           <SelectItem value="admin">Chefe</SelectItem>
-                           <SelectItem value="collaborator_admin">Colaborador</SelectItem>
-                         </SelectContent>
-                       </Select>
-                       <Button
-                         size="sm"
-                         variant="ghost"
-                         className="text-destructive hover:text-destructive"
-                         onClick={() => handleRemoveAdmin(admin.id, admin.user_id)}
-                       >
-                         <XCircle className="h-4 w-4" />
-                       </Button>
-                     </div>
-                   )}
-                 </div>
+                {admins.map((admin) => (
+                  <div
+                    key={admin.id}
+                    className="rounded-xl border border-border p-4 space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-full",
+                        admin.role === 'admin' ? "bg-primary/20" : "bg-secondary"
+                      )}>
+                        <Shield className={cn("h-5 w-5", admin.role === 'admin' ? "text-primary" : "text-muted-foreground")} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">
+                            {admin.email || (admin.user_id === user?.id ? "Você" : `Admin ${admin.id.slice(0, 8)}`)}
+                          </p>
+                          <Badge variant="outline" className={admin.role === 'admin' ? "border-primary text-primary" : "border-muted-foreground text-muted-foreground"}>
+                            {admin.role === 'admin' ? 'Chefe' : 'Colaborador'}
+                          </Badge>
+                          {admin.user_id === user?.id && (
+                            <Badge variant="secondary" className="text-xs">Você</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Desde {new Date(admin.created_at).toLocaleDateString("pt-BR")}
+                        </p>
+                      </div>
+                    </div>
+                    {isChiefAdmin && admin.user_id !== user?.id && (
+                      <div className="flex gap-2">
+                        <Select
+                          value={admin.role}
+                          onValueChange={(value) => handleChangeAdminRole(admin.id, value)}
+                        >
+                          <SelectTrigger className="w-[140px] bg-secondary/50">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">Chefe</SelectItem>
+                            <SelectItem value="collaborator_admin">Colaborador</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {admin.role === 'collaborator_admin' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingPermissions(admin.user_id);
+                              setEditPermValues(admin.permissions || {
+                                can_approve_barbers: false,
+                                can_suspend_barbers: false,
+                                can_view_emails: false,
+                                can_view_contacts: false,
+                                can_view_financials: false,
+                                can_manage_subscriptions: false,
+                              });
+                            }}
+                          >
+                            <Settings2 className="mr-1 h-4 w-4" />
+                            Permissões
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleRemoveAdmin(admin.id, admin.user_id)}
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                    </div>
+
+                    {/* Inline permission editor */}
+                    {editingPermissions === admin.user_id && editPermValues && (
+                      <div className="rounded-lg border border-border bg-secondary/20 p-4 space-y-3">
+                        <p className="text-sm font-medium">Permissões do Colaborador</p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {(Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[]).map((key) => (
+                            <label key={key} className="flex items-center gap-2 text-sm cursor-pointer">
+                              <Checkbox
+                                checked={editPermValues[key]}
+                                onCheckedChange={(checked) =>
+                                  setEditPermValues(prev => prev ? { ...prev, [key]: !!checked } : prev)
+                                }
+                              />
+                              {PERMISSION_LABELS[key]}
+                            </label>
+                          ))}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => handleSavePermissions(admin.user_id, editPermValues)}>
+                            Salvar
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => { setEditingPermissions(null); setEditPermValues(null); }}>
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Show current permissions as badges for collaborators */}
+                    {admin.role === 'collaborator_admin' && admin.permissions && editingPermissions !== admin.user_id && (
+                      <div className="flex flex-wrap gap-1 pl-13">
+                        {(Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[]).map((key) => (
+                          admin.permissions?.[key] && (
+                            <Badge key={key} variant="secondary" className="text-xs">
+                              {PERMISSION_LABELS[key]}
+                            </Badge>
+                          )
+                        ))}
+                        {!Object.values(admin.permissions).some(v => v) && (
+                          <span className="text-xs text-muted-foreground">Sem permissões configuradas</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                ))}
              </div>
            </CardContent>
@@ -975,6 +1113,24 @@ const navItems = [
                   </SelectContent>
                 </Select>
               </div>
+              {newAdminRole === 'collaborator_admin' && (
+                <div className="space-y-2">
+                  <Label>Permissões</Label>
+                  <div className="rounded-lg border border-border bg-secondary/20 p-3 space-y-2">
+                    {(Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[]).map((key) => (
+                      <label key={key} className="flex items-center gap-2 text-sm cursor-pointer">
+                        <Checkbox
+                          checked={newAdminPermissions[key]}
+                          onCheckedChange={(checked) =>
+                            setNewAdminPermissions(prev => ({ ...prev, [key]: !!checked }))
+                          }
+                        />
+                        {PERMISSION_LABELS[key]}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
            <DialogFooter>
              <Button variant="outline" onClick={() => setIsAddAdminOpen(false)}>

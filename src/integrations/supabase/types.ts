@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_permissions: {
+        Row: {
+          can_approve_barbers: boolean
+          can_manage_subscriptions: boolean
+          can_suspend_barbers: boolean
+          can_view_contacts: boolean
+          can_view_emails: boolean
+          can_view_financials: boolean
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          can_approve_barbers?: boolean
+          can_manage_subscriptions?: boolean
+          can_suspend_barbers?: boolean
+          can_view_contacts?: boolean
+          can_view_emails?: boolean
+          can_view_financials?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          can_approve_barbers?: boolean
+          can_manage_subscriptions?: boolean
+          can_suspend_barbers?: boolean
+          can_view_contacts?: boolean
+          can_view_emails?: boolean
+          can_view_financials?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           appointment_date: string
