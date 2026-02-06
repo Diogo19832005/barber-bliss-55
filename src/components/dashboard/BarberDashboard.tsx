@@ -9,6 +9,7 @@ import {
   DollarSign, 
   Scissors, 
   Users,
+  User,
   TrendingUp,
   Plus,
   Edit2,
@@ -66,6 +67,7 @@ interface Schedule {
 
 const navItems = [
   { label: "Página Inicial", href: "/dashboard", icon: <Home className="h-4 w-4" /> },
+  { label: "Meu Perfil", href: "/dashboard/profile", icon: <User className="h-4 w-4" /> },
   { label: "Dashboard", href: "/dashboard/analytics", icon: <TrendingUp className="h-4 w-4" /> },
   { label: "Agenda", href: "/dashboard/agenda", icon: <Calendar className="h-4 w-4" /> },
   { label: "Serviços", href: "/dashboard/services", icon: <Scissors className="h-4 w-4" /> },
@@ -266,6 +268,7 @@ const BarberDashboard = () => {
 
   // Check if we're on the main dashboard page (home) vs a specific section
   const isHomePage = currentPath === "/dashboard" || currentPath === "/dashboard/";
+  const isProfilePage = currentPath === "/dashboard/profile";
   const isAnalyticsPage = currentPath === "/dashboard/analytics";
   const isAgendaPage = currentPath === "/dashboard/agenda";
   const isServicesPage = currentPath === "/dashboard/services";
@@ -275,53 +278,97 @@ const BarberDashboard = () => {
   return (
     <DashboardLayout navItems={navItems}>
       <div className="space-y-6">
-        {/* Subscription Alert */}
-        <SubscriptionAlert barberId={profile?.id || ""} />
+        {/* Meu Perfil Page - Subscription Alert, Header and Public Link */}
+        {isProfilePage && (
+          <>
+            {/* Subscription Alert */}
+            <SubscriptionAlert barberId={profile?.id || ""} />
 
-        {/* Header */}
-         <div className="flex items-start justify-between">
-           <div className="flex items-center gap-4">
-             {profile?.logo_url ? (
-               <img
-                 src={profile.logo_url}
-                 alt="Logo"
-                 className="h-14 w-14 rounded-xl object-cover border border-border"
-               />
-             ) : (
-               <div 
-                 className="flex h-14 w-14 items-center justify-center rounded-xl text-white font-bold text-xl"
-                 style={{ backgroundColor: primaryColor }}
-               >
-                 {displayName?.charAt(0).toUpperCase()}
-               </div>
-             )}
-             <div>
-               <h1 className="text-2xl font-bold md:text-3xl">
-                 Olá, {displayName}! 👋
-               </h1>
-               <p className="text-muted-foreground">
-                 {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
-               </p>
-             </div>
-           </div>
-           <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setIsSettingsModalOpen(true)}
-              title="Configurações"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-         </div>
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-4">
+                {profile?.logo_url ? (
+                  <img
+                    src={profile.logo_url}
+                    alt="Logo"
+                    className="h-14 w-14 rounded-xl object-cover border border-border"
+                  />
+                ) : (
+                  <div 
+                    className="flex h-14 w-14 items-center justify-center rounded-xl text-white font-bold text-xl"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    {displayName?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <h1 className="text-2xl font-bold md:text-3xl">
+                    Olá, {displayName}! 👋
+                  </h1>
+                  <p className="text-muted-foreground">
+                    {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsSettingsModalOpen(true)}
+                title="Configurações"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </div>
 
-         {/* Customizable Home Page */}
-         {isHomePage && (
-           <DashboardHome
-             barberId={profile?.id || ""}
-             widgets={dashboardWidgets}
-             onCompleteAppointment={() => fetchData()}
-           />
-         )}
+            {/* Public Link Card */}
+            {publicLink && (
+              <Card className="glass-card border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
+                <CardContent className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20">
+                      <LinkIcon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Seu Link Público</p>
+                      <p className="font-mono text-sm text-foreground break-all">{publicLink}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="gold"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(publicLink);
+                      setLinkCopied(true);
+                      toast({ title: "Link copiado!" });
+                      setTimeout(() => setLinkCopied(false), 2000);
+                    }}
+                  >
+                    {linkCopied ? (
+                      <>
+                        <Check className="mr-2 h-4 w-4" />
+                        Copiado!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copiar Link
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+
+        {/* Customizable Home Page */}
+        {isHomePage && (
+          <DashboardHome
+            barberId={profile?.id || ""}
+            widgets={dashboardWidgets}
+            onCompleteAppointment={() => fetchData()}
+          />
+        )}
 
          {/* Dashboard/Analytics Page - Only charts and performance metrics */}
           {isAnalyticsPage && (
