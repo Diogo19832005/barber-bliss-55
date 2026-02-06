@@ -238,7 +238,12 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
         sorted.sort((a, b) => b.completedAppointments - a.completedAppointments);
         break;
       case "least_cuts":
-        sorted.sort((a, b) => a.completedAppointments - b.completedAppointments);
+        sorted.sort((a, b) => {
+          if (a.completedAppointments !== b.completedAppointments) {
+            return a.completedAppointments - b.completedAppointments;
+          }
+          return a.full_name.localeCompare(b.full_name);
+        });
         break;
     }
 
