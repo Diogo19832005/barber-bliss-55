@@ -7,11 +7,12 @@ interface AuthContextType {
   profile: Profile | null;
   session: Session | null;
   isLoading: boolean;
-   isAdmin: boolean;
+  isAdmin: boolean;
+  isChiefAdmin: boolean;
   signUp: (email: string, password: string, fullName: string, role: UserRole, phone?: string, pais?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-   checkAdminStatus: () => Promise<boolean>;
+  checkAdminStatus: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,7 +22,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isChiefAdmin, setIsChiefAdmin] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -38,15 +40,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data as Profile | null;
   };
 
-   const checkAdminStatus = async (): Promise<boolean> => {
-     const { data, error } = await supabase.rpc('is_admin');
-     if (error) {
-       console.error('Error checking admin status:', error);
-       return false;
-     }
-     setIsAdmin(data === true);
-     return data === true;
-   };
+  const checkAdminStatus = async (): Promise<boolean> => {
+    const [adminResult, chiefResult] = await Promise.all([
+      supabase.rpc('is_admin'),
+      supabase.rpc('is_chief_admin' as any),
+    ]);
+    if (adminResult.error) {
+      console.error('Error checking admin status:', adminResult.error);
+      return false;
+    }
+    setIsAdmin(adminResult.data === true);
+    setIsChiefAdmin(chiefResult.data === true);
+    return adminResult.data === true;
+  };
  
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -62,8 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }, 0);
       } else {
         setProfile(null);
-         setIsAdmin(false);
-        setIsLoading(false);
+        setIsAdmin(false);
+        setIsChiefAdmin(false);
       }
     });
 
@@ -116,11 +122,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setProfile(null);
     setSession(null);
-     setIsAdmin(false);
+    setIsAdmin(false);
+    setIsChiefAdmin(false);
   };
 
   return (
-     <AuthContext.Provider value={{ user, profile, session, isLoading, isAdmin, signUp, signIn, signOut, checkAdminStatus }}>
+     <AuthContext.Provider value={{ user, profile, session, isLoading, isAdmin, isChiefAdmin, signUp, signIn, signOut, checkAdminStatus }}>
       {children}
     </AuthContext.Provider>
   );

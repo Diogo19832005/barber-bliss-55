@@ -432,6 +432,7 @@ export type Database = {
         Args: { team_member_owner_id: string }
         Returns: boolean
       }
+      is_chief_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
