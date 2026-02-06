@@ -15,9 +15,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import UpcomingAppointments from "./UpcomingAppointments";
 import AccountPaused from "@/pages/AccountPaused";
 import EarningsChart from "./EarningsChart";
@@ -55,6 +57,10 @@ const RegularBarberDashboard = () => {
   const [linkCopied, setLinkCopied] = useState(false);
   const [isPaused, setIsPaused] = useState<boolean | null>(null);
   const [isCheckingStatus, setIsCheckingStatus] = useState(true);
+  const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>(undefined);
+  const [customDateTo, setCustomDateTo] = useState<Date | undefined>(undefined);
+  const [customEarnings, setCustomEarnings] = useState<number | null>(null);
+  const [isLoadingCustom, setIsLoadingCustom] = useState(false);
 
   useEffect(() => {
     if (profile?.id) {
@@ -162,6 +168,31 @@ const RegularBarberDashboard = () => {
     });
   };
 
+  const calculateCustomEarnings = async () => {
+    if (!profile?.id || !customDateFrom || !customDateTo) return;
+    setIsLoadingCustom(true);
+    const fromStr = format(customDateFrom, "yyyy-MM-dd");
+    const toStr = format(customDateTo, "yyyy-MM-dd");
+    const { data } = await supabase
+      .from("appointments")
+      .select("service:services(price)")
+      .eq("barber_id", profile.id)
+      .gte("appointment_date", fromStr)
+      .lte("appointment_date", toStr)
+      .eq("status", "completed");
+    const total = data?.reduce((sum: number, item: any) => sum + (item.service?.price || 0), 0) || 0;
+    setCustomEarnings(total);
+    setIsLoadingCustom(false);
+  };
+
+  useEffect(() => {
+    if (customDateFrom && customDateTo) {
+      calculateCustomEarnings();
+    } else {
+      setCustomEarnings(null);
+    }
+  }, [customDateFrom, customDateTo]);
+
   const handleCompleteAppointment = async (id: string) => {
     const { error } = await supabase
       .from("appointments")
@@ -183,6 +214,7 @@ const RegularBarberDashboard = () => {
   const displayName = profile?.full_name?.split(" ")[0];
   const ownerDisplayName = barbershopOwner?.nome_exibido || barbershopOwner?.full_name;
   const primaryColor = barbershopOwner?.cor_primaria || "#D97706";
+  const minDate = subMonths(new Date(), 13);
 
   if (isCheckingStatus) {
     return (
@@ -275,9 +307,7 @@ const RegularBarberDashboard = () => {
         <div className="grid gap-4 md:grid-cols-3">
           <Card className="glass-card">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Hoje
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Hoje</CardTitle>
               <DollarSign className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
@@ -286,9 +316,7 @@ const RegularBarberDashboard = () => {
           </Card>
           <Card className="glass-card">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Esta Semana
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Esta Semana</CardTitle>
               <TrendingUp className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
@@ -297,9 +325,7 @@ const RegularBarberDashboard = () => {
           </Card>
           <Card className="glass-card">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Este Mês
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Este Mês</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -307,6 +333,79 @@ const RegularBarberDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Custom Period Earnings */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Clock className="h-5 w-5 text-primary" />
+              Faturamento por Período
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+              <div className="flex-1">
+                <p className="mb-1 text-sm text-muted-foreground">De</p>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {customDateFrom ? format(customDateFrom, "dd/MM/yyyy") : "Selecionar data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={customDateFrom}
+                      onSelect={setCustomDateFrom}
+                      disabled={(date) => date > new Date() || date < minDate}
+                      locale={ptBR}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="flex-1">
+                <p className="mb-1 text-sm text-muted-foreground">Até</p>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {customDateTo ? format(customDateTo, "dd/MM/yyyy") : "Selecionar data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={customDateTo}
+                      onSelect={setCustomDateTo}
+                      disabled={(date) => date > new Date() || date < minDate || (customDateFrom ? date < customDateFrom : false)}
+                      locale={ptBR}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              {customDateFrom && customDateTo && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setCustomDateFrom(undefined); setCustomDateTo(undefined); }}
+                >
+                  Limpar
+                </Button>
+              )}
+            </div>
+            {customEarnings !== null && (
+              <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  {format(customDateFrom!, "dd/MM/yyyy")} — {format(customDateTo!, "dd/MM/yyyy")}
+                </p>
+                <p className="mt-1 text-3xl font-bold text-primary">
+                  {isLoadingCustom ? <Loader2 className="mx-auto h-6 w-6 animate-spin" /> : `R$ ${customEarnings.toFixed(2)}`}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Today's Appointments */}
         <Card className="glass-card">
