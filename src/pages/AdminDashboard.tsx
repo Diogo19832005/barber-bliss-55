@@ -88,7 +88,9 @@ interface Admin {
 
 type AdminSection = "barbeiros" | "mensalidades" | "receita" | "historico" | "administradores";
 
-const navItems: { label: string; href: string; icon: React.ReactNode }[] = [];
+const navItems: { label: string; href: string; icon: React.ReactNode }[] = [
+  { label: "Painel Admin", href: "/dashboard", icon: <Shield className="h-4 w-4" /> },
+];
 
 const AdminDashboard = () => {
   const { profile, user, isAdmin, isChiefAdmin, isLoading: authLoading } = useAuth();

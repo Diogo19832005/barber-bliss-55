@@ -11,7 +11,8 @@ import {
   DollarSign,
   User,
   Menu,
-  X
+  X,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -85,6 +86,19 @@ const DashboardLayout = ({ children, navItems }: DashboardLayoutProps) => {
                   {item.label}
                 </Link>
               ))}
+              {/* Link para página pública - apenas barbeiros */}
+              {profile?.role === "barber" && profile?.slug_final && (
+                <a
+                  href={`/${profile.slug_final}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Ver página pública
+                </a>
+              )}
             </nav>
             <div className="border-t border-border p-4">
               <div className="mb-4 flex items-center gap-3 px-4">

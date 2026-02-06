@@ -45,6 +45,8 @@ interface BarbershopOwner {
 
 const navItems = [
   { label: "Minha Agenda", href: "/dashboard", icon: <Calendar className="h-4 w-4" /> },
+  { label: "Próximos", href: "/dashboard/upcoming", icon: <Clock className="h-4 w-4" /> },
+  { label: "Ganhos", href: "/dashboard/earnings", icon: <DollarSign className="h-4 w-4" /> },
 ];
 
 const RegularBarberDashboard = () => {
