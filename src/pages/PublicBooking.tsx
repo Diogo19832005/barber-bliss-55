@@ -85,15 +85,21 @@ const PublicBooking = () => {
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showHero, setShowHero] = useState(true);
   
-  const [clientName, setClientName] = useState("");
-  const [clientEmail, setClientEmail] = useState("");
-  const [clientPhone, setClientPhone] = useState("");
+  // Registration form states
+  const [registerName, setRegisterName] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPhone, setRegisterPhone] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  
+  // Login form states
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
   // Auth states
   const [authMode, setAuthMode] = useState<"login" | "register">("register");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
 
@@ -103,12 +109,13 @@ const PublicBooking = () => {
     }
   }, [slugFinal]);
 
-  // Pre-fill form if user is logged in
+  // Pre-fill register form if user is logged in
   useEffect(() => {
     if (user && profile) {
-      setClientName(profile.full_name || "");
-      setClientPhone(profile.phone || "");
-      setClientEmail(user.email || "");
+      setRegisterName(profile.full_name || "");
+      setRegisterPhone(profile.phone || "");
+      setRegisterEmail(user.email || "");
+      setLoginEmail(user.email || "");
     }
   }, [user, profile]);
 
@@ -284,27 +291,47 @@ const PublicBooking = () => {
       return;
     }
 
-    // Get the name and email to use (from profile if logged in, otherwise from form)
-    const nameToUse = user && profile ? profile.full_name : clientName.trim();
-    const emailToUse = user ? user.email : clientEmail.trim();
+    // Get the name, email and password based on auth mode
+    const nameToUse = user && profile ? profile.full_name : (authMode === "register" ? registerName.trim() : "");
+    const emailToUse = user ? user.email : (authMode === "register" ? registerEmail.trim() : loginEmail.trim());
+    const passwordToUse = authMode === "register" ? registerPassword : loginPassword;
+    const phoneToUse = authMode === "register" ? registerPhone.trim() : "";
 
-    if (!nameToUse || !emailToUse) {
-      toast({
-        title: "Erro",
-        description: "Nome e email são obrigatórios",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // If registering, validate password
-    if (authMode === "register" && password.length < 6) {
-      toast({
-        title: "Erro",
-        description: "A senha deve ter pelo menos 6 caracteres",
-        variant: "destructive",
-      });
-      return;
+    // Validate based on auth mode
+    if (authMode === "register") {
+      if (!nameToUse || !emailToUse) {
+        toast({
+          title: "Erro",
+          description: "Nome e email são obrigatórios",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (passwordToUse.length < 6) {
+        toast({
+          title: "Erro",
+          description: "A senha deve ter pelo menos 6 caracteres",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else if (authMode === "login") {
+      if (!emailToUse) {
+        toast({
+          title: "Erro",
+          description: "Email é obrigatório",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!passwordToUse) {
+        toast({
+          title: "Erro",
+          description: "Senha é obrigatória",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -319,11 +346,11 @@ const PublicBooking = () => {
         // Register new user
         setIsAuthLoading(true);
         const { error: signUpError } = await signUp(
-          clientEmail.trim(),
-          password,
-          clientName.trim(),
+          registerEmail.trim(),
+          registerPassword,
+          registerName.trim(),
           "client",
-          clientPhone.trim() || undefined
+          phoneToUse || undefined
         );
 
         if (signUpError) {
@@ -353,7 +380,7 @@ const PublicBooking = () => {
       } else if (authMode === "login") {
         // Login existing user
         setIsAuthLoading(true);
-        const { error: signInError } = await signIn(clientEmail.trim(), password);
+        const { error: signInError } = await signIn(loginEmail.trim(), loginPassword);
 
         if (signInError) {
           throw new Error(signInError.message);
@@ -424,7 +451,7 @@ const PublicBooking = () => {
           appointment_date: dateStr,
           start_time: selectedTime,
           end_time: endTime,
-          notes: `Email: ${clientEmail}${clientPhone ? `, Tel: ${clientPhone}` : ""}`,
+          notes: `Email: ${emailToUse}${phoneToUse ? `, Tel: ${phoneToUse}` : ""}`,
         });
 
       if (appointmentError) {
@@ -521,9 +548,12 @@ const PublicBooking = () => {
             setSelectedDate(undefined);
             setSelectedTime(null);
             setShowBookingForm(false);
-            setClientName("");
-            setClientEmail("");
-            setClientPhone("");
+            setRegisterName("");
+            setRegisterEmail("");
+            setRegisterPhone("");
+            setRegisterPassword("");
+            setLoginEmail("");
+            setLoginPassword("");
           }}
         >
           Fazer novo agendamento
@@ -741,13 +771,13 @@ const PublicBooking = () => {
                       {/* Name field - show for register */}
                       {authMode === "register" && (
                         <div className="space-y-2">
-                          <Label htmlFor="booking-client-name">Nome completo *</Label>
+                          <Label htmlFor={authMode === "register" ? "booking-register-name" : "booking-login-name"}>Nome completo *</Label>
                           <Input
-                            id="booking-client-name"
-                            name="booking-client-name"
+                            id="booking-register-name"
+                            name="booking-register-name"
                             autoComplete="name"
-                            value={clientName}
-                            onChange={(e) => setClientName(e.target.value)}
+                            value={registerName}
+                            onChange={(e) => setRegisterName(e.target.value)}
                             placeholder="Seu nome"
                             required
                             className="bg-secondary/50"
@@ -756,14 +786,14 @@ const PublicBooking = () => {
                       )}
 
                       <div className="space-y-2">
-                        <Label htmlFor="booking-client-email">Email *</Label>
+                        <Label htmlFor={authMode === "register" ? "booking-register-email" : "booking-login-email"}>Email *</Label>
                         <Input
-                          id="booking-client-email"
-                          name="booking-client-email"
+                          id={authMode === "register" ? "booking-register-email" : "booking-login-email"}
+                          name={authMode === "register" ? "booking-register-email" : "booking-login-email"}
                           type="email"
                           autoComplete="email"
-                          value={clientEmail}
-                          onChange={(e) => setClientEmail(e.target.value)}
+                          value={authMode === "register" ? registerEmail : loginEmail}
+                          onChange={(e) => authMode === "register" ? setRegisterEmail(e.target.value) : setLoginEmail(e.target.value)}
                           placeholder="seu@email.com"
                           required
                           className="bg-secondary/50"
@@ -773,18 +803,18 @@ const PublicBooking = () => {
                       {/* Phone field - show for register */}
                       {authMode === "register" && (
                         <div className="space-y-2">
-                          <Label htmlFor="booking-client-phone">
+                          <Label htmlFor="booking-register-phone">
                             Telefone *
                           </Label>
                           <div className="relative">
                             <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
-                              id="booking-client-phone"
-                              name="booking-client-phone"
+                              id="booking-register-phone"
+                              name="booking-register-phone"
                               type="tel"
                               autoComplete="tel"
-                              value={clientPhone}
-                              onChange={(e) => setClientPhone(e.target.value)}
+                              value={registerPhone}
+                              onChange={(e) => setRegisterPhone(e.target.value)}
                               placeholder="(00) 00000-0000"
                               required
                               className="bg-secondary/50 pl-11"
@@ -795,15 +825,15 @@ const PublicBooking = () => {
 
                       {/* Password field */}
                       <div className="space-y-2">
-                        <Label htmlFor="booking-client-password">Senha *</Label>
+                        <Label htmlFor={authMode === "register" ? "booking-register-password" : "booking-login-password"}>Senha *</Label>
                         <div className="relative">
                           <Input
-                            id="booking-client-password"
-                            name="booking-client-password"
+                            id={authMode === "register" ? "booking-register-password" : "booking-login-password"}
+                            name={authMode === "register" ? "booking-register-password" : "booking-login-password"}
                             type={showPassword ? "text" : "password"}
                             autoComplete={authMode === "register" ? "new-password" : "current-password"}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            value={authMode === "register" ? registerPassword : loginPassword}
+                            onChange={(e) => authMode === "register" ? setRegisterPassword(e.target.value) : setLoginPassword(e.target.value)}
                             placeholder={authMode === "register" ? "Mínimo 6 caracteres" : "Sua senha"}
                             required
                             minLength={authMode === "register" ? 6 : undefined}
