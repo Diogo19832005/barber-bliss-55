@@ -7,7 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Scissors, Clock, Calendar as CalendarIcon, User, ArrowLeft, Loader2, Check, Eye, EyeOff, Phone, MapPin, MessageCircle } from "lucide-react";
-import { format, addMinutes, parse, isBefore, isAfter, parseISO } from "date-fns";
+import { format, addMinutes, parse, isBefore, isAfter, parseISO, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -516,10 +516,13 @@ const PublicBooking = () => {
   };
 
   const isDateDisabled = (date: Date) => {
+    const today = new Date();
+    const maxDate = addDays(today, 30);
     const dayOfWeek = date.getDay();
     const hasSchedule = schedules.some((s) => s.day_of_week === dayOfWeek);
-    const isPast = isBefore(date, new Date()) && format(date, "yyyy-MM-dd") !== format(new Date(), "yyyy-MM-dd");
-    return !hasSchedule || isPast;
+    const isPast = isBefore(date, today) && format(date, "yyyy-MM-dd") !== format(today, "yyyy-MM-dd");
+    const isTooFar = isAfter(date, maxDate);
+    return !hasSchedule || isPast || isTooFar;
   };
 
   const formatDuration = (minutes: number) => {
