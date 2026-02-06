@@ -36,6 +36,7 @@ import SubscriptionAlert from "./SubscriptionAlert";
 import AccountPaused from "@/pages/AccountPaused";
 import EarningsChart from "./EarningsChart";
 import DashboardHome from "./DashboardHome";
+import DataExport from "./DataExport";
 
 interface Service {
   id: string;
@@ -418,6 +419,9 @@ const BarberDashboard = () => {
 
               {/* Analytics Charts */}
               <EarningsChart barberId={profile?.id || ""} />
+
+              {/* Data Export */}
+              <DataExport barberId={profile?.id || ""} />
             </>
           )}
 
