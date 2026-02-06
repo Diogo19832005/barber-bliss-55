@@ -49,6 +49,12 @@ const navItems = [
   { label: "Ganhos", href: "/dashboard/earnings", icon: <DollarSign className="h-4 w-4" /> },
 ];
 
+const bottomTabItems = [
+  { label: "Agenda", href: "/dashboard", icon: <Calendar className="h-4 w-4" /> },
+  { label: "Próximos", href: "/dashboard/upcoming", icon: <Clock className="h-4 w-4" /> },
+  { label: "Ganhos", href: "/dashboard/earnings", icon: <DollarSign className="h-4 w-4" /> },
+];
+
 const RegularBarberDashboard = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
@@ -231,7 +237,7 @@ const RegularBarberDashboard = () => {
   }
 
   return (
-    <DashboardLayout navItems={navItems}>
+    <DashboardLayout navItems={navItems} bottomTabItems={bottomTabItems}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
