@@ -53,6 +53,8 @@ import { CalendarIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 import SubscriptionManager from "@/components/admin/SubscriptionManager";
 import RevenueDashboard from "@/components/admin/RevenueDashboard";
+import AdminActivityLog from "@/components/admin/AdminActivityLog";
+import { logAdminAction } from "@/lib/adminLogger";
 
 interface BarberSubscription {
   barber_id: string;
@@ -200,6 +202,7 @@ const navItems = [
  
    const handleApprove = async (barberId: string) => {
      setProcessingId(barberId);
+     const barber = barbers.find(b => b.id === barberId);
  
      const { error } = await supabase
        .from("profiles")
@@ -213,6 +216,7 @@ const navItems = [
          variant: "destructive",
        });
      } else {
+       await logAdminAction({ action: "approve_barber", targetType: "barber", targetId: barberId, targetName: barber?.full_name });
        toast({ title: "Barbeiro aprovado com sucesso!" });
        fetchData();
      }
@@ -222,6 +226,8 @@ const navItems = [
  
    const handleReject = async (barberId: string) => {
      setProcessingId(barberId);
+     const barber = barbers.find(b => b.id === barberId);
+     const wasPreviouslyApproved = barber?.barber_status === "approved";
  
      const { error } = await supabase
        .from("profiles")
@@ -235,7 +241,11 @@ const navItems = [
          variant: "destructive",
        });
      } else {
-       toast({ title: "Barbeiro recusado" });
+       await logAdminAction({ 
+         action: wasPreviouslyApproved ? "suspend_barber" : "reject_barber", 
+         targetType: "barber", targetId: barberId, targetName: barber?.full_name 
+       });
+       toast({ title: wasPreviouslyApproved ? "Barbeiro suspenso" : "Barbeiro recusado" });
        fetchData();
      }
   
@@ -244,6 +254,7 @@ const navItems = [
 
     const handleToggleBarbershopAdmin = async (barberId: string, currentStatus: boolean) => {
       setProcessingId(barberId);
+      const barber = barbers.find(b => b.id === barberId);
 
       const { error } = await supabase
         .from("profiles")
@@ -257,6 +268,10 @@ const navItems = [
           variant: "destructive",
         });
       } else {
+        await logAdminAction({ 
+          action: "toggle_barbershop_admin", targetType: "barber", targetId: barberId, targetName: barber?.full_name,
+          details: !currentStatus ? "Definido como admin de barbearia" : "Removido como admin de barbearia"
+        });
         toast({
           title: !currentStatus
             ? "Barbeiro definido como administrador da barbearia!"
@@ -345,6 +360,7 @@ const navItems = [
           .from("admin_permissions")
           .upsert([{ user_id: userId, ...newAdminPermissions }] as any);
       }
+      await logAdminAction({ action: "add_admin", targetType: "admin", targetName: email, details: `Tipo: ${newAdminRole === 'admin' ? 'Chefe' : 'Colaborador'}` });
       toast({ title: "Administrador adicionado!" });
       setNewAdminEmail("");
       setNewAdminPermissions({
@@ -374,6 +390,8 @@ const navItems = [
         variant: "destructive",
       });
     } else {
+      const admin = admins.find(a => a.user_id === adminUserId);
+      await logAdminAction({ action: "update_permissions", targetType: "admin", targetName: admin?.email, targetId: adminUserId });
       toast({ title: "Permissões atualizadas!" });
       setEditingPermissions(null);
       setEditPermValues(null);
@@ -404,6 +422,8 @@ const navItems = [
          variant: "destructive",
        });
      } else {
+       const admin = admins.find(a => a.id === adminId);
+       await logAdminAction({ action: "remove_admin", targetType: "admin", targetName: admin?.email, targetId: adminUserId });
        toast({ title: "Administrador removido" });
        fetchData();
      }
@@ -422,6 +442,8 @@ const navItems = [
         variant: "destructive",
       });
     } else {
+      const admin = admins.find(a => a.id === adminId);
+      await logAdminAction({ action: "change_admin_role", targetType: "admin", targetName: admin?.email, details: `Novo cargo: ${newRole === 'admin' ? 'Chefe' : 'Colaborador'}` });
       toast({ title: newRole === 'admin' ? "Promovido a Administrador Chefe!" : "Alterado para Colaborador" });
       fetchData();
     }
@@ -928,6 +950,9 @@ const navItems = [
 
            {/* Revenue Dashboard - only for chief admins */}
            {isChiefAdmin && <RevenueDashboard />}
+
+           {/* Activity Log - only for chief admins */}
+           {isChiefAdmin && <AdminActivityLog />}
 
            {/* Subscriptions - only visible with financial permissions */}
            {myPermissions.can_view_financials && <SubscriptionManager />}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { logAdminAction } from "@/lib/adminLogger";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -236,6 +237,7 @@ const SubscriptionManager = () => {
           variant: "destructive",
         });
       } else {
+        await logAdminAction({ action: "update_subscription", targetType: "subscription", targetId: selectedBarber.id, targetName: selectedBarber.full_name, details: `Plano: ${editPlanType}, Status: ${editPaymentStatus}` });
         toast({ title: "Assinatura atualizada!" });
         setIsEditOpen(false);
         fetchSubscriptions();
@@ -267,6 +269,7 @@ const SubscriptionManager = () => {
           variant: "destructive",
         });
       } else {
+        await logAdminAction({ action: "create_subscription", targetType: "subscription", targetId: selectedBarber.id, targetName: selectedBarber.full_name });
         toast({ title: "Assinatura criada!" });
         setIsEditOpen(false);
         fetchSubscriptions();
@@ -307,6 +310,8 @@ const SubscriptionManager = () => {
         variant: "destructive",
       });
     } else {
+      const barber = subscriptions.find(b => b.subscription?.id === subscription.id);
+      await logAdminAction({ action: "mark_as_paid", targetType: "subscription", targetId: subscription.barber_id, targetName: barber?.full_name, details: `Plano: ${subscription.plan_type}` });
       toast({ title: "Pagamento registrado!" });
       fetchSubscriptions();
     }
@@ -331,6 +336,8 @@ const SubscriptionManager = () => {
         variant: "destructive",
       });
     } else {
+      const barber = subscriptions.find(b => b.subscription?.id === subscription.id);
+      await logAdminAction({ action: "toggle_pause", targetType: "subscription", targetId: subscription.barber_id, targetName: barber?.full_name, details: isPaused ? "Reativado" : "Pausado" });
       toast({ 
         title: isPaused ? "Conta reativada!" : "Conta pausada!",
         description: isPaused 
