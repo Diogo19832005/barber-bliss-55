@@ -151,7 +151,9 @@ const PublicBooking = () => {
     }
 
     setBarber(barberData);
-    // Set showHero based on barber's preference
+    // Save barbershop context for client dashboard
+    localStorage.setItem("last_barbershop_id", barberData.id);
+    localStorage.setItem("last_barbershop_name", barberData.nome_exibido || barberData.full_name);
     setShowHero(barberData.hero_enabled !== false);
 
     // Fetch team members (barbers who belong to this barbershop)

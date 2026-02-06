@@ -54,20 +54,41 @@ const ClientDashboard = () => {
   }, [profile?.id]);
 
   const fetchData = async () => {
-    // Fetch barbers with their services
-    const { data: barbersData } = await supabase
-      .from("profiles")
-      .select("id, full_name, avatar_url")
-       .eq("role", "barber")
-       .eq("barber_status", "approved");
+    // Get the barbershop context from last visited public link
+    const lastBarbershopId = localStorage.getItem("last_barbershop_id");
 
-    if (barbersData) {
+    if (lastBarbershopId) {
+      // Fetch the barbershop owner
+      const { data: ownerData } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .eq("id", lastBarbershopId)
+        .eq("role", "barber")
+        .eq("barber_status", "approved")
+        .maybeSingle();
+
+      // Fetch team members of this barbershop
+      const { data: teamData } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .eq("barbershop_owner_id", lastBarbershopId)
+        .eq("role", "barber")
+        .eq("barber_status", "approved");
+
+      const allBarbers = [
+        ...(ownerData ? [ownerData] : []),
+        ...(teamData || []),
+      ];
+
+      // Fetch services for each barber
       const barbersWithServices = await Promise.all(
-        barbersData.map(async (barber) => {
+        allBarbers.map(async (barber) => {
+          // For team members, use the owner's services
+          const serviceOwnerId = barber.id === lastBarbershopId ? barber.id : lastBarbershopId;
           const { data: services } = await supabase
             .from("services")
             .select("id, name, duration_minutes, price")
-            .eq("barber_id", barber.id)
+            .eq("barber_id", serviceOwnerId)
             .eq("is_active", true);
 
           return { ...barber, services: services || [] };
@@ -75,6 +96,29 @@ const ClientDashboard = () => {
       );
 
       setBarbers(barbersWithServices);
+    } else {
+      // Fallback: show all barbers if no barbershop context
+      const { data: barbersData } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .eq("role", "barber")
+        .eq("barber_status", "approved");
+
+      if (barbersData) {
+        const barbersWithServices = await Promise.all(
+          barbersData.map(async (barber) => {
+            const { data: services } = await supabase
+              .from("services")
+              .select("id, name, duration_minutes, price")
+              .eq("barber_id", barber.id)
+              .eq("is_active", true);
+
+            return { ...barber, services: services || [] };
+          })
+        );
+
+        setBarbers(barbersWithServices);
+      }
     }
 
     // Fetch user's appointments
@@ -172,7 +216,11 @@ const ClientDashboard = () => {
 
         {/* Available Barbers */}
         <div>
-          <h2 className="mb-4 text-xl font-semibold">Barbeiros Disponíveis</h2>
+          <h2 className="mb-4 text-xl font-semibold">
+            {localStorage.getItem("last_barbershop_name")
+              ? `Barbeiros — ${localStorage.getItem("last_barbershop_name")}`
+              : "Barbeiros Disponíveis"}
+          </h2>
           {barbers.length === 0 ? (
             <Card className="glass-card">
               <CardContent className="py-12 text-center">
