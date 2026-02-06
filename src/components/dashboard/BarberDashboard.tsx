@@ -24,6 +24,7 @@ import {
   Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { History } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
@@ -41,6 +42,7 @@ import EarningsChart from "./EarningsChart";
 import DashboardHome from "./DashboardHome";
 import DataExport from "./DataExport";
 import ClientsHistory from "./ClientsHistory";
+import ServiceHistory from "./ServiceHistory";
 
 interface Service {
   id: string;
@@ -78,6 +80,7 @@ const navItems = [
   { label: "Dashboard", href: "/dashboard/analytics", icon: <TrendingUp className="h-4 w-4" /> },
   { label: "Agenda", href: "/dashboard/agenda", icon: <Calendar className="h-4 w-4" /> },
   { label: "Próximos", href: "/dashboard/upcoming", icon: <Clock className="h-4 w-4" /> },
+  { label: "Histórico", href: "/dashboard/history", icon: <History className="h-4 w-4" /> },
   { label: "Clientes", href: "/dashboard/clients", icon: <UserCheck className="h-4 w-4" /> },
   { label: "Serviços", href: "/dashboard/services", icon: <Scissors className="h-4 w-4" /> },
   { label: "Horários", href: "/dashboard/schedule", icon: <Clock className="h-4 w-4" /> },
@@ -293,6 +296,7 @@ const BarberDashboard = () => {
   const isServicesPage = currentPath === "/dashboard/services";
   const isSchedulePage = currentPath === "/dashboard/schedule";
   const isTeamPage = currentPath === "/dashboard/team";
+  const isHistoryPage = currentPath === "/dashboard/history";
 
   return (
     <DashboardLayout navItems={navItems} bottomTabItems={bottomTabItems}>
@@ -680,6 +684,11 @@ const BarberDashboard = () => {
                 </div>
              </CardContent>
            </Card>
+         )}
+
+         {/* History Page */}
+         {isHistoryPage && profile?.id && (
+           <ServiceHistory barberId={profile.id} />
          )}
 
          {/* Team Page - Only for barbershop admins */}
