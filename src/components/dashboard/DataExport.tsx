@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, Loader2, FileSpreadsheet, CalendarIcon } from "lucide-react";
-import { format, subDays, subMonths } from "date-fns";
+import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
@@ -15,47 +15,17 @@ interface DataExportProps {
   barberId: string;
 }
 
-const exportPeriods = [
-  { label: "7 dias", days: 7 },
-  { label: "15 dias", days: 15 },
-  { label: "1 mês", months: 1 },
-  { label: "2 meses", months: 2 },
-  { label: "3 meses", months: 3 },
-  { label: "6 meses", months: 6 },
-  { label: "12 meses", months: 12 },
-  { label: "13 meses", months: 13 },
-];
-
 const DataExport = ({ barberId }: DataExportProps) => {
   const { toast } = useToast();
-  const [isExporting, setIsExporting] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
-  const getDateRange = (period: typeof exportPeriods[0]) => {
-    const endDate = new Date();
-    let startDate: Date;
-
-    if (period.days) {
-      startDate = subDays(endDate, period.days);
-    } else if (period.months) {
-      startDate = subMonths(endDate, period.months);
-    } else {
-      startDate = subDays(endDate, 7);
-    }
-
-    return {
-      startDate: format(startDate, "yyyy-MM-dd"),
-      endDate: format(endDate, "yyyy-MM-dd"),
-    };
-  };
-
-  const exportData = async (period: typeof exportPeriods[0] | null, customRange?: { startDate: string; endDate: string }) => {
-    const exportLabel = period?.label || "Personalizado";
-    setIsExporting(exportLabel);
+  const exportData = async (customRange: { startDate: string; endDate: string }) => {
+    setIsExporting(true);
 
     try {
-      const { startDate, endDate } = customRange || getDateRange(period!);
+      const { startDate, endDate } = customRange;
 
       // Fetch appointments with related data
       const { data: appointments, error } = await supabase
@@ -85,7 +55,7 @@ const DataExport = ({ barberId }: DataExportProps) => {
           description: `Nenhum agendamento encontrado no período selecionado.`,
           variant: "destructive",
         });
-        setIsExporting(null);
+        setIsExporting(false);
         return;
       }
 
@@ -102,7 +72,7 @@ const DataExport = ({ barberId }: DataExportProps) => {
       // Create CSV content
       const csvRows = [
         // Header with summary
-        [`Relatório de Agendamentos - ${exportLabel}`],
+        [`Relatório de Agendamentos`],
         [`Período: ${format(new Date(startDate), "dd/MM/yyyy", { locale: ptBR })} a ${format(new Date(endDate), "dd/MM/yyyy", { locale: ptBR })}`],
         [`Total de Agendamentos: ${totalAppointments}`],
         [`Concluídos: ${completedCount}`],
@@ -149,8 +119,8 @@ const DataExport = ({ barberId }: DataExportProps) => {
       // Create download link
       const link = document.createElement("a");
       link.href = url;
-      const fileLabel = period ? period.label.replace(" ", "_") : `${format(new Date(startDate), "dd-MM-yyyy")}_a_${format(new Date(endDate), "dd-MM-yyyy")}`;
-      link.download = `agendamentos_${fileLabel}_${format(new Date(), "yyyy-MM-dd")}.csv`;
+      const fileLabel = `${format(new Date(startDate), "dd-MM-yyyy")}_a_${format(new Date(endDate), "dd-MM-yyyy")}`;
+      link.download = `agendamentos_${fileLabel}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -168,7 +138,7 @@ const DataExport = ({ barberId }: DataExportProps) => {
         variant: "destructive",
       });
     } finally {
-      setIsExporting(null);
+      setIsExporting(false);
     }
   };
 
@@ -183,11 +153,11 @@ const DataExport = ({ barberId }: DataExportProps) => {
           Baixe seus dados de agendamentos em formato CSV (compatível com Excel)
         </p>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent>
         {/* Custom Date Range Picker */}
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
           <div className="flex-1 w-full">
-            <p className="text-sm font-medium mb-2">Período Personalizado</p>
+            <p className="text-sm font-medium mb-2">Selecione o Período</p>
             <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -232,7 +202,7 @@ const DataExport = ({ barberId }: DataExportProps) => {
           <Button
             onClick={() => {
               if (dateRange?.from && dateRange?.to) {
-                exportData(null, {
+                exportData({
                   startDate: format(dateRange.from, "yyyy-MM-dd"),
                   endDate: format(dateRange.to, "yyyy-MM-dd"),
                 });
@@ -245,10 +215,10 @@ const DataExport = ({ barberId }: DataExportProps) => {
                 });
               }
             }}
-            disabled={isExporting !== null || !dateRange?.from || !dateRange?.to}
+            disabled={isExporting || !dateRange?.from || !dateRange?.to}
             className="w-full sm:w-auto"
           >
-            {isExporting === "Personalizado" ? (
+            {isExporting ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
               <Download className="h-4 w-4 mr-2" />
@@ -256,37 +226,7 @@ const DataExport = ({ barberId }: DataExportProps) => {
             Exportar
           </Button>
         </div>
-
-        {/* Divider */}
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">ou escolha um período</span>
-          </div>
-        </div>
-
-        {/* Preset Buttons */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {exportPeriods.map((period) => (
-            <Button
-              key={period.label}
-              variant="outline"
-              className="h-auto flex-col gap-1 py-3"
-              onClick={() => exportData(period)}
-              disabled={isExporting !== null}
-            >
-              {isExporting === period.label ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4" />
-              )}
-              <span className="text-xs font-medium">{period.label}</span>
-            </Button>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground text-center">
+        <p className="mt-4 text-xs text-muted-foreground text-center">
           Os dados são armazenados por até 13 meses para histórico e análises
         </p>
       </CardContent>
