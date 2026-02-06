@@ -323,170 +323,53 @@ const BarberDashboard = () => {
            />
          )}
 
-         {/* Dashboard/Analytics Page */}
-         {isAnalyticsPage && (
-           <>
-             {/* Public Link Card */}
-             {publicLink && (
-               <Card className="glass-card border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
-                 <CardContent className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center">
-                   <div className="flex items-center gap-3">
-                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20">
-                       <LinkIcon className="h-5 w-5 text-primary" />
-                     </div>
-                     <div>
-                       <p className="text-sm font-medium text-muted-foreground">Seu Link Público</p>
-                       <p className="font-mono text-sm text-foreground break-all">{publicLink}</p>
-                     </div>
-                   </div>
-                   <Button
-                     variant="gold"
-                     size="sm"
-                     onClick={() => {
-                       navigator.clipboard.writeText(publicLink);
-                       setLinkCopied(true);
-                       toast({ title: "Link copiado!" });
-                       setTimeout(() => setLinkCopied(false), 2000);
-                     }}
-                   >
-                     {linkCopied ? (
-                       <>
-                         <Check className="mr-2 h-4 w-4" />
-                         Copiado!
-                       </>
-                     ) : (
-                       <>
-                         <Copy className="mr-2 h-4 w-4" />
-                         Copiar Link
-                       </>
-                     )}
-                   </Button>
-                 </CardContent>
-               </Card>
-             )}
+         {/* Dashboard/Analytics Page - Only charts and performance metrics */}
+          {isAnalyticsPage && (
+            <>
+              {/* Stats Cards */}
+              <div className="grid gap-4 md:grid-cols-3">
+                <Card className="glass-card">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Hoje
+                    </CardTitle>
+                    <DollarSign className="h-4 w-4 text-primary" />
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">
+                      R$ {earnings.daily.toFixed(2)}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="glass-card">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Esta Semana
+                    </CardTitle>
+                    <TrendingUp className="h-4 w-4 text-success" />
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">
+                      R$ {earnings.weekly.toFixed(2)}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="glass-card">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Este Mês
+                    </CardTitle>
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">
+                      R$ {earnings.monthly.toFixed(2)}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
 
-             {/* Stats Cards */}
-             <div className="grid gap-4 md:grid-cols-3">
-               <Card className="glass-card">
-                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                     Hoje
-                   </CardTitle>
-                   <DollarSign className="h-4 w-4 text-primary" />
-                 </CardHeader>
-                 <CardContent>
-                   <p className="text-2xl font-bold">
-                     R$ {earnings.daily.toFixed(2)}
-                   </p>
-                 </CardContent>
-               </Card>
-               <Card className="glass-card">
-                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                     Esta Semana
-                   </CardTitle>
-                   <TrendingUp className="h-4 w-4 text-success" />
-                 </CardHeader>
-                 <CardContent>
-                   <p className="text-2xl font-bold">
-                     R$ {earnings.weekly.toFixed(2)}
-                   </p>
-                 </CardContent>
-               </Card>
-               <Card className="glass-card">
-                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                     Este Mês
-                   </CardTitle>
-                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                 </CardHeader>
-                 <CardContent>
-                   <p className="text-2xl font-bold">
-                     R$ {earnings.monthly.toFixed(2)}
-                   </p>
-                 </CardContent>
-               </Card>
-             </div>
-
-             {/* Today's Appointments */}
-             <Card className="glass-card">
-               <CardHeader>
-                 <CardTitle className="flex items-center gap-2">
-                   <Calendar className="h-5 w-5 text-primary" />
-                   Agenda de Hoje
-                 </CardTitle>
-               </CardHeader>
-               <CardContent>
-                 {appointments.length === 0 ? (
-                   <p className="py-8 text-center text-muted-foreground">
-                     Nenhum agendamento para hoje
-                   </p>
-                 ) : (
-                   <div className="space-y-3">
-                     {appointments.map((apt) => (
-                       <div
-                         key={apt.id}
-                         className={`flex items-center justify-between rounded-xl border p-4 ${
-                           apt.status === "completed" 
-                             ? "border-success/30 bg-success/5" 
-                             : apt.status === "cancelled"
-                             ? "border-destructive/30 bg-destructive/5"
-                             : "border-border"
-                         }`}
-                       >
-                         <div className="flex items-center gap-4">
-                           <div className="text-center">
-                             <p className="text-lg font-semibold">
-                               {apt.start_time.slice(0, 5)}
-                             </p>
-                             <p className="text-xs text-muted-foreground">
-                               {apt.end_time.slice(0, 5)}
-                             </p>
-                           </div>
-                           <div>
-                             <div className="flex items-center gap-2">
-                               <p className="font-medium">{apt.client?.full_name}</p>
-                               {apt.client?.phone && (
-                                 <a
-                                   href={`https://wa.me/${apt.client.phone.replace(/\D/g, '')}`}
-                                   target="_blank"
-                                   rel="noopener noreferrer"
-                                   className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 text-xs text-success hover:bg-success/30 transition-colors"
-                                   title="Enviar mensagem no WhatsApp"
-                                 >
-                                   <MessageCircle className="h-3 w-3" />
-                                   WhatsApp
-                                 </a>
-                               )}
-                             </div>
-                             <p className="text-sm text-muted-foreground">
-                               {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
-                             </p>
-                           </div>
-                         </div>
-                         {apt.status === "scheduled" && (
-                           <Button
-                             size="sm"
-                             variant="outline"
-                             onClick={() => handleCompleteAppointment(apt.id)}
-                           >
-                             Concluir
-                           </Button>
-                         )}
-                         {apt.status === "completed" && (
-                           <span className="text-sm text-success">✓ Concluído</span>
-                         )}
-                       </div>
-                     ))}
-                   </div>
-                 )}
-               </CardContent>
-             </Card>
-
-             {/* Upcoming Appointments */}
-             <UpcomingAppointments barberId={profile?.id || ""} />
-
-              {/* Analytics */}
+              {/* Analytics Charts */}
               <EarningsChart barberId={profile?.id || ""} />
             </>
           )}
