@@ -18,8 +18,12 @@ export type Database = {
         Row: {
           appointment_date: string
           barber_id: string
-          client_id: string
+          client_email: string | null
+          client_id: string | null
+          client_name: string | null
+          client_phone: string | null
           created_at: string
+          created_by: string | null
           end_time: string
           id: string
           notes: string | null
@@ -31,8 +35,12 @@ export type Database = {
         Insert: {
           appointment_date: string
           barber_id: string
-          client_id: string
+          client_email?: string | null
+          client_id?: string | null
+          client_name?: string | null
+          client_phone?: string | null
           created_at?: string
+          created_by?: string | null
           end_time: string
           id?: string
           notes?: string | null
@@ -44,8 +52,12 @@ export type Database = {
         Update: {
           appointment_date?: string
           barber_id?: string
-          client_id?: string
+          client_email?: string | null
+          client_id?: string | null
+          client_name?: string | null
+          client_phone?: string | null
           created_at?: string
+          created_by?: string | null
           end_time?: string
           id?: string
           notes?: string | null
@@ -65,6 +77,13 @@ export type Database = {
           {
             foreignKeyName: "appointments_client_id_fkey"
             columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

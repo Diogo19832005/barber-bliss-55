@@ -25,9 +25,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ServiceModal from "./ServiceModal";
+import BarberCreateAppointmentModal from "./BarberCreateAppointmentModal";
 import ScheduleModal from "./ScheduleModal";
 import SettingsModal from "./SettingsModal";
 import TeamManagement from "./TeamManagement";
@@ -56,6 +58,9 @@ interface Appointment {
   start_time: string;
   end_time: string;
   status: string;
+  created_by: string | null;
+  client_name: string | null;
+  client_phone: string | null;
   client: { full_name: string; phone: string | null } | null;
   service: { name: string; price: number } | null;
 }
@@ -94,6 +99,7 @@ const BarberDashboard = () => {
    const [publicLink, setPublicLink] = useState<string | null>(null);
    const [linkCopied, setLinkCopied] = useState(false);
    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+   const [isCreateAppointmentOpen, setIsCreateAppointmentOpen] = useState(false);
    
    const [isPaused, setIsPaused] = useState<boolean | null>(null);
    const [isCheckingStatus, setIsCheckingStatus] = useState(true);
@@ -437,6 +443,14 @@ const BarberDashboard = () => {
           {/* Agenda Page - Today's Appointments and Upcoming */}
           {isAgendaPage && (
             <>
+              {/* Create Appointment Button */}
+              <div className="flex justify-end">
+                <Button variant="gold" onClick={() => setIsCreateAppointmentOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Criar Agendamento
+                </Button>
+              </div>
+
               {/* Today's Appointments */}
               <Card className="glass-card">
                 <CardHeader>
@@ -474,7 +488,10 @@ const BarberDashboard = () => {
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <p className="font-medium">{apt.client?.full_name}</p>
+                                <p className="font-medium">{apt.client?.full_name || apt.client_name || "Cliente avulso"}</p>
+                                {apt.created_by && (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Manual</Badge>
+                                )}
                                 {apt.client?.phone && (
                                   <a
                                     href={`https://wa.me/${apt.client.phone.replace(/\D/g, '')}`}
@@ -694,6 +711,14 @@ const BarberDashboard = () => {
            }}
          />
        )}
+
+        {/* Barber Create Appointment Modal */}
+        <BarberCreateAppointmentModal
+          isOpen={isCreateAppointmentOpen}
+          onClose={() => setIsCreateAppointmentOpen(false)}
+          onSuccess={() => fetchData()}
+          barberId={profile?.id || ""}
+        />
 
     </DashboardLayout>
   );
