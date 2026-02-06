@@ -2,10 +2,14 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Loader2, FileSpreadsheet } from "lucide-react";
+import { Download, Loader2, FileSpreadsheet, CalendarIcon } from "lucide-react";
 import { format, subDays, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
 
 interface DataExportProps {
   barberId: string;
@@ -25,6 +29,8 @@ const exportPeriods = [
 const DataExport = ({ barberId }: DataExportProps) => {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const getDateRange = (period: typeof exportPeriods[0]) => {
     const endDate = new Date();
@@ -44,11 +50,12 @@ const DataExport = ({ barberId }: DataExportProps) => {
     };
   };
 
-  const exportData = async (period: typeof exportPeriods[0]) => {
-    setIsExporting(period.label);
+  const exportData = async (period: typeof exportPeriods[0] | null, customRange?: { startDate: string; endDate: string }) => {
+    const exportLabel = period?.label || "Personalizado";
+    setIsExporting(exportLabel);
 
     try {
-      const { startDate, endDate } = getDateRange(period);
+      const { startDate, endDate } = customRange || getDateRange(period!);
 
       // Fetch appointments with related data
       const { data: appointments, error } = await supabase
@@ -75,7 +82,7 @@ const DataExport = ({ barberId }: DataExportProps) => {
       if (!appointments || appointments.length === 0) {
         toast({
           title: "Sem dados",
-          description: `Nenhum agendamento encontrado nos últimos ${period.label}.`,
+          description: `Nenhum agendamento encontrado no período selecionado.`,
           variant: "destructive",
         });
         setIsExporting(null);
@@ -95,7 +102,7 @@ const DataExport = ({ barberId }: DataExportProps) => {
       // Create CSV content
       const csvRows = [
         // Header with summary
-        [`Relatório de Agendamentos - Últimos ${period.label}`],
+        [`Relatório de Agendamentos - ${exportLabel}`],
         [`Período: ${format(new Date(startDate), "dd/MM/yyyy", { locale: ptBR })} a ${format(new Date(endDate), "dd/MM/yyyy", { locale: ptBR })}`],
         [`Total de Agendamentos: ${totalAppointments}`],
         [`Concluídos: ${completedCount}`],
@@ -142,7 +149,8 @@ const DataExport = ({ barberId }: DataExportProps) => {
       // Create download link
       const link = document.createElement("a");
       link.href = url;
-      link.download = `agendamentos_${period.label.replace(" ", "_")}_${format(new Date(), "yyyy-MM-dd")}.csv`;
+      const fileLabel = period ? period.label.replace(" ", "_") : `${format(new Date(startDate), "dd-MM-yyyy")}_a_${format(new Date(endDate), "dd-MM-yyyy")}`;
+      link.download = `agendamentos_${fileLabel}_${format(new Date(), "yyyy-MM-dd")}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -175,7 +183,91 @@ const DataExport = ({ barberId }: DataExportProps) => {
           Baixe seus dados de agendamentos em formato CSV (compatível com Excel)
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {/* Custom Date Range Picker */}
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+          <div className="flex-1 w-full">
+            <p className="text-sm font-medium mb-2">Período Personalizado</p>
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !dateRange && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
+                        {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
+                      </>
+                    ) : (
+                      format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
+                    )
+                  ) : (
+                    <span>Selecione o período</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  numberOfMonths={2}
+                  locale={ptBR}
+                  className="pointer-events-auto"
+                  disabled={(date) =>
+                    date > new Date() || date < subMonths(new Date(), 13)
+                  }
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <Button
+            onClick={() => {
+              if (dateRange?.from && dateRange?.to) {
+                exportData(null, {
+                  startDate: format(dateRange.from, "yyyy-MM-dd"),
+                  endDate: format(dateRange.to, "yyyy-MM-dd"),
+                });
+                setIsCalendarOpen(false);
+              } else {
+                toast({
+                  title: "Selecione um período",
+                  description: "Por favor, selecione a data inicial e final.",
+                  variant: "destructive",
+                });
+              }
+            }}
+            disabled={isExporting !== null || !dateRange?.from || !dateRange?.to}
+            className="w-full sm:w-auto"
+          >
+            {isExporting === "Personalizado" ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            Exportar
+          </Button>
+        </div>
+
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">ou escolha um período</span>
+          </div>
+        </div>
+
+        {/* Preset Buttons */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {exportPeriods.map((period) => (
             <Button
@@ -194,7 +286,7 @@ const DataExport = ({ barberId }: DataExportProps) => {
             </Button>
           ))}
         </div>
-        <p className="mt-4 text-xs text-muted-foreground text-center">
+        <p className="text-xs text-muted-foreground text-center">
           Os dados são armazenados por até 13 meses para histórico e análises
         </p>
       </CardContent>
