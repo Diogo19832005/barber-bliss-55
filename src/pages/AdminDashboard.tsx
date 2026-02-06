@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -15,7 +15,9 @@ import {
   CreditCard,
   Store,
   MessageCircle,
-  Phone
+  Phone,
+  Filter,
+  BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +34,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Navigate } from "react-router-dom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import SubscriptionManager from "@/components/admin/SubscriptionManager";
+
+interface BarberSubscription {
+  barber_id: string;
+  plan_type: string;
+  payment_status: string;
+}
 
 interface Barber {
   id: string;
@@ -46,6 +61,7 @@ interface Barber {
   slug_final: string | null;
   is_barbershop_admin: boolean;
   barbershop_owner_id: string | null;
+  subscription?: BarberSubscription | null;
 }
 
 interface Admin {
@@ -68,9 +84,11 @@ const navItems = [
    const [admins, setAdmins] = useState<Admin[]>([]);
    const [isLoading, setIsLoading] = useState(true);
    const [processingId, setProcessingId] = useState<string | null>(null);
-   const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
-   const [newAdminEmail, setNewAdminEmail] = useState("");
-   const [isAddingAdmin, setIsAddingAdmin] = useState(false);
+    const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
+    const [newAdminEmail, setNewAdminEmail] = useState("");
+    const [isAddingAdmin, setIsAddingAdmin] = useState(false);
+    const [filterMonth, setFilterMonth] = useState<string>("all");
+    const [filterYear, setFilterYear] = useState<string>(new Date().getFullYear().toString());
  
    useEffect(() => {
      if (isAdmin) {
@@ -78,29 +96,37 @@ const navItems = [
      }
    }, [isAdmin]);
  
-   const fetchData = async () => {
-     setIsLoading(true);
- 
-      // Fetch all barbers
-      const { data: barbersData } = await supabase
-        .from("profiles")
-        .select("id, user_id, full_name, phone, barber_status, created_at, public_id, slug_final, is_barbershop_admin, barbershop_owner_id")
-        .eq("role", "barber")
-        .order("created_at", { ascending: false });
+    const fetchData = async () => {
+      setIsLoading(true);
 
-      // Fetch emails for each barber
-      if (barbersData) {
-        const barbersWithEmails = await Promise.all(
-          barbersData.map(async (barber) => {
-            const { data: email } = await supabase.rpc(
-              'get_user_email_by_id' as any,
-              { target_user_id: barber.user_id }
-            );
-            return { ...barber, email: email as string | null };
-          })
-        );
-        setBarbers(barbersWithEmails);
-      }
+       // Fetch all barbers
+       const { data: barbersData } = await supabase
+         .from("profiles")
+         .select("id, user_id, full_name, phone, barber_status, created_at, public_id, slug_final, is_barbershop_admin, barbershop_owner_id")
+         .eq("role", "barber")
+         .order("created_at", { ascending: false });
+
+       // Fetch all subscriptions
+       const { data: subscriptionsData } = await supabase
+         .from("barber_subscriptions")
+         .select("barber_id, plan_type, payment_status");
+
+       const subsMap = new Map<string, BarberSubscription>();
+       subscriptionsData?.forEach(sub => subsMap.set(sub.barber_id, sub));
+
+       // Fetch emails for each barber
+       if (barbersData) {
+         const barbersWithEmails = await Promise.all(
+           barbersData.map(async (barber) => {
+             const { data: email } = await supabase.rpc(
+               'get_user_email_by_id' as any,
+               { target_user_id: barber.user_id }
+             );
+             return { ...barber, email: email as string | null, subscription: subsMap.get(barber.id) || null };
+           })
+         );
+         setBarbers(barbersWithEmails);
+       }
  
      // Fetch admins
      const { data: adminsData } = await supabase
@@ -304,9 +330,52 @@ const navItems = [
      }
    };
  
-   const pendingBarbers = barbers.filter(b => b.barber_status === "pending");
-   const approvedBarbers = barbers.filter(b => b.barber_status === "approved");
-   const rejectedBarbers = barbers.filter(b => b.barber_status === "rejected");
+    const pendingBarbers = barbers.filter(b => b.barber_status === "pending");
+    const approvedBarbers = barbers.filter(b => b.barber_status === "approved");
+    const rejectedBarbers = barbers.filter(b => b.barber_status === "rejected");
+
+    const months = [
+      { value: "all", label: "Todos os meses" },
+      { value: "0", label: "Janeiro" },
+      { value: "1", label: "Fevereiro" },
+      { value: "2", label: "Março" },
+      { value: "3", label: "Abril" },
+      { value: "4", label: "Maio" },
+      { value: "5", label: "Junho" },
+      { value: "6", label: "Julho" },
+      { value: "7", label: "Agosto" },
+      { value: "8", label: "Setembro" },
+      { value: "9", label: "Outubro" },
+      { value: "10", label: "Novembro" },
+      { value: "11", label: "Dezembro" },
+    ];
+
+    const availableYears = useMemo(() => {
+      const years = new Set(barbers.map(b => new Date(b.created_at).getFullYear()));
+      years.add(new Date().getFullYear());
+      return Array.from(years).sort((a, b) => b - a);
+    }, [barbers]);
+
+    const filteredBarbers = useMemo(() => {
+      if (filterMonth === "all") return barbers;
+      return barbers.filter(b => {
+        const d = new Date(b.created_at);
+        return d.getMonth() === parseInt(filterMonth) && d.getFullYear() === parseInt(filterYear);
+      });
+    }, [barbers, filterMonth, filterYear]);
+
+    const planStats = useMemo(() => {
+      const filtered = filteredBarbers;
+      const withSub = filtered.filter(b => b.subscription && b.subscription.payment_status !== 'trial');
+      const monthly = withSub.filter(b => b.subscription?.plan_type === 'monthly').length;
+      const quarterly = withSub.filter(b => b.subscription?.plan_type === 'quarterly').length;
+      const semiannual = withSub.filter(b => b.subscription?.plan_type === 'semiannual').length;
+      const yearly = withSub.filter(b => b.subscription?.plan_type === 'yearly').length;
+      const trial = filtered.filter(b => b.subscription?.payment_status === 'trial').length;
+      const paid = filtered.filter(b => b.subscription?.payment_status === 'paid').length;
+      const noSub = filtered.filter(b => !b.subscription).length;
+      return { total: filtered.length, monthly, quarterly, semiannual, yearly, trial, paid, noSub };
+    }, [filteredBarbers]);
  
    if (authLoading || isLoading) {
      return (
@@ -452,22 +521,105 @@ const navItems = [
            </Card>
          )}
  
-         {/* All Barbers */}
-         <Card className="glass-card">
-           <CardHeader>
-             <CardTitle className="flex items-center gap-2">
-               <Users className="h-5 w-5 text-primary" />
-               Todos os Barbeiros
-             </CardTitle>
-           </CardHeader>
-           <CardContent>
-             {barbers.length === 0 ? (
+          {/* Period Filter & Stats */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5 text-primary" />
+                Filtrar por Período de Cadastro
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-3">
+                <div className="w-48">
+                  <Label className="text-xs text-muted-foreground">Mês</Label>
+                  <Select value={filterMonth} onValueChange={setFilterMonth}>
+                    <SelectTrigger className="bg-secondary/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {months.map(m => (
+                        <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {filterMonth !== "all" && (
+                  <div className="w-32">
+                    <Label className="text-xs text-muted-foreground">Ano</Label>
+                    <Select value={filterYear} onValueChange={setFilterYear}>
+                      <SelectTrigger className="bg-secondary/50">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableYears.map(y => (
+                          <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+
+              {filterMonth !== "all" && (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-lg border border-border bg-secondary/30 p-3 text-center">
+                    <p className="text-2xl font-bold">{planStats.total}</p>
+                    <p className="text-xs text-muted-foreground">Cadastrados no período</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-secondary/30 p-3 text-center">
+                    <p className="text-2xl font-bold text-success">{planStats.paid}</p>
+                    <p className="text-xs text-muted-foreground">Com plano ativo (pago)</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-secondary/30 p-3 text-center">
+                    <p className="text-2xl font-bold text-warning">{planStats.trial}</p>
+                    <p className="text-xs text-muted-foreground">Em período de teste</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-secondary/30 p-3 text-center">
+                    <p className="text-2xl font-bold text-muted-foreground">{planStats.noSub}</p>
+                    <p className="text-xs text-muted-foreground">Sem assinatura</p>
+                  </div>
+                </div>
+              )}
+
+              {filterMonth !== "all" && (
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" className="gap-1">
+                    <BarChart3 className="h-3 w-3" />
+                    Mensal: {planStats.monthly}
+                  </Badge>
+                  <Badge variant="outline" className="gap-1">
+                    Trimestral: {planStats.quarterly}
+                  </Badge>
+                  <Badge variant="outline" className="gap-1">
+                    Semestral: {planStats.semiannual}
+                  </Badge>
+                  <Badge variant="outline" className="gap-1">
+                    Anual: {planStats.yearly}
+                  </Badge>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* All Barbers (filtered) */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                {filterMonth !== "all"
+                  ? `Barbeiros — ${months.find(m => m.value === filterMonth)?.label} ${filterYear} (${filteredBarbers.length})`
+                  : `Todos os Barbeiros (${barbers.length})`}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {filteredBarbers.length === 0 ? (
                <p className="py-8 text-center text-muted-foreground">
-                 Nenhum barbeiro cadastrado
-               </p>
-             ) : (
-               <div className="space-y-3">
-                  {barbers.map((barber) => (
+                  Nenhum barbeiro encontrado neste período
+                </p>
+              ) : (
+                <div className="space-y-3">
+                   {filteredBarbers.map((barber) => (
                     <div
                       key={barber.id}
                       className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
