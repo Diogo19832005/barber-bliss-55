@@ -78,7 +78,8 @@ const PublicBooking = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  // Multi-service selection
+  const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [allSlots, setAllSlots] = useState<{ time: string; available: boolean; isBooked: boolean }[]>([]);
@@ -97,6 +98,8 @@ const PublicBooking = () => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [successType, setSuccessType] = useState<"booking" | "register">("booking");
+  const [bookedServicesInfo, setBookedServicesInfo] = useState<{ names: string[], total: number } | null>(null);
 
   // Auth states
   const [authMode, setAuthMode] = useState<"login" | "register">("register");
@@ -120,10 +123,14 @@ const PublicBooking = () => {
   }, [user, profile]);
 
   useEffect(() => {
-    if (selectedDate && selectedService && selectedBarber) {
+    if (selectedDate && selectedServices.length > 0 && selectedBarber) {
       fetchAvailableSlots();
     }
-  }, [selectedDate, selectedService, selectedBarber]);
+  }, [selectedDate, selectedServices, selectedBarber]);
+
+  // Calculate total duration for multi-service
+  const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0);
+  const totalPrice = selectedServices.reduce((sum, s) => sum + Number(s.price), 0);
 
   const fetchBarberData = async () => {
     setIsLoading(true);
@@ -210,7 +217,7 @@ const PublicBooking = () => {
   };
 
   const fetchAvailableSlots = async () => {
-    if (!selectedDate || !selectedService || !selectedBarber) return;
+    if (!selectedDate || selectedServices.length === 0 || !selectedBarber) return;
 
     const dayOfWeek = selectedDate.getDay();
     const schedule = schedules.find((s) => s.day_of_week === dayOfWeek);
@@ -235,7 +242,9 @@ const PublicBooking = () => {
     const slots: { time: string; available: boolean; isBooked: boolean }[] = [];
     const startTime = parse(schedule.start_time, "HH:mm:ss", new Date());
     const endTime = parse(schedule.end_time, "HH:mm:ss", new Date());
-    const serviceDuration = selectedService.duration_minutes;
+    
+    // Use total duration for multi-service
+    const serviceDuration = totalDuration;
 
     let currentSlot = startTime;
 
@@ -274,15 +283,27 @@ const PublicBooking = () => {
     setSelectedTime(null);
   };
 
-  const handleBookService = (service: Service) => {
-    setSelectedService(service);
-    setShowBookingForm(true);
+  // Toggle service selection for multi-service
+  const toggleServiceSelection = (service: Service) => {
+    setSelectedServices(prev => {
+      const exists = prev.find(s => s.id === service.id);
+      if (exists) {
+        return prev.filter(s => s.id !== service.id);
+      }
+      return [...prev, service];
+    });
+  };
+
+  const handleContinueToBooking = () => {
+    if (selectedServices.length > 0) {
+      setShowBookingForm(true);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedBarber || !selectedService || !selectedDate || !selectedTime) {
+    if (!selectedBarber || selectedServices.length === 0 || !selectedDate || !selectedTime) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios",
@@ -409,13 +430,15 @@ const PublicBooking = () => {
         throw new Error("Por favor, faça login ou crie uma conta para agendar.");
       }
 
-      // Create appointment
-      const endTime = format(
-        addMinutes(parse(selectedTime, "HH:mm", new Date()), selectedService.duration_minutes),
+      // Create appointments for all selected services
+      const dateStr = format(selectedDate, "yyyy-MM-dd");
+      let currentStartTime = selectedTime;
+
+      // Calculate full end time for conflict check
+      const fullEndTime = format(
+        addMinutes(parse(selectedTime, "HH:mm", new Date()), totalDuration),
         "HH:mm"
       );
-
-      const dateStr = format(selectedDate, "yyyy-MM-dd");
 
       // CRITICAL: Re-validate availability right before booking to prevent double-bookings
       const { data: existingAppointments } = await supabase
@@ -431,8 +454,8 @@ const PublicBooking = () => {
         const aptEnd = apt.end_time.slice(0, 5);
         return (
           (selectedTime >= aptStart && selectedTime < aptEnd) ||
-          (endTime > aptStart && endTime <= aptEnd) ||
-          (selectedTime <= aptStart && endTime >= aptEnd)
+          (fullEndTime > aptStart && fullEndTime <= aptEnd) ||
+          (selectedTime <= aptStart && fullEndTime >= aptEnd)
         );
       });
 
@@ -442,22 +465,39 @@ const PublicBooking = () => {
         throw new Error("Este horário acabou de ser reservado. Por favor, escolha outro horário.");
       }
 
-      const { error: appointmentError } = await supabase
-        .from("appointments")
-        .insert({
-          client_id: clientProfileId,
-          barber_id: selectedBarber.id,
-          service_id: selectedService.id,
-          appointment_date: dateStr,
-          start_time: selectedTime,
-          end_time: endTime,
-          notes: `Email: ${emailToUse}${phoneToUse ? `, Tel: ${phoneToUse}` : ""}`,
-        });
+      // Create one appointment per service, sequentially
+      for (const service of selectedServices) {
+        const serviceEndTime = format(
+          addMinutes(parse(currentStartTime, "HH:mm", new Date()), service.duration_minutes),
+          "HH:mm"
+        );
 
-      if (appointmentError) {
-        throw new Error(appointmentError.message);
+        const { error: appointmentError } = await supabase
+          .from("appointments")
+          .insert({
+            client_id: clientProfileId,
+            barber_id: selectedBarber.id,
+            service_id: service.id,
+            appointment_date: dateStr,
+            start_time: currentStartTime,
+            end_time: serviceEndTime,
+            notes: `Email: ${emailToUse}${phoneToUse ? `, Tel: ${phoneToUse}` : ""}`,
+          });
+
+        if (appointmentError) {
+          throw new Error(appointmentError.message);
+        }
+
+        // Next service starts when this one ends
+        currentStartTime = serviceEndTime;
       }
 
+      // Store success info
+      setBookedServicesInfo({
+        names: selectedServices.map(s => s.name),
+        total: totalPrice
+      });
+      setSuccessType("booking");
       setBookingSuccess(true);
       toast({
         title: "Agendamento confirmado!",
@@ -466,7 +506,7 @@ const PublicBooking = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao agendar",
-        description: error.message,
+        description: error.message || "Ocorreu um erro inesperado. Tente novamente.",
         variant: "destructive",
       });
       setIsAuthLoading(false);
@@ -522,42 +562,98 @@ const PublicBooking = () => {
   }
 
   if (bookingSuccess) {
+    const primaryColor = barber?.cor_primaria || "#D97706";
+    
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-success/20">
-          <Check className="h-10 w-10 text-success" />
+      <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
+        <div className="max-w-md w-full text-center">
+          <div className="flex h-24 w-24 mx-auto items-center justify-center rounded-full bg-green-500/20">
+            <Check className="h-12 w-12 text-green-500" />
+          </div>
+          
+          <h1 className="mt-6 text-2xl font-bold">
+            {successType === "register" ? "Cadastro Realizado!" : "Agendamento Confirmado!"}
+          </h1>
+          
+          {successType === "booking" && (
+            <>
+              <p className="mt-4 text-muted-foreground">
+                Seu horário com {selectedBarber?.full_name || barber?.nome_exibido || barber?.full_name} foi reservado para
+              </p>
+              <p className="mt-2 text-lg font-semibold">
+                {selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })} às {selectedTime}
+              </p>
+              
+              {bookedServicesInfo && (
+                <div className="mt-4 rounded-xl bg-secondary/50 p-4 text-left">
+                  <p className="text-sm font-medium mb-2">Serviços agendados:</p>
+                  <ul className="space-y-1">
+                    {bookedServicesInfo.names.map((name, idx) => (
+                      <li key={idx} className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Check className="h-3 w-3 text-green-500" />
+                        {name}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-3 font-semibold" style={{ color: primaryColor }}>
+                    Total: R$ {bookedServicesInfo.total.toFixed(2)}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+          
+          {successType === "register" && (
+            <p className="mt-4 text-muted-foreground">
+              Sua conta foi criada com sucesso! Agora você pode fazer agendamentos.
+            </p>
+          )}
+          
+          <div className="mt-8 space-y-3">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setBookingSuccess(false);
+                setSelectedServices([]);
+                setSelectedBarber(teamMembers.length === 1 ? teamMembers[0] : null);
+                setSelectedDate(undefined);
+                setSelectedTime(null);
+                setShowBookingForm(false);
+                setShowHero(barber?.hero_enabled !== false);
+                setRegisterName("");
+                setRegisterEmail("");
+                setRegisterPhone("");
+                setRegisterPassword("");
+                setLoginEmail("");
+                setLoginPassword("");
+                setBookedServicesInfo(null);
+              }}
+            >
+              Fazer novo agendamento
+            </Button>
+            
+            {user && (
+              <Button
+                className="w-full"
+                style={{ backgroundColor: primaryColor, color: "white" }}
+                onClick={() => navigate("/dashboard")}
+              >
+                Ver meus agendamentos
+              </Button>
+            )}
+            
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => {
+                window.location.href = "/";
+              }}
+            >
+              Sair
+            </Button>
+          </div>
         </div>
-        <h1 className="mt-6 text-2xl font-bold">Agendamento Confirmado!</h1>
-        <p className="mt-2 text-center text-muted-foreground">
-          Seu horário com {selectedBarber?.full_name || barber?.nome_exibido || barber?.full_name} foi reservado para
-          <br />
-          <span className="font-semibold text-foreground">
-            {selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })} às {selectedTime}
-          </span>
-        </p>
-        <p className="mt-4 text-sm text-muted-foreground">
-          {selectedService?.name} • R$ {selectedService?.price.toFixed(2)}
-        </p>
-        <Button
-          variant="outline"
-          className="mt-8"
-          onClick={() => {
-            setBookingSuccess(false);
-            setSelectedService(null);
-            setSelectedBarber(teamMembers.length === 1 ? teamMembers[0] : null);
-            setSelectedDate(undefined);
-            setSelectedTime(null);
-            setShowBookingForm(false);
-            setRegisterName("");
-            setRegisterEmail("");
-            setRegisterPhone("");
-            setRegisterPassword("");
-            setLoginEmail("");
-            setLoginPassword("");
-          }}
-        >
-          Fazer novo agendamento
-        </Button>
       </div>
     );
   }
@@ -568,7 +664,7 @@ const PublicBooking = () => {
   const fullAddress = [barber?.endereco, barber?.cidade, barber?.estado].filter(Boolean).join(", ");
 
   // Show booking form view
-  if (showBookingForm && selectedService) {
+  if (showBookingForm && selectedServices.length > 0) {
     return (
       <div className="min-h-screen bg-background">
         {/* Header with back button */}
@@ -585,9 +681,13 @@ const PublicBooking = () => {
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div>
-              <h1 className="text-lg font-semibold">{selectedService.name}</h1>
+              <h1 className="text-lg font-semibold">
+                {selectedServices.length === 1 
+                  ? selectedServices[0].name 
+                  : `${selectedServices.length} serviços`}
+              </h1>
               <p className="text-sm text-muted-foreground">
-                R$ {Number(selectedService.price).toFixed(2)} • {formatDuration(selectedService.duration_minutes)}
+                R$ {totalPrice.toFixed(2)} • {formatDuration(totalDuration)}
               </p>
             </div>
           </div>
@@ -855,12 +955,14 @@ const PublicBooking = () => {
                   <div className="rounded-xl bg-secondary/50 p-4">
                     <p className="text-sm font-medium">Resumo</p>
                     <div className="mt-2 space-y-1 text-sm text-muted-foreground">
-                      <p>{selectedService?.name}</p>
+                      {selectedServices.map((service, idx) => (
+                        <p key={idx}>{service.name}</p>
+                      ))}
                       <p>
                         {selectedDate && format(selectedDate, "dd/MM/yyyy")} às {selectedTime}
                       </p>
                       <p className="font-semibold" style={{ color: primaryColor }}>
-                        R$ {selectedService?.price.toFixed(2)}
+                        Total: R$ {totalPrice.toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -1052,7 +1154,8 @@ const PublicBooking = () => {
           className="rounded-t-xl py-4 px-4 -mx-4"
           style={{ backgroundColor: primaryColor }}
         >
-          <h2 className="text-lg font-semibold text-white">Escolha um Serviço</h2>
+          <h2 className="text-lg font-semibold text-white">Selecione os Serviços</h2>
+          <p className="text-sm text-white/80">Você pode escolher mais de um serviço</p>
         </div>
 
         <div className="divide-y divide-border bg-card rounded-b-xl border border-t-0 border-border">
@@ -1061,11 +1164,31 @@ const PublicBooking = () => {
               Nenhum serviço disponível
             </div>
           ) : (
-            services.map((service) => (
-              <div key={service.id} className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start gap-3">
+            services.map((service) => {
+              const isSelected = selectedServices.some(s => s.id === service.id);
+              return (
+                <button
+                  key={service.id}
+                  type="button"
+                  onClick={() => toggleServiceSelection(service)}
+                  className={`w-full p-4 text-left transition-colors ${
+                    isSelected ? "bg-primary/10" : "hover:bg-secondary/50"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      {/* Checkbox indicator */}
+                      <div
+                        className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors flex-shrink-0 ${
+                          isSelected 
+                            ? "border-primary bg-primary text-white" 
+                            : "border-border"
+                        }`}
+                        style={isSelected ? { backgroundColor: primaryColor, borderColor: primaryColor } : {}}
+                      >
+                        {isSelected && <Check className="h-4 w-4" />}
+                      </div>
+                      
                       {service.image_url && (
                         <img
                           src={service.image_url}
@@ -1082,29 +1205,50 @@ const PublicBooking = () => {
                         )}
                       </div>
                     </div>
-                  </div>
 
-                  <div className="text-right flex-shrink-0">
-                    <p className="font-bold" style={{ color: primaryColor }}>
-                      R$ {Number(service.price).toFixed(2)}
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      {formatDuration(service.duration_minutes)}
-                    </p>
-                    <Button
-                      size="sm"
-                      onClick={() => handleBookService(service)}
-                      style={{ backgroundColor: "#EA580C", color: "white" }}
-                      className="font-semibold text-xs px-4"
-                    >
-                      AGENDAR
-                    </Button>
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-bold" style={{ color: primaryColor }}>
+                        R$ {Number(service.price).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDuration(service.duration_minutes)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))
+                </button>
+              );
+            })
           )}
         </div>
+
+        {/* Floating action button when services are selected */}
+        {selectedServices.length > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-xl border-t border-border">
+            <div className="container mx-auto max-w-lg">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedServices.length} {selectedServices.length === 1 ? "serviço selecionado" : "serviços selecionados"}
+                  </p>
+                  <p className="font-semibold" style={{ color: primaryColor }}>
+                    Total: R$ {totalPrice.toFixed(2)} • {formatDuration(totalDuration)}
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="lg"
+                className="w-full font-semibold"
+                onClick={handleContinueToBooking}
+                style={{ backgroundColor: primaryColor, color: "white" }}
+              >
+                Continuar para Agendamento
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        {/* Bottom spacing when services are selected */}
+        {selectedServices.length > 0 && <div className="h-32" />}
       </main>
     </div>
   );
