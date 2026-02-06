@@ -5,14 +5,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/lib/supabase";
- import { Scissors, Eye, EyeOff, Loader2, User, ScissorsIcon, Phone } from "lucide-react";
+import { Scissors, Eye, EyeOff, Loader2, User, ScissorsIcon, Phone, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { countries } from "@/lib/dateLocales";
 
 const Register = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
+  const [pais, setPais] = useState("BR");
   const [role, setRole] = useState<UserRole>("client");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +53,7 @@ const Register = () => {
 
     setIsLoading(true);
 
-    const { error } = await signUp(email, password, fullName, role, phone);
+    const { error } = await signUp(email, password, fullName, role, phone, role === "barber" ? pais : undefined);
 
     if (error) {
       toast({
@@ -160,6 +169,30 @@ const Register = () => {
                 />
               </div>
             </div>
+
+            {/* Country Selection - Only for barbers */}
+            {role === "barber" && (
+              <div className="space-y-2">
+                <Label htmlFor="pais">
+                  País <span className="text-destructive">*</span>
+                </Label>
+                <Select value={pais} onValueChange={setPais}>
+                  <SelectTrigger className="h-12 bg-secondary/50">
+                    <div className="flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Selecione seu país" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map((country) => (
+                      <SelectItem key={country.code} value={country.code}>
+                        {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="password">

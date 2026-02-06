@@ -17,7 +17,7 @@ import {
   Loader2 
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { getLocaleByCountry } from "@/lib/dateLocales";
 import UpcomingAppointments from "./UpcomingAppointments";
 import EarningsChart from "./EarningsChart";
 
@@ -58,7 +58,8 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
   const [isLoading, setIsLoading] = useState(true);
 
   const today = new Date();
-  const formattedDate = format(today, "EEEE, d 'de' MMMM", { locale: ptBR });
+  const userLocale = getLocaleByCountry(profile?.pais);
+  const formattedDate = format(today, "EEEE, d 'de' MMMM", { locale: userLocale });
   const displayName = profile?.nome_exibido || profile?.full_name || "Barbeiro";
 
   useEffect(() => {
