@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import UpcomingAppointments from "./UpcomingAppointments";
 import SubscriptionAlert from "./SubscriptionAlert";
 import AccountPaused from "@/pages/AccountPaused";
+import EarningsChart from "./EarningsChart";
 
 interface Service {
   id: string;
@@ -451,6 +452,9 @@ const BarberDashboard = () => {
 
        {/* Upcoming Appointments */}
        <UpcomingAppointments barberId={profile?.id || ""} />
+
+       {/* Analytics */}
+       <EarningsChart barberId={profile?.id || ""} />
  
         {/* Services */}
         <Card className="glass-card">

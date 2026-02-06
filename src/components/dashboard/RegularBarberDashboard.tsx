@@ -20,6 +20,7 @@ import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import UpcomingAppointments from "./UpcomingAppointments";
 import AccountPaused from "@/pages/AccountPaused";
+import EarningsChart from "./EarningsChart";
 
 interface Appointment {
   id: string;
@@ -384,6 +385,9 @@ const RegularBarberDashboard = () => {
 
         {/* Upcoming Appointments */}
         <UpcomingAppointments barberId={profile?.id || ""} />
+
+        {/* Analytics */}
+        <EarningsChart barberId={profile?.id || ""} />
       </div>
     </DashboardLayout>
   );
