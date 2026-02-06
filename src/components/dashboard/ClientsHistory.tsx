@@ -99,7 +99,10 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
 
     const clientsMap = new Map<string, ClientData>();
 
-    appointments?.forEach((apt) => {
+    // Only process completed appointments
+    const completedAppointments = appointments?.filter((apt) => apt.status === "completed") || [];
+
+    completedAppointments.forEach((apt) => {
       const client = apt.client as { id: string; full_name: string; phone: string | null } | null;
       if (!client) return;
 
