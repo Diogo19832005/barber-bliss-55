@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -10,8 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Users, Calendar, Search, ChevronDown, ChevronUp, Phone, Medal, Trophy } from "lucide-react";
-import { format } from "date-fns";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Users, Calendar, Search, CalendarRange, X } from "lucide-react";
+import { format, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import ClientCard from "./clients/ClientCard";
@@ -39,6 +46,7 @@ interface ClientsHistoryProps {
 }
 
 type SortOption = "alphabetical" | "newest" | "oldest" | "most_cuts" | "least_cuts";
+type FilterMode = "month" | "period";
 
 const SORT_LABELS: Record<SortOption, string> = {
   alphabetical: "Ordem alfabética",
@@ -55,6 +63,9 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>("most_cuts");
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const [filterMode, setFilterMode] = useState<FilterMode>("month");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     if (barberId) {
@@ -129,17 +140,34 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
     setIsLoading(false);
   };
 
-  // Generate available months from appointment data
+  // Generate available months from appointment data + future months
   const availableMonths = useMemo(() => {
     const months = new Set<string>();
     clients.forEach((client) => {
       client.appointments.forEach((apt) => {
-        const month = apt.appointment_date.substring(0, 7); // YYYY-MM
+        const month = apt.appointment_date.substring(0, 7);
         months.add(month);
       });
     });
+    // Add next 3 future months
+    const now = new Date();
+    for (let i = 0; i <= 3; i++) {
+      const future = addMonths(now, i);
+      months.add(format(future, "yyyy-MM"));
+    }
     return Array.from(months).sort().reverse();
   }, [clients]);
+
+  // Filter appointments by date range
+  const filterByDateRange = (appointments: ClientAppointment[]) => {
+    if (!dateFrom && !dateTo) return appointments;
+    return appointments.filter((apt) => {
+      const d = apt.appointment_date;
+      if (dateFrom && d < format(dateFrom, "yyyy-MM-dd")) return false;
+      if (dateTo && d > format(dateTo, "yyyy-MM-dd")) return false;
+      return true;
+    });
+  };
 
   // Filter and sort clients
   const processedClients = useMemo(() => {
@@ -153,8 +181,8 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
       );
     }
 
-    // Month filter - recalculate completedAppointments for the selected month
-    if (selectedMonth !== "all") {
+    // Month filter
+    if (filterMode === "month" && selectedMonth !== "all") {
       filtered = filtered
         .map((client) => {
           const monthAppointments = client.appointments.filter(
@@ -166,6 +194,22 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
             appointments: monthAppointments,
             totalAppointments: monthAppointments.length,
             completedAppointments: monthAppointments.filter((a) => a.status === "completed").length,
+          };
+        })
+        .filter(Boolean) as ClientData[];
+    }
+
+    // Period filter
+    if (filterMode === "period" && (dateFrom || dateTo)) {
+      filtered = filtered
+        .map((client) => {
+          const periodAppointments = filterByDateRange(client.appointments);
+          if (periodAppointments.length === 0) return null;
+          return {
+            ...client,
+            appointments: periodAppointments,
+            totalAppointments: periodAppointments.length,
+            completedAppointments: periodAppointments.filter((a) => a.status === "completed").length,
           };
         })
         .filter(Boolean) as ClientData[];
@@ -200,7 +244,7 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
     }
 
     return sorted;
-  }, [clients, searchTerm, sortBy, selectedMonth]);
+  }, [clients, searchTerm, sortBy, selectedMonth, filterMode, dateFrom, dateTo]);
 
   // Top 10 ranking (always based on all-time data, not filtered by month)
   const top10Map = useMemo(() => {
@@ -264,39 +308,125 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-            <SelectTrigger className="w-full sm:w-[220px]">
-              <SelectValue placeholder="Ordenar por" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(SORT_LABELS).map(([key, label]) => (
-                <SelectItem key={key} value={key}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+              <SelectTrigger className="w-full sm:w-[220px]">
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(SORT_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-full sm:w-[220px]">
-              <SelectValue placeholder="Filtrar por mês" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os meses</SelectItem>
-              {availableMonths.map((month) => (
-                <SelectItem key={month} value={month}>
-                  {formatMonthLabel(month)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={filterMode} onValueChange={(v) => {
+              setFilterMode(v as FilterMode);
+              if (v === "month") { setDateFrom(undefined); setDateTo(undefined); }
+              if (v === "period") { setSelectedMonth("all"); }
+            }}>
+              <SelectTrigger className="w-full sm:w-[220px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="month">Filtrar por mês</SelectItem>
+                <SelectItem value="period">Filtrar por período</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {filterMode === "month" && (
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-full sm:w-[220px]">
+                <SelectValue placeholder="Selecionar mês" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os meses</SelectItem>
+                {availableMonths.map((month) => (
+                  <SelectItem key={month} value={month}>
+                    {formatMonthLabel(month)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {filterMode === "period" && (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full sm:w-[180px] justify-start text-left font-normal",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarRange className="mr-2 h-4 w-4" />
+                    {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Data início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={setDateFrom}
+                    locale={ptBR}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <span className="text-muted-foreground text-sm hidden sm:block">até</span>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full sm:w-[180px] justify-start text-left font-normal",
+                      !dateTo && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarRange className="mr-2 h-4 w-4" />
+                    {dateTo ? format(dateTo, "dd/MM/yyyy") : "Data fim"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={setDateTo}
+                    locale={ptBR}
+                    disabled={(date) => dateFrom ? date < dateFrom : false}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+
+              {(dateFrom || dateTo) && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}
+                  className="h-9 w-9"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Clients List */}
         {processedClients.length === 0 ? (
           <p className="py-8 text-center text-muted-foreground">
-            {searchTerm || selectedMonth !== "all"
+            {searchTerm || selectedMonth !== "all" || dateFrom || dateTo
               ? "Nenhum cliente encontrado"
               : "Nenhum cliente ainda"}
           </p>
