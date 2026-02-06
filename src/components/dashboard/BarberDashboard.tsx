@@ -85,6 +85,13 @@ const navItems = [
   { label: "Meu Perfil", href: "/dashboard/profile", icon: <User className="h-4 w-4" /> },
 ];
 
+const bottomTabItems = [
+  { label: "Início", href: "/dashboard", icon: <Home className="h-4 w-4" /> },
+  { label: "Agenda", href: "/dashboard/agenda", icon: <Calendar className="h-4 w-4" /> },
+  { label: "Próximos", href: "/dashboard/upcoming", icon: <Clock className="h-4 w-4" /> },
+  { label: "Clientes", href: "/dashboard/clients", icon: <UserCheck className="h-4 w-4" /> },
+];
+
 const BarberDashboard = () => {
   const location = useLocation();
   const currentPath = location.pathname;
@@ -288,7 +295,7 @@ const BarberDashboard = () => {
   const isTeamPage = currentPath === "/dashboard/team";
 
   return (
-    <DashboardLayout navItems={navItems}>
+    <DashboardLayout navItems={navItems} bottomTabItems={bottomTabItems}>
       <div className="space-y-6">
         {/* Meu Perfil Page - Subscription Alert, Header and Public Link */}
         {isProfilePage && (

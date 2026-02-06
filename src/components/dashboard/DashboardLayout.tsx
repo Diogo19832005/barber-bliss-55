@@ -27,9 +27,11 @@ interface NavItem {
 interface DashboardLayoutProps {
   children: ReactNode;
   navItems: NavItem[];
+  bottomTabItems?: NavItem[];
 }
 
-const DashboardLayout = ({ children, navItems }: DashboardLayoutProps) => {
+const DashboardLayout = ({ children, navItems, bottomTabItems }: DashboardLayoutProps) => {
+  const tabs = bottomTabItems || navItems.slice(0, 5);
   const { profile, signOut, isAdmin } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -49,19 +51,13 @@ const DashboardLayout = ({ children, navItems }: DashboardLayoutProps) => {
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile Header */}
-      <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-xl md:hidden">
+      <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-background/90 px-4 backdrop-blur-xl md:hidden">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-gold">
-            <Scissors className="h-4 w-4 text-primary-foreground" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-gold">
+            <Scissors className="h-3.5 w-3.5 text-primary-foreground" />
           </div>
-              <span className="font-semibold">Barber Office</span>
+          <span className="font-semibold text-sm">Barber Office</span>
         </div>
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="rounded-lg p-2 hover:bg-secondary"
-        >
-          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
       </header>
 
       {/* Mobile Menu Overlay */}
@@ -181,9 +177,43 @@ const DashboardLayout = ({ children, navItems }: DashboardLayoutProps) => {
 
         {/* Main Content */}
         <main className="flex-1 md:ml-64">
-          <div className="p-4 md:p-8">{children}</div>
+          <div className="p-4 pb-24 md:p-8 md:pb-8">{children}</div>
         </main>
       </div>
+
+      {/* Mobile Bottom Tab Bar */}
+      <nav className="fixed bottom-0 inset-x-0 z-50 border-t border-border bg-background/90 backdrop-blur-xl md:hidden">
+        <div className="flex items-center justify-around h-16 px-1">
+          {tabs.map((item) => {
+            const isActive = location.pathname === item.href ||
+              (item.href === "/dashboard" && (location.pathname === "/dashboard" || location.pathname === "/dashboard/"));
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-[10px] font-medium transition-colors",
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                )}
+              >
+                {item.icon}
+                <span className="truncate max-w-[64px]">{item.label}</span>
+              </Link>
+            );
+          })}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className={cn(
+              "flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-[10px] font-medium transition-colors text-muted-foreground"
+            )}
+          >
+            <Menu className="h-4 w-4" />
+            <span>Mais</span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 };
