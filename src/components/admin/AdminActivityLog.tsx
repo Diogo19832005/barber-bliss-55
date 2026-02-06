@@ -226,8 +226,8 @@ const AdminActivityLog = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
-          <div className="flex flex-wrap gap-3">
-            <div className="w-56">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap">
+            <div className="w-full sm:w-56">
               <Label className="text-xs text-muted-foreground">Administrador</Label>
               <Select value={filterAdmin} onValueChange={setFilterAdmin}>
                 <SelectTrigger className="bg-secondary/50">
@@ -241,7 +241,7 @@ const AdminActivityLog = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="w-48">
+            <div className="w-full sm:w-48">
               <Label className="text-xs text-muted-foreground">Tipo de Ação</Label>
               <Select value={filterAction} onValueChange={setFilterAction}>
                 <SelectTrigger className="bg-secondary/50">
@@ -255,14 +255,14 @@ const AdminActivityLog = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="w-full sm:w-auto">
               <Label className="text-xs text-muted-foreground">Período</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-[240px] justify-start text-left font-normal bg-secondary/50",
+                      "w-full sm:w-[240px] justify-start text-left font-normal bg-secondary/50",
                       !dateRange && "text-muted-foreground"
                     )}
                   >
@@ -295,11 +295,9 @@ const AdminActivityLog = () => {
               </Popover>
             </div>
             {dateRange?.from && (
-              <div className="flex items-end">
-                <Button size="sm" variant="ghost" onClick={() => setDateRange(undefined)}>
-                  Limpar
-                </Button>
-              </div>
+              <Button size="sm" variant="ghost" onClick={() => setDateRange(undefined)} className="self-end">
+                Limpar
+              </Button>
             )}
           </div>
 
