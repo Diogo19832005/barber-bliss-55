@@ -231,6 +231,7 @@ export type Database = {
           hero_button_color: string | null
           hero_button_text: string | null
           hero_enabled: boolean | null
+          hero_services_title: string | null
           id: string
           is_barbershop_admin: boolean | null
           logo_url: string | null
@@ -260,6 +261,7 @@ export type Database = {
           hero_button_color?: string | null
           hero_button_text?: string | null
           hero_enabled?: boolean | null
+          hero_services_title?: string | null
           id?: string
           is_barbershop_admin?: boolean | null
           logo_url?: string | null
@@ -289,6 +291,7 @@ export type Database = {
           hero_button_color?: string | null
           hero_button_text?: string | null
           hero_enabled?: boolean | null
+          hero_services_title?: string | null
           id?: string
           is_barbershop_admin?: boolean | null
           logo_url?: string | null

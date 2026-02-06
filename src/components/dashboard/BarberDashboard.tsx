@@ -605,22 +605,23 @@ const BarberDashboard = () => {
            onClose={() => setIsSettingsModalOpen(false)}
            onSuccess={fetchData}
           profile={{
-            id: profile.id,
-            user_id: profile.user_id,
-            full_name: profile.full_name,
-            nome_exibido: profile.nome_exibido,
-            logo_url: profile.logo_url,
-            cor_primaria: profile.cor_primaria,
-            cor_secundaria: profile.cor_secundaria,
-            phone: profile.phone,
-            endereco: profile.endereco,
-            cidade: profile.cidade,
-            estado: profile.estado,
-            hero_enabled: (profile as any).hero_enabled ?? true,
-            hero_button_text: (profile as any).hero_button_text || "Agendar agora mesmo",
-            hero_button_color: (profile as any).hero_button_color || "#D97706",
-            hero_animation_speed: (profile as any).hero_animation_speed ?? 1.0,
-          }}
+             id: profile.id,
+             user_id: profile.user_id,
+             full_name: profile.full_name,
+             nome_exibido: profile.nome_exibido,
+             logo_url: profile.logo_url,
+             cor_primaria: profile.cor_primaria,
+             cor_secundaria: profile.cor_secundaria,
+             phone: profile.phone,
+             endereco: profile.endereco,
+             cidade: profile.cidade,
+             estado: profile.estado,
+             hero_enabled: (profile as any).hero_enabled ?? true,
+             hero_button_text: (profile as any).hero_button_text || "Agendar agora mesmo",
+             hero_button_color: (profile as any).hero_button_color || "#D97706",
+             hero_animation_speed: (profile as any).hero_animation_speed ?? 1.0,
+             hero_services_title: (profile as any).hero_services_title || "Meus Serviços",
+           }}
          />
        )}
 

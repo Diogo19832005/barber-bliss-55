@@ -35,6 +35,7 @@ interface SettingsModalProps {
     hero_button_text: string | null;
     hero_button_color: string | null;
     hero_animation_speed: number | null;
+    hero_services_title: string | null;
   };
 }
  
@@ -65,6 +66,7 @@ interface SettingsModalProps {
   const [heroButtonText, setHeroButtonText] = useState(profile.hero_button_text || "Agendar agora mesmo");
   const [heroButtonColor, setHeroButtonColor] = useState(profile.hero_button_color || "#D97706");
   const [heroAnimationSpeed, setHeroAnimationSpeed] = useState(profile.hero_animation_speed || 1.0);
+  const [heroServicesTitle, setHeroServicesTitle] = useState(profile.hero_services_title || "Meus Serviços");
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
  
@@ -157,23 +159,24 @@ interface SettingsModalProps {
      e.preventDefault();
      setIsLoading(true);
  
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        nome_exibido: nomeExibido.trim() || null,
-        logo_url: logoUrl || null,
-        cor_primaria: corPrimaria,
-        cor_secundaria: corSecundaria || null,
-        phone: telefone.trim() || null,
-        endereco: endereco.trim() || null,
-        cidade: cidade.trim() || null,
-        estado: estado.trim() || null,
-        hero_enabled: heroEnabled,
-        hero_button_text: heroButtonText.trim() || "Agendar agora mesmo",
-        hero_button_color: heroButtonColor,
-        hero_animation_speed: heroAnimationSpeed,
-      })
-      .eq("id", profile.id);
+     const { error } = await supabase
+       .from("profiles")
+       .update({
+         nome_exibido: nomeExibido.trim() || null,
+         logo_url: logoUrl || null,
+         cor_primaria: corPrimaria,
+         cor_secundaria: corSecundaria || null,
+         phone: telefone.trim() || null,
+         endereco: endereco.trim() || null,
+         cidade: cidade.trim() || null,
+         estado: estado.trim() || null,
+         hero_enabled: heroEnabled,
+         hero_button_text: heroButtonText.trim() || "Agendar agora mesmo",
+         hero_button_color: heroButtonColor,
+         hero_animation_speed: heroAnimationSpeed,
+         hero_services_title: heroServicesTitle.trim() || "Meus Serviços",
+       })
+       .eq("id", profile.id);
  
      if (error) {
        toast({
@@ -542,6 +545,23 @@ interface SettingsModalProps {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Menor = mais rápido (0.2 é muito rápido)
+                    </p>
+                  </div>
+
+                  {/* Services Section Title */}
+                  <div className="space-y-2">
+                    <Label htmlFor="heroServicesTitle" className="text-sm text-muted-foreground">
+                      Título da Seção de Serviços
+                    </Label>
+                    <Input
+                      id="heroServicesTitle"
+                      value={heroServicesTitle}
+                      onChange={(e) => setHeroServicesTitle(e.target.value)}
+                      placeholder="Meus Serviços"
+                      className="bg-secondary/50"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Título exibido acima do carrossel de serviços
                     </p>
                   </div>
                 </div>

@@ -40,6 +40,7 @@ interface Barber {
   hero_button_text: string | null;
   hero_button_color: string | null;
   hero_animation_speed: number | null;
+  hero_services_title: string | null;
 }
 
 interface TeamMember {
@@ -123,7 +124,7 @@ const PublicBooking = () => {
     // Fetch barber by slug_final
     const { data: barberData, error } = await supabase
       .from("profiles")
-      .select("id, full_name, avatar_url, public_id, slug_final, nome_exibido, logo_url, cor_primaria, cor_secundaria, phone, endereco, cidade, estado, hero_enabled, hero_button_text, hero_button_color, hero_animation_speed")
+      .select("id, full_name, avatar_url, public_id, slug_final, nome_exibido, logo_url, cor_primaria, cor_secundaria, phone, endereco, cidade, estado, hero_enabled, hero_button_text, hero_button_color, hero_animation_speed, hero_services_title")
       .eq("slug_final", slugFinal)
       .eq("role", "barber")
       .eq("barber_status", "approved")
@@ -898,6 +899,7 @@ const PublicBooking = () => {
   if (showHero && barber?.hero_enabled !== false) {
     const heroButtonText = barber?.hero_button_text || "Agendar agora mesmo";
     const heroButtonColor = barber?.hero_button_color || primaryColor;
+    const heroServicesTitle = barber?.hero_services_title || "Meus Serviços";
 
     return (
       <div className="min-h-screen bg-background">
@@ -911,6 +913,8 @@ const PublicBooking = () => {
           buttonText={heroButtonText}
           buttonColor={heroButtonColor}
           animationSpeed={barber?.hero_animation_speed ?? 1.0}
+          services={services}
+          servicesTitle={heroServicesTitle}
           onContinue={() => setShowHero(false)}
         />
       </div>
