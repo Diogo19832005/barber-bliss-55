@@ -22,8 +22,11 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  Calendar,
+  UserCheck,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import TeamBarberAgenda from "./TeamBarberAgenda";
 
 interface TeamMember {
   id: string;
@@ -33,6 +36,7 @@ interface TeamMember {
   avatar_url: string | null;
   barber_status: string;
   created_at: string;
+  completed_count?: number;
 }
 
 interface TeamManagementProps {
@@ -48,6 +52,7 @@ const TeamManagement = ({ barbershopOwnerId }: TeamManagementProps) => {
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [agendaBarber, setAgendaBarber] = useState<{ id: string; full_name: string } | null>(null);
 
   useEffect(() => {
     fetchTeamMembers();
@@ -64,10 +69,24 @@ const TeamManagement = ({ barbershopOwnerId }: TeamManagementProps) => {
 
     if (error) {
       console.error("Error fetching team members:", error);
-    } else {
-      setTeamMembers(data || []);
+      setIsLoading(false);
+      return;
     }
-    
+
+    // Fetch completed appointment counts for each member
+    const membersWithStats = await Promise.all(
+      (data || []).map(async (member) => {
+        const { count } = await supabase
+          .from("appointments")
+          .select("*", { count: "exact", head: true })
+          .eq("barber_id", member.id)
+          .eq("status", "completed");
+
+        return { ...member, completed_count: count || 0 };
+      })
+    );
+
+    setTeamMembers(membersWithStats);
     setIsLoading(false);
   };
 
@@ -250,52 +269,69 @@ const TeamManagement = ({ barbershopOwnerId }: TeamManagementProps) => {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+             <div className="space-y-3">
               {teamMembers.map((member) => (
                 <div
                   key={member.id}
-                  className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-4 rounded-xl border border-border p-4"
                 >
-                  <div className="flex items-center gap-3">
-                    {member.avatar_url ? (
-                      <img
-                        src={member.avatar_url}
-                        alt={member.full_name}
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
-                        <span className="text-sm font-medium">
-                          {member.full_name.charAt(0).toUpperCase()}
-                        </span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {member.avatar_url ? (
+                        <img
+                          src={member.avatar_url}
+                          alt={member.full_name}
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
+                          <span className="text-sm font-medium">
+                            {member.full_name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{member.full_name}</p>
+                          {getStatusBadge(member.barber_status)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {member.phone || "Sem telefone"}
+                        </p>
                       </div>
-                    )}
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{member.full_name}</p>
-                        {getStatusBadge(member.barber_status)}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {member.phone || "Sem telefone"}
-                      </p>
                     </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => handleRemoveMember(member.id)}
+                      disabled={removingId === member.id}
+                    >
+                      {removingId === member.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Trash2 className="mr-1 h-4 w-4" />
+                          Remover
+                        </>
+                      )}
+                    </Button>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => handleRemoveMember(member.id)}
-                    disabled={removingId === member.id}
-                  >
-                    {removingId === member.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Trash2 className="mr-1 h-4 w-4" />
-                        Remover
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex items-center gap-3 border-t border-border pt-3">
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <UserCheck className="h-4 w-4 text-success" />
+                      <span className="font-medium text-foreground">{member.completed_count ?? 0}</span>
+                      <span>atendimentos</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setAgendaBarber({ id: member.id, full_name: member.full_name })}
+                    >
+                      <Calendar className="mr-1.5 h-3.5 w-3.5" />
+                      Ver Agenda
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -349,6 +385,15 @@ const TeamManagement = ({ barbershopOwnerId }: TeamManagementProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Barber Agenda Modal */}
+      {agendaBarber && (
+        <TeamBarberAgenda
+          isOpen={!!agendaBarber}
+          onClose={() => setAgendaBarber(null)}
+          barber={agendaBarber}
+        />
+      )}
     </>
   );
 };
