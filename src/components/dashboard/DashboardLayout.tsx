@@ -75,7 +75,8 @@ const DashboardLayout = ({ children, navItems }: DashboardLayoutProps) => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
                     "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors",
-                    location.pathname === item.href
+                    (location.pathname === item.href || 
+                     (item.href === "/dashboard" && (location.pathname === "/dashboard" || location.pathname === "/dashboard/")))
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   )}
@@ -128,7 +129,8 @@ const DashboardLayout = ({ children, navItems }: DashboardLayoutProps) => {
                   to={item.href}
                   className={cn(
                     "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors",
-                    location.pathname === item.href
+                    (location.pathname === item.href || 
+                     (item.href === "/dashboard" && (location.pathname === "/dashboard" || location.pathname === "/dashboard/")))
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
                   )}
