@@ -27,6 +27,9 @@ export interface Profile {
   hero_enabled: boolean | null;
   hero_button_text: string | null;
   hero_button_color: string | null;
+  hero_animation_speed: number | null;
+  hero_services_title: string | null;
+  dashboard_home_widgets: string[] | null;
   created_at: string;
   updated_at: string;
 }

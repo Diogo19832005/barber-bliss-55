@@ -1,20 +1,21 @@
- import { useState, useRef } from "react";
- import { supabase } from "@/lib/supabase";
- import { Button } from "@/components/ui/button";
- import { Input } from "@/components/ui/input";
- import { Label } from "@/components/ui/label";
- import {
-   Dialog,
-   DialogContent,
-   DialogDescription,
-   DialogFooter,
-   DialogHeader,
-   DialogTitle,
- } from "@/components/ui/dialog";
- import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, Palette, Store, X, MapPin, Phone, Sparkles } from "lucide-react";
+import { useState, useRef } from "react";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, Upload, Palette, Store, X, MapPin, Phone, Sparkles, Home } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
- 
+import DashboardHomeSettings from "./DashboardHomeSettings";
+
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -36,6 +37,7 @@ interface SettingsModalProps {
     hero_button_color: string | null;
     hero_animation_speed: number | null;
     hero_services_title: string | null;
+    dashboard_home_widgets?: string[] | null;
   };
 }
  
@@ -67,9 +69,12 @@ interface SettingsModalProps {
   const [heroButtonColor, setHeroButtonColor] = useState(profile.hero_button_color || "#D97706");
   const [heroAnimationSpeed, setHeroAnimationSpeed] = useState(profile.hero_animation_speed || 1.0);
   const [heroServicesTitle, setHeroServicesTitle] = useState(profile.hero_services_title || "Meus Serviços");
+  const [dashboardHomeWidgets, setDashboardHomeWidgets] = useState<string[]>(
+    (profile.dashboard_home_widgets as string[]) || ["today_appointments", "upcoming_appointments", "services"]
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
- 
+
    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
      const file = e.target.files?.[0];
      if (!file) return;
@@ -159,24 +164,25 @@ interface SettingsModalProps {
      e.preventDefault();
      setIsLoading(true);
  
-     const { error } = await supabase
-       .from("profiles")
-       .update({
-         nome_exibido: nomeExibido.trim() || null,
-         logo_url: logoUrl || null,
-         cor_primaria: corPrimaria,
-         cor_secundaria: corSecundaria || null,
-         phone: telefone.trim() || null,
-         endereco: endereco.trim() || null,
-         cidade: cidade.trim() || null,
-         estado: estado.trim() || null,
-         hero_enabled: heroEnabled,
-         hero_button_text: heroButtonText.trim() || "Agendar agora mesmo",
-         hero_button_color: heroButtonColor,
-         hero_animation_speed: heroAnimationSpeed,
-         hero_services_title: heroServicesTitle.trim() || "Meus Serviços",
-       })
-       .eq("id", profile.id);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        nome_exibido: nomeExibido.trim() || null,
+        logo_url: logoUrl || null,
+        cor_primaria: corPrimaria,
+        cor_secundaria: corSecundaria || null,
+        phone: telefone.trim() || null,
+        endereco: endereco.trim() || null,
+        cidade: cidade.trim() || null,
+        estado: estado.trim() || null,
+        hero_enabled: heroEnabled,
+        hero_button_text: heroButtonText.trim() || "Agendar agora mesmo",
+        hero_button_color: heroButtonColor,
+        hero_animation_speed: heroAnimationSpeed,
+        hero_services_title: heroServicesTitle.trim() || "Meus Serviços",
+        dashboard_home_widgets: dashboardHomeWidgets,
+      })
+      .eq("id", profile.id);
  
      if (error) {
        toast({
@@ -566,6 +572,18 @@ interface SettingsModalProps {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Dashboard Home Settings */}
+            <div className="space-y-4 border-t border-border pt-6">
+              <Label className="flex items-center gap-2 text-base">
+                <Home className="h-4 w-4" />
+                Página Inicial
+              </Label>
+              <DashboardHomeSettings
+                widgets={dashboardHomeWidgets}
+                onChange={setDashboardHomeWidgets}
+              />
             </div>
              </div>
            </div>

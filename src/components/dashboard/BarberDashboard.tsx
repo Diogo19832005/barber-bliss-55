@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import DashboardLayout from "./DashboardLayout";
@@ -18,6 +19,7 @@ import {
   Settings,
   Loader2,
   MessageCircle,
+  Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +34,7 @@ import UpcomingAppointments from "./UpcomingAppointments";
 import SubscriptionAlert from "./SubscriptionAlert";
 import AccountPaused from "@/pages/AccountPaused";
 import EarningsChart from "./EarningsChart";
+import DashboardHome from "./DashboardHome";
 
 interface Service {
   id: string;
@@ -62,7 +65,8 @@ interface Schedule {
 }
 
 const navItems = [
-  { label: "Visão Geral", href: "/dashboard", icon: <TrendingUp className="h-4 w-4" /> },
+  { label: "Página Inicial", href: "/dashboard", icon: <Home className="h-4 w-4" /> },
+  { label: "Visão Geral", href: "/dashboard/overview", icon: <TrendingUp className="h-4 w-4" /> },
   { label: "Agenda", href: "/dashboard/agenda", icon: <Calendar className="h-4 w-4" /> },
   { label: "Serviços", href: "/dashboard/services", icon: <Scissors className="h-4 w-4" /> },
   { label: "Horários", href: "/dashboard/schedule", icon: <Clock className="h-4 w-4" /> },
@@ -70,6 +74,8 @@ const navItems = [
 ];
 
 const BarberDashboard = () => {
+  const location = useLocation();
+  const currentPath = location.pathname;
   const { profile } = useAuth();
   const { toast } = useToast();
   const [services, setServices] = useState<Service[]>([]);
@@ -251,6 +257,21 @@ const BarberDashboard = () => {
     return <AccountPaused />;
   }
 
+  // Get dashboard home widgets from profile
+  const dashboardWidgets = (profile?.dashboard_home_widgets as string[]) || [
+    "today_appointments",
+    "upcoming_appointments", 
+    "services"
+  ];
+
+  // Check if we're on the main dashboard page (home) vs a specific section
+  const isHomePage = currentPath === "/dashboard" || currentPath === "/dashboard/";
+  const isOverviewPage = currentPath === "/dashboard/overview";
+  const isAgendaPage = currentPath === "/dashboard/agenda";
+  const isServicesPage = currentPath === "/dashboard/services";
+  const isSchedulePage = currentPath === "/dashboard/schedule";
+  const isTeamPage = currentPath === "/dashboard/team";
+
   return (
     <DashboardLayout navItems={navItems}>
       <div className="space-y-6">
@@ -293,296 +314,314 @@ const BarberDashboard = () => {
             </Button>
          </div>
 
-         {/* Public Link Card */}
-         {publicLink && (
-           <Card className="glass-card border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
-             <CardContent className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center">
-               <div className="flex items-center gap-3">
-                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20">
-                   <LinkIcon className="h-5 w-5 text-primary" />
-                 </div>
-                 <div>
-                   <p className="text-sm font-medium text-muted-foreground">Seu Link Público</p>
-                   <p className="font-mono text-sm text-foreground break-all">{publicLink}</p>
-                 </div>
-               </div>
+         {/* Customizable Home Page */}
+         {isHomePage && (
+           <DashboardHome
+             barberId={profile?.id || ""}
+             widgets={dashboardWidgets}
+             onCompleteAppointment={() => fetchData()}
+           />
+         )}
+
+         {/* Overview Page - Full dashboard view */}
+         {(isOverviewPage || isAgendaPage) && (
+           <>
+             {/* Public Link Card */}
+             {publicLink && (
+               <Card className="glass-card border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
+                 <CardContent className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center">
+                   <div className="flex items-center gap-3">
+                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20">
+                       <LinkIcon className="h-5 w-5 text-primary" />
+                     </div>
+                     <div>
+                       <p className="text-sm font-medium text-muted-foreground">Seu Link Público</p>
+                       <p className="font-mono text-sm text-foreground break-all">{publicLink}</p>
+                     </div>
+                   </div>
+                   <Button
+                     variant="gold"
+                     size="sm"
+                     onClick={() => {
+                       navigator.clipboard.writeText(publicLink);
+                       setLinkCopied(true);
+                       toast({ title: "Link copiado!" });
+                       setTimeout(() => setLinkCopied(false), 2000);
+                     }}
+                   >
+                     {linkCopied ? (
+                       <>
+                         <Check className="mr-2 h-4 w-4" />
+                         Copiado!
+                       </>
+                     ) : (
+                       <>
+                         <Copy className="mr-2 h-4 w-4" />
+                         Copiar Link
+                       </>
+                     )}
+                   </Button>
+                 </CardContent>
+               </Card>
+             )}
+
+             {/* Stats Cards */}
+             <div className="grid gap-4 md:grid-cols-3">
+               <Card className="glass-card">
+                 <CardHeader className="flex flex-row items-center justify-between pb-2">
+                   <CardTitle className="text-sm font-medium text-muted-foreground">
+                     Hoje
+                   </CardTitle>
+                   <DollarSign className="h-4 w-4 text-primary" />
+                 </CardHeader>
+                 <CardContent>
+                   <p className="text-2xl font-bold">
+                     R$ {earnings.daily.toFixed(2)}
+                   </p>
+                 </CardContent>
+               </Card>
+               <Card className="glass-card">
+                 <CardHeader className="flex flex-row items-center justify-between pb-2">
+                   <CardTitle className="text-sm font-medium text-muted-foreground">
+                     Esta Semana
+                   </CardTitle>
+                   <TrendingUp className="h-4 w-4 text-success" />
+                 </CardHeader>
+                 <CardContent>
+                   <p className="text-2xl font-bold">
+                     R$ {earnings.weekly.toFixed(2)}
+                   </p>
+                 </CardContent>
+               </Card>
+               <Card className="glass-card">
+                 <CardHeader className="flex flex-row items-center justify-between pb-2">
+                   <CardTitle className="text-sm font-medium text-muted-foreground">
+                     Este Mês
+                   </CardTitle>
+                   <Calendar className="h-4 w-4 text-muted-foreground" />
+                 </CardHeader>
+                 <CardContent>
+                   <p className="text-2xl font-bold">
+                     R$ {earnings.monthly.toFixed(2)}
+                   </p>
+                 </CardContent>
+               </Card>
+             </div>
+
+             {/* Today's Appointments */}
+             <Card className="glass-card">
+               <CardHeader>
+                 <CardTitle className="flex items-center gap-2">
+                   <Calendar className="h-5 w-5 text-primary" />
+                   Agenda de Hoje
+                 </CardTitle>
+               </CardHeader>
+               <CardContent>
+                 {appointments.length === 0 ? (
+                   <p className="py-8 text-center text-muted-foreground">
+                     Nenhum agendamento para hoje
+                   </p>
+                 ) : (
+                   <div className="space-y-3">
+                     {appointments.map((apt) => (
+                       <div
+                         key={apt.id}
+                         className={`flex items-center justify-between rounded-xl border p-4 ${
+                           apt.status === "completed" 
+                             ? "border-success/30 bg-success/5" 
+                             : apt.status === "cancelled"
+                             ? "border-destructive/30 bg-destructive/5"
+                             : "border-border"
+                         }`}
+                       >
+                         <div className="flex items-center gap-4">
+                           <div className="text-center">
+                             <p className="text-lg font-semibold">
+                               {apt.start_time.slice(0, 5)}
+                             </p>
+                             <p className="text-xs text-muted-foreground">
+                               {apt.end_time.slice(0, 5)}
+                             </p>
+                           </div>
+                           <div>
+                             <div className="flex items-center gap-2">
+                               <p className="font-medium">{apt.client?.full_name}</p>
+                               {apt.client?.phone && (
+                                 <a
+                                   href={`https://wa.me/${apt.client.phone.replace(/\D/g, '')}`}
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 text-xs text-success hover:bg-success/30 transition-colors"
+                                   title="Enviar mensagem no WhatsApp"
+                                 >
+                                   <MessageCircle className="h-3 w-3" />
+                                   WhatsApp
+                                 </a>
+                               )}
+                             </div>
+                             <p className="text-sm text-muted-foreground">
+                               {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
+                             </p>
+                           </div>
+                         </div>
+                         {apt.status === "scheduled" && (
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             onClick={() => handleCompleteAppointment(apt.id)}
+                           >
+                             Concluir
+                           </Button>
+                         )}
+                         {apt.status === "completed" && (
+                           <span className="text-sm text-success">✓ Concluído</span>
+                         )}
+                       </div>
+                     ))}
+                   </div>
+                 )}
+               </CardContent>
+             </Card>
+
+             {/* Upcoming Appointments */}
+             <UpcomingAppointments barberId={profile?.id || ""} />
+
+             {/* Analytics */}
+             <EarningsChart barberId={profile?.id || ""} />
+           </>
+         )}
+
+         {/* Services Page */}
+         {isServicesPage && (
+           <Card className="glass-card">
+             <CardHeader className="flex flex-row items-center justify-between">
+               <CardTitle className="flex items-center gap-2">
+                 <Scissors className="h-5 w-5 text-primary" />
+                 Meus Serviços
+               </CardTitle>
                <Button
                  variant="gold"
                  size="sm"
                  onClick={() => {
-                   navigator.clipboard.writeText(publicLink);
-                   setLinkCopied(true);
-                   toast({ title: "Link copiado!" });
-                   setTimeout(() => setLinkCopied(false), 2000);
+                   setEditingService(null);
+                   setIsServiceModalOpen(true);
                  }}
                >
-                 {linkCopied ? (
-                   <>
-                     <Check className="mr-2 h-4 w-4" />
-                     Copiado!
-                   </>
-                 ) : (
-                   <>
-                     <Copy className="mr-2 h-4 w-4" />
-                     Copiar Link
-                   </>
-                 )}
+                 <Plus className="h-4 w-4" />
+                 Adicionar
                </Button>
+             </CardHeader>
+             <CardContent>
+               {services.length === 0 ? (
+                 <p className="py-8 text-center text-muted-foreground">
+                   Nenhum serviço cadastrado
+                 </p>
+               ) : (
+                 <div className="grid gap-3 md:grid-cols-2">
+                   {services.map((service) => (
+                     <div
+                       key={service.id}
+                       className="flex items-center justify-between rounded-xl border border-border p-4"
+                     >
+                       <div className="flex items-center gap-3">
+                         {service.image_url ? (
+                           <img
+                             src={service.image_url}
+                             alt={service.name}
+                             className="h-14 w-14 rounded-lg object-cover border border-border"
+                           />
+                         ) : (
+                           <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-secondary">
+                             <Scissors className="h-6 w-6 text-muted-foreground" />
+                           </div>
+                         )}
+                         <div>
+                           <p className="font-medium">{service.name}</p>
+                           <p className="text-sm text-muted-foreground">
+                             {service.duration_minutes} min • R$ {Number(service.price).toFixed(2)}
+                           </p>
+                         </div>
+                       </div>
+                       <div className="flex gap-2">
+                         <Button
+                           size="icon"
+                           variant="ghost"
+                           onClick={() => {
+                             setEditingService(service);
+                             setIsServiceModalOpen(true);
+                           }}
+                         >
+                           <Edit2 className="h-4 w-4" />
+                         </Button>
+                         <Button
+                           size="icon"
+                           variant="ghost"
+                           className="text-destructive hover:text-destructive"
+                           onClick={() => handleDeleteService(service.id)}
+                         >
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               )}
              </CardContent>
            </Card>
          )}
- 
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Hoje
-              </CardTitle>
-              <DollarSign className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">
-                R$ {earnings.daily.toFixed(2)}
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Esta Semana
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-success" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">
-                R$ {earnings.weekly.toFixed(2)}
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Este Mês
-              </CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">
-                R$ {earnings.monthly.toFixed(2)}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
 
-        {/* Today's Appointments */}
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              Agenda de Hoje
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {appointments.length === 0 ? (
-              <p className="py-8 text-center text-muted-foreground">
-                Nenhum agendamento para hoje
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {appointments.map((apt) => (
-                  <div
-                    key={apt.id}
-                    className={`flex items-center justify-between rounded-xl border p-4 ${
-                      apt.status === "completed" 
-                        ? "border-success/30 bg-success/5" 
-                        : apt.status === "cancelled"
-                        ? "border-destructive/30 bg-destructive/5"
-                        : "border-border"
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="text-center">
-                        <p className="text-lg font-semibold">
-                          {apt.start_time.slice(0, 5)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {apt.end_time.slice(0, 5)}
-                        </p>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{apt.client?.full_name}</p>
-                          {apt.client?.phone && (
-                            <a
-                              href={`https://wa.me/${apt.client.phone.replace(/\D/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 text-xs text-success hover:bg-success/30 transition-colors"
-                              title="Enviar mensagem no WhatsApp"
-                            >
-                              <MessageCircle className="h-3 w-3" />
-                              WhatsApp
-                            </a>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                    {apt.status === "scheduled" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleCompleteAppointment(apt.id)}
-                      >
-                        Concluir
-                      </Button>
-                    )}
-                    {apt.status === "completed" && (
-                      <span className="text-sm text-success">✓ Concluído</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+         {/* Schedule Page */}
+         {isSchedulePage && (
+           <Card className="glass-card">
+             <CardHeader className="flex flex-row items-center justify-between">
+               <CardTitle className="flex items-center gap-2">
+                 <Clock className="h-5 w-5 text-primary" />
+                 Horários de Trabalho
+               </CardTitle>
+               <Button
+                 variant="outline"
+                 size="sm"
+                 onClick={() => setIsScheduleModalOpen(true)}
+               >
+                 Editar
+               </Button>
+             </CardHeader>
+             <CardContent>
+               <div className="grid grid-cols-7 gap-2">
+                 {[0, 1, 2, 3, 4, 5, 6].map((day) => {
+                   const schedule = schedules.find((s) => s.day_of_week === day);
+                   return (
+                     <div
+                       key={day}
+                       className={`rounded-lg p-3 text-center ${
+                         schedule?.is_active
+                           ? "bg-primary/10 text-primary"
+                           : "bg-secondary text-muted-foreground"
+                       }`}
+                     >
+                       <p className="text-xs font-medium">{dayNames[day]}</p>
+                       {schedule?.is_active ? (
+                         <p className="mt-1 text-xs">
+                           {schedule.start_time.slice(0, 5)}
+                           <br />
+                           {schedule.end_time.slice(0, 5)}
+                         </p>
+                       ) : (
+                         <p className="mt-1 text-xs">—</p>
+                       )}
+                     </div>
+                   );
+                 })}
+               </div>
+             </CardContent>
+           </Card>
+         )}
 
-       {/* Upcoming Appointments */}
-       <UpcomingAppointments barberId={profile?.id || ""} />
-
-       {/* Analytics */}
-       <EarningsChart barberId={profile?.id || ""} />
- 
-        {/* Services */}
-        <Card className="glass-card">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Scissors className="h-5 w-5 text-primary" />
-              Meus Serviços
-            </CardTitle>
-            <Button
-              variant="gold"
-              size="sm"
-              onClick={() => {
-                setEditingService(null);
-                setIsServiceModalOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              Adicionar
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {services.length === 0 ? (
-              <p className="py-8 text-center text-muted-foreground">
-                Nenhum serviço cadastrado
-              </p>
-            ) : (
-              <div className="grid gap-3 md:grid-cols-2">
-                {services.map((service) => (
-                  <div
-                    key={service.id}
-                    className="flex items-center justify-between rounded-xl border border-border p-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      {service.image_url ? (
-                        <img
-                          src={service.image_url}
-                          alt={service.name}
-                          className="h-14 w-14 rounded-lg object-cover border border-border"
-                        />
-                      ) : (
-                        <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-secondary">
-                          <Scissors className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-medium">{service.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {service.duration_minutes} min • R$ {Number(service.price).toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditingService(service);
-                          setIsServiceModalOpen(true);
-                        }}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteService(service.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Work Schedule */}
-        <Card className="glass-card">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-primary" />
-              Horários de Trabalho
-            </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsScheduleModalOpen(true)}
-            >
-              Editar
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-7 gap-2">
-              {[0, 1, 2, 3, 4, 5, 6].map((day) => {
-                const schedule = schedules.find((s) => s.day_of_week === day);
-                return (
-                  <div
-                    key={day}
-                    className={`rounded-lg p-3 text-center ${
-                      schedule?.is_active
-                        ? "bg-primary/10 text-primary"
-                        : "bg-secondary text-muted-foreground"
-                    }`}
-                  >
-                    <p className="text-xs font-medium">{dayNames[day]}</p>
-                    {schedule?.is_active ? (
-                      <p className="mt-1 text-xs">
-                        {schedule.start_time.slice(0, 5)}
-                        <br />
-                        {schedule.end_time.slice(0, 5)}
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-xs">—</p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Team Management - Only for barbershop admins */}
-        {profile?.is_barbershop_admin && (
-          <TeamManagement barbershopOwnerId={profile.id} />
-        )}
-      </div>
+         {/* Team Page - Only for barbershop admins */}
+         {isTeamPage && profile?.is_barbershop_admin && (
+           <TeamManagement barbershopOwnerId={profile.id} />
+         )}
+       </div>
 
       <ServiceModal
         isOpen={isServiceModalOpen}
@@ -620,11 +659,12 @@ const BarberDashboard = () => {
              endereco: profile.endereco,
              cidade: profile.cidade,
              estado: profile.estado,
-             hero_enabled: (profile as any).hero_enabled ?? true,
-             hero_button_text: (profile as any).hero_button_text || "Agendar agora mesmo",
-             hero_button_color: (profile as any).hero_button_color || "#D97706",
-             hero_animation_speed: (profile as any).hero_animation_speed ?? 1.0,
-             hero_services_title: (profile as any).hero_services_title || "Meus Serviços",
+             hero_enabled: profile.hero_enabled ?? true,
+             hero_button_text: profile.hero_button_text || "Agendar agora mesmo",
+             hero_button_color: profile.hero_button_color || "#D97706",
+             hero_animation_speed: profile.hero_animation_speed ?? 1.0,
+             hero_services_title: profile.hero_services_title || "Meus Serviços",
+             dashboard_home_widgets: profile.dashboard_home_widgets || ["today_appointments", "upcoming_appointments", "services"],
            }}
          />
        )}
