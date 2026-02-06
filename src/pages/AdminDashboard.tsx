@@ -52,6 +52,7 @@ import { ptBR } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 import SubscriptionManager from "@/components/admin/SubscriptionManager";
+import RevenueDashboard from "@/components/admin/RevenueDashboard";
 
 interface BarberSubscription {
   barber_id: string;
@@ -924,6 +925,9 @@ const navItems = [
               )}
             </CardContent>
            </Card>
+
+           {/* Revenue Dashboard - only for chief admins */}
+           {isChiefAdmin && <RevenueDashboard />}
 
            {/* Subscriptions - only visible with financial permissions */}
            {myPermissions.can_view_financials && <SubscriptionManager />}
