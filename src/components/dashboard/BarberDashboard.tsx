@@ -18,7 +18,6 @@ import {
   Settings,
   Loader2,
   MessageCircle,
-  UserCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +26,6 @@ import { ptBR } from "date-fns/locale";
 import ServiceModal from "./ServiceModal";
 import ScheduleModal from "./ScheduleModal";
 import SettingsModal from "./SettingsModal";
-import PresentationSettingsModal from "./PresentationSettingsModal";
 import TeamManagement from "./TeamManagement";
 import { useToast } from "@/hooks/use-toast";
 import UpcomingAppointments from "./UpcomingAppointments";
@@ -83,7 +81,7 @@ const BarberDashboard = () => {
    const [publicLink, setPublicLink] = useState<string | null>(null);
    const [linkCopied, setLinkCopied] = useState(false);
    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-   const [isPresentationModalOpen, setIsPresentationModalOpen] = useState(false);
+   
    const [isPaused, setIsPaused] = useState<boolean | null>(null);
    const [isCheckingStatus, setIsCheckingStatus] = useState(true);
 
@@ -284,25 +282,15 @@ const BarberDashboard = () => {
                </p>
              </div>
            </div>
-           <div className="flex gap-2">
-             <Button
-               variant="outline"
-               size="icon"
-               onClick={() => setIsPresentationModalOpen(true)}
-               title="Apresentação"
-             >
-               <UserCircle className="h-4 w-4" />
-             </Button>
-             <Button
-               variant="outline"
-               size="icon"
-               onClick={() => setIsSettingsModalOpen(true)}
-               title="Configurações"
-             >
-               <Settings className="h-4 w-4" />
-             </Button>
-           </div>
-        </div>
+           <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setIsSettingsModalOpen(true)}
+              title="Configurações"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+         </div>
 
          {/* Public Link Card */}
          {publicLink && (
@@ -636,20 +624,6 @@ const BarberDashboard = () => {
          />
        )}
 
-       {profile && (
-         <PresentationSettingsModal
-           isOpen={isPresentationModalOpen}
-           onClose={() => setIsPresentationModalOpen(false)}
-           onSuccess={fetchData}
-           profile={{
-             id: profile.id,
-             user_id: profile.user_id,
-             full_name: profile.full_name,
-             bio: (profile as any).bio || null,
-             foto_apresentacao: (profile as any).foto_apresentacao || null,
-           }}
-         />
-       )}
     </DashboardLayout>
   );
 };
