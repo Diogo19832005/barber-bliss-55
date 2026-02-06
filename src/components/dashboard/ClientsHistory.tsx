@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Users, Calendar, Search, CalendarRange, X } from "lucide-react";
-import { format, addMonths } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import ClientCard from "./clients/ClientCard";
@@ -152,12 +152,8 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
         months.add(month);
       });
     });
-    // Add next 3 future months
-    const now = new Date();
-    for (let i = 0; i <= 3; i++) {
-      const future = addMonths(now, i);
-      months.add(format(future, "yyyy-MM"));
-    }
+    // Add current month if not already present
+    months.add(format(new Date(), "yyyy-MM"));
     return Array.from(months).sort().reverse();
   }, [clients]);
 
