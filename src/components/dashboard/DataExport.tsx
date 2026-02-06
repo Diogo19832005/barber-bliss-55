@@ -38,6 +38,8 @@ const DataExport = ({ barberId }: DataExportProps) => {
           status,
           notes,
           created_at,
+          client_name,
+          client_phone,
           client:profiles!appointments_client_id_fkey(full_name, phone),
           service:services(name, price, duration_minutes)
         `)
@@ -69,45 +71,44 @@ const DataExport = ({ barberId }: DataExportProps) => {
       const completedCount = completed.length;
       const cancelledCount = appointments.filter((a) => a.status === "cancelled").length;
 
-      // Create CSV content
+      // Create CSV content with semicolon separator for Brazilian Excel
+      const sep = ";";
       const csvRows = [
-        // Header with summary
-        [`Relatório de Agendamentos`],
-        [`Período: ${format(new Date(startDate), "dd/MM/yyyy", { locale: ptBR })} a ${format(new Date(endDate), "dd/MM/yyyy", { locale: ptBR })}`],
-        [`Total de Agendamentos: ${totalAppointments}`],
-        [`Concluídos: ${completedCount}`],
-        [`Cancelados: ${cancelledCount}`],
-        [`Faturamento Total: R$ ${totalEarnings.toFixed(2)}`],
-        [],
+        // Summary header row
+        ["Relatório de Agendamentos", "", "", "", "", "", "", "", ""],
+        ["Período", `${format(new Date(startDate), "dd/MM/yyyy", { locale: ptBR })} a ${format(new Date(endDate), "dd/MM/yyyy", { locale: ptBR })}`, "", "", "", "", "", "", ""],
+        ["Total de Agendamentos", String(totalAppointments), "", "Concluídos", String(completedCount), "", "Cancelados", String(cancelledCount), ""],
+        ["Faturamento Total", `R$ ${totalEarnings.toFixed(2)}`, "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", "", ""],
         // Data header
-        ["Data", "Horário", "Cliente", "Telefone", "Serviço", "Duração (min)", "Valor (R$)", "Status", "Observações"],
+        ["Data", "Horário Início", "Horário Fim", "Cliente", "Telefone", "Serviço", "Duração (min)", "Valor (R$)", "Status", "Observações"],
         // Data rows
         ...appointments.map((apt) => [
-          format(new Date(apt.appointment_date), "dd/MM/yyyy"),
-          `${apt.start_time.slice(0, 5)} - ${apt.end_time.slice(0, 5)}`,
-          (apt.client as any)?.full_name || "N/A",
-          (apt.client as any)?.phone || "N/A",
-          (apt.service as any)?.name || "N/A",
-          (apt.service as any)?.duration_minutes || "N/A",
-          (apt.service as any)?.price?.toFixed(2) || "0.00",
+          format(new Date(apt.appointment_date + "T12:00:00"), "dd/MM/yyyy"),
+          apt.start_time.slice(0, 5),
+          apt.end_time.slice(0, 5),
+          (apt.client as any)?.full_name || apt.client_name || "Cliente avulso",
+          (apt.client as any)?.phone || apt.client_phone || "",
+          (apt.service as any)?.name || "",
+          String((apt.service as any)?.duration_minutes || ""),
+          ((apt.service as any)?.price?.toFixed(2) || "0.00").replace(".", ","),
           apt.status === "completed" ? "Concluído" : apt.status === "cancelled" ? "Cancelado" : "Agendado",
           apt.notes || "",
         ]),
       ];
 
-      // Convert to CSV string
+      // Convert to CSV string with semicolon separator
       const csvContent = csvRows
         .map((row) =>
           row
             .map((cell) => {
               const cellStr = String(cell);
-              // Escape quotes and wrap in quotes if contains comma or quote
-              if (cellStr.includes(",") || cellStr.includes('"') || cellStr.includes("\n")) {
+              if (cellStr.includes(sep) || cellStr.includes('"') || cellStr.includes("\n")) {
                 return `"${cellStr.replace(/"/g, '""')}"`;
               }
               return cellStr;
             })
-            .join(",")
+            .join(sep)
         )
         .join("\n");
 
