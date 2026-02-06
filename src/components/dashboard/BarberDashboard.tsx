@@ -654,32 +654,30 @@ const BarberDashboard = () => {
                </Button>
              </CardHeader>
              <CardContent>
-               <div className="grid grid-cols-7 gap-2">
-                 {[0, 1, 2, 3, 4, 5, 6].map((day) => {
-                   const schedule = schedules.find((s) => s.day_of_week === day);
-                   return (
-                     <div
-                       key={day}
-                       className={`rounded-lg p-3 text-center ${
-                         schedule?.is_active
-                           ? "bg-primary/10 text-primary"
-                           : "bg-secondary text-muted-foreground"
-                       }`}
-                     >
-                       <p className="text-xs font-medium">{dayNames[day]}</p>
-                       {schedule?.is_active ? (
-                         <p className="mt-1 text-xs">
-                           {schedule.start_time.slice(0, 5)}
-                           <br />
-                           {schedule.end_time.slice(0, 5)}
-                         </p>
-                       ) : (
-                         <p className="mt-1 text-xs">—</p>
-                       )}
-                     </div>
-                   );
-                 })}
-               </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+                  {[0, 1, 2, 3, 4, 5, 6].map((day) => {
+                    const schedule = schedules.find((s) => s.day_of_week === day);
+                    return (
+                      <div
+                        key={day}
+                        className={`rounded-lg p-3 text-center ${
+                          schedule?.is_active
+                            ? "bg-primary/10 text-primary"
+                            : "bg-secondary text-muted-foreground"
+                        }`}
+                      >
+                        <p className="text-xs font-medium">{dayNames[day]}</p>
+                        {schedule?.is_active ? (
+                          <p className="mt-1 text-xs">
+                            {schedule.start_time.slice(0, 5)} - {schedule.end_time.slice(0, 5)}
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-xs">—</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
              </CardContent>
            </Card>
          )}
