@@ -41,14 +41,13 @@ interface UpcomingAppointment {
    const fetchUpcomingAppointments = async () => {
      setIsLoading(true);
      
-     const now = new Date();
-     const todayStr = format(now, "yyyy-MM-dd");
-     const currentTime = format(now, "HH:mm:ss");
-     
-     // Fetch future appointments (today with future time + future dates)
-     const { data, error } = await supabase
-       .from("appointments")
-      .select(`
+      const now = new Date();
+      const tomorrowStr = format(addDays(startOfDay(now), 1), "yyyy-MM-dd");
+      
+      // Fetch only future appointments (starting from tomorrow)
+      const { data, error } = await supabase
+        .from("appointments")
+       .select(`
           id,
           appointment_date,
           start_time,
@@ -59,13 +58,13 @@ interface UpcomingAppointment {
           client:profiles!appointments_client_id_fkey(full_name),
           service:services(name, duration_minutes, price)
         `)
-       .eq("barber_id", barberId)
-       .neq("status", "completed")
-       .neq("status", "cancelled")
-       .or(`appointment_date.gt.${todayStr},and(appointment_date.eq.${todayStr},start_time.gte.${currentTime})`)
-       .order("appointment_date", { ascending: true })
-       .order("start_time", { ascending: true })
-       .limit(50);
+        .eq("barber_id", barberId)
+        .neq("status", "completed")
+        .neq("status", "cancelled")
+        .gte("appointment_date", tomorrowStr)
+        .order("appointment_date", { ascending: true })
+        .order("start_time", { ascending: true })
+        .limit(50);
  
      if (error) {
        console.error("Error fetching appointments:", error);
