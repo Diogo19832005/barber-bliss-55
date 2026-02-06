@@ -1,12 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Users, Calendar, Search, ChevronDown, ChevronUp, Phone } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Users, Calendar, Search, ChevronDown, ChevronUp, Phone, Medal, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import ClientCard from "./clients/ClientCard";
 
 interface ClientAppointment {
   id: string;
@@ -16,24 +24,37 @@ interface ClientAppointment {
   status: string;
 }
 
-interface ClientData {
+export interface ClientData {
   id: string;
   full_name: string;
   phone: string | null;
   appointments: ClientAppointment[];
   totalAppointments: number;
   completedAppointments: number;
+  firstAppointmentDate: string | null;
 }
 
 interface ClientsHistoryProps {
   barberId: string;
 }
 
+type SortOption = "alphabetical" | "newest" | "oldest" | "most_cuts" | "least_cuts";
+
+const SORT_LABELS: Record<SortOption, string> = {
+  alphabetical: "Ordem alfabética",
+  newest: "Mais recente",
+  oldest: "Mais antigo",
+  most_cuts: "Mais cortes",
+  least_cuts: "Menos cortes",
+};
+
 const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
   const [clients, setClients] = useState<ClientData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>("most_cuts");
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
 
   useEffect(() => {
     if (barberId) {
@@ -44,7 +65,6 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
   const fetchClientsHistory = async () => {
     setIsLoading(true);
 
-    // Fetch all appointments for this barber with client info
     const { data: appointments, error } = await supabase
       .from("appointments")
       .select(`
@@ -66,7 +86,6 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
       return;
     }
 
-    // Group appointments by client
     const clientsMap = new Map<string, ClientData>();
 
     appointments?.forEach((apt) => {
@@ -83,6 +102,7 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
           appointments: [],
           totalAppointments: 0,
           completedAppointments: 0,
+          firstAppointmentDate: null,
         });
       }
 
@@ -98,38 +118,108 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
       if (apt.status === "completed") {
         clientData.completedAppointments++;
       }
+
+      // Track first appointment date (appointments are desc, so last processed is earliest)
+      if (!clientData.firstAppointmentDate || apt.appointment_date < clientData.firstAppointmentDate) {
+        clientData.firstAppointmentDate = apt.appointment_date;
+      }
     });
 
-    // Convert to array and sort by total appointments
-    const clientsArray = Array.from(clientsMap.values()).sort(
-      (a, b) => b.totalAppointments - a.totalAppointments
-    );
-
-    setClients(clientsArray);
+    setClients(Array.from(clientsMap.values()));
     setIsLoading(false);
   };
 
-  const filteredClients = clients.filter((client) =>
-    client.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.phone?.includes(searchTerm)
-  );
+  // Generate available months from appointment data
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    clients.forEach((client) => {
+      client.appointments.forEach((apt) => {
+        const month = apt.appointment_date.substring(0, 7); // YYYY-MM
+        months.add(month);
+      });
+    });
+    return Array.from(months).sort().reverse();
+  }, [clients]);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <Badge className="bg-success/20 text-success border-success/30 text-xs">Concluído</Badge>;
-      case "cancelled":
-        return <Badge variant="destructive" className="text-xs">Cancelado</Badge>;
-      case "scheduled":
-        return <Badge className="bg-primary/20 text-primary border-primary/30 text-xs">Agendado</Badge>;
-      default:
-        return <Badge variant="secondary" className="text-xs">{status}</Badge>;
+  // Filter and sort clients
+  const processedClients = useMemo(() => {
+    let filtered = clients;
+
+    // Search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (c) => c.full_name.toLowerCase().includes(term) || c.phone?.includes(searchTerm)
+      );
     }
-  };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr + "T00:00:00");
-    return format(date, "dd/MM/yyyy (EEEE)", { locale: ptBR });
+    // Month filter - recalculate completedAppointments for the selected month
+    if (selectedMonth !== "all") {
+      filtered = filtered
+        .map((client) => {
+          const monthAppointments = client.appointments.filter(
+            (apt) => apt.appointment_date.startsWith(selectedMonth)
+          );
+          if (monthAppointments.length === 0) return null;
+          return {
+            ...client,
+            appointments: monthAppointments,
+            totalAppointments: monthAppointments.length,
+            completedAppointments: monthAppointments.filter((a) => a.status === "completed").length,
+          };
+        })
+        .filter(Boolean) as ClientData[];
+    }
+
+    // Sort
+    const sorted = [...filtered];
+    switch (sortBy) {
+      case "alphabetical":
+        sorted.sort((a, b) => a.full_name.localeCompare(b.full_name));
+        break;
+      case "newest":
+        sorted.sort((a, b) => {
+          const dateA = a.appointments[0]?.appointment_date || "";
+          const dateB = b.appointments[0]?.appointment_date || "";
+          return dateB.localeCompare(dateA);
+        });
+        break;
+      case "oldest":
+        sorted.sort((a, b) => {
+          const dateA = a.firstAppointmentDate || "";
+          const dateB = b.firstAppointmentDate || "";
+          return dateA.localeCompare(dateB);
+        });
+        break;
+      case "most_cuts":
+        sorted.sort((a, b) => b.completedAppointments - a.completedAppointments);
+        break;
+      case "least_cuts":
+        sorted.sort((a, b) => a.completedAppointments - b.completedAppointments);
+        break;
+    }
+
+    return sorted;
+  }, [clients, searchTerm, sortBy, selectedMonth]);
+
+  // Top 10 ranking (always based on all-time data, not filtered by month)
+  const top10Map = useMemo(() => {
+    const ranked = [...clients]
+      .sort((a, b) => b.completedAppointments - a.completedAppointments)
+      .slice(0, 10);
+    const map = new Map<string, number>();
+    ranked.forEach((c, i) => {
+      if (c.completedAppointments > 0) {
+        map.set(c.id, i + 1);
+      }
+    });
+    return map;
+  }, [clients]);
+
+  const formatMonthLabel = (monthStr: string) => {
+    const [year, month] = monthStr.split("-");
+    const date = new Date(Number(year), Number(month) - 1, 1);
+    return format(date, "MMMM yyyy", { locale: ptBR });
   };
 
   if (isLoading) {
@@ -157,7 +247,7 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
           <Users className="h-5 w-5 text-primary" />
           Meus Clientes
           <Badge variant="secondary" className="ml-2">
-            {clients.length} {clients.length === 1 ? "cliente" : "clientes"}
+            {processedClients.length} {processedClients.length === 1 ? "cliente" : "clientes"}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -173,92 +263,55 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
           />
         </div>
 
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+            <SelectTrigger className="w-full sm:w-[220px]">
+              <SelectValue placeholder="Ordenar por" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(SORT_LABELS).map(([key, label]) => (
+                <SelectItem key={key} value={key}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-full sm:w-[220px]">
+              <SelectValue placeholder="Filtrar por mês" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os meses</SelectItem>
+              {availableMonths.map((month) => (
+                <SelectItem key={month} value={month}>
+                  {formatMonthLabel(month)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Clients List */}
-        {filteredClients.length === 0 ? (
+        {processedClients.length === 0 ? (
           <p className="py-8 text-center text-muted-foreground">
-            {searchTerm ? "Nenhum cliente encontrado" : "Nenhum cliente ainda"}
+            {searchTerm || selectedMonth !== "all"
+              ? "Nenhum cliente encontrado"
+              : "Nenhum cliente ainda"}
           </p>
         ) : (
           <div className="space-y-3">
-            {filteredClients.map((client) => (
-              <div
+            {processedClients.map((client) => (
+              <ClientCard
                 key={client.id}
-                className="rounded-xl border border-border bg-card/50 overflow-hidden"
-              >
-                {/* Client Header */}
-                <button
-                  type="button"
-                  onClick={() => setExpandedClient(expandedClient === client.id ? null : client.id)}
-                  className="w-full flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                      {client.full_name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium">{client.full_name}</p>
-                      {client.phone && (
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Phone className="h-3 w-3" />
-                          <span>{client.phone}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-primary">
-                        {client.completedAppointments}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {client.completedAppointments === 1 ? "corte" : "cortes"}
-                      </p>
-                    </div>
-                    {expandedClient === client.id ? (
-                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                </button>
-
-                {/* Appointments List (Expanded) */}
-                {expandedClient === client.id && (
-                  <div className="border-t border-border bg-secondary/10 p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Histórico de agendamentos ({client.totalAppointments})
-                      </span>
-                    </div>
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {client.appointments.map((apt) => (
-                        <div
-                          key={apt.id}
-                          className={cn(
-                            "flex items-center justify-between rounded-lg p-3",
-                            apt.status === "cancelled" 
-                              ? "bg-destructive/10" 
-                              : apt.status === "completed"
-                              ? "bg-success/10"
-                              : "bg-primary/10"
-                          )}
-                        >
-                          <div className="flex flex-col gap-1">
-                            <span className="text-sm font-medium">
-                              {formatDate(apt.appointment_date)}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {apt.start_time.slice(0, 5)} • {apt.service?.name || "Serviço não especificado"}
-                            </span>
-                          </div>
-                          {getStatusBadge(apt.status)}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                client={client}
+                isExpanded={expandedClient === client.id}
+                onToggle={() =>
+                  setExpandedClient(expandedClient === client.id ? null : client.id)
+                }
+                rankPosition={top10Map.get(client.id)}
+              />
             ))}
           </div>
         )}
