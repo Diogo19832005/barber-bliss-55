@@ -66,7 +66,7 @@ interface Schedule {
 
 const navItems = [
   { label: "Página Inicial", href: "/dashboard", icon: <Home className="h-4 w-4" /> },
-  { label: "Visão Geral", href: "/dashboard/overview", icon: <TrendingUp className="h-4 w-4" /> },
+  { label: "Dashboard", href: "/dashboard/analytics", icon: <TrendingUp className="h-4 w-4" /> },
   { label: "Agenda", href: "/dashboard/agenda", icon: <Calendar className="h-4 w-4" /> },
   { label: "Serviços", href: "/dashboard/services", icon: <Scissors className="h-4 w-4" /> },
   { label: "Horários", href: "/dashboard/schedule", icon: <Clock className="h-4 w-4" /> },
@@ -266,7 +266,7 @@ const BarberDashboard = () => {
 
   // Check if we're on the main dashboard page (home) vs a specific section
   const isHomePage = currentPath === "/dashboard" || currentPath === "/dashboard/";
-  const isOverviewPage = currentPath === "/dashboard/overview";
+  const isAnalyticsPage = currentPath === "/dashboard/analytics";
   const isAgendaPage = currentPath === "/dashboard/agenda";
   const isServicesPage = currentPath === "/dashboard/services";
   const isSchedulePage = currentPath === "/dashboard/schedule";
@@ -323,8 +323,8 @@ const BarberDashboard = () => {
            />
          )}
 
-         {/* Overview Page - Full dashboard view */}
-         {(isOverviewPage || isAgendaPage) && (
+         {/* Dashboard/Analytics Page */}
+         {isAnalyticsPage && (
            <>
              {/* Public Link Card */}
              {publicLink && (
@@ -486,13 +486,96 @@ const BarberDashboard = () => {
              {/* Upcoming Appointments */}
              <UpcomingAppointments barberId={profile?.id || ""} />
 
-             {/* Analytics */}
-             <EarningsChart barberId={profile?.id || ""} />
-           </>
-         )}
+              {/* Analytics */}
+              <EarningsChart barberId={profile?.id || ""} />
+            </>
+          )}
 
-         {/* Services Page */}
-         {isServicesPage && (
+          {/* Agenda Page - Today's Appointments and Upcoming */}
+          {isAgendaPage && (
+            <>
+              {/* Today's Appointments */}
+              <Card className="glass-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    Agenda de Hoje
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {appointments.length === 0 ? (
+                    <p className="py-8 text-center text-muted-foreground">
+                      Nenhum agendamento para hoje
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {appointments.map((apt) => (
+                        <div
+                          key={apt.id}
+                          className={`flex items-center justify-between rounded-xl border p-4 ${
+                            apt.status === "completed" 
+                              ? "border-success/30 bg-success/5" 
+                              : apt.status === "cancelled"
+                              ? "border-destructive/30 bg-destructive/5"
+                              : "border-border"
+                          }`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="text-center">
+                              <p className="text-lg font-semibold">
+                                {apt.start_time.slice(0, 5)}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {apt.end_time.slice(0, 5)}
+                              </p>
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{apt.client?.full_name}</p>
+                                {apt.client?.phone && (
+                                  <a
+                                    href={`https://wa.me/${apt.client.phone.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 text-xs text-success hover:bg-success/30 transition-colors"
+                                    title="Enviar mensagem no WhatsApp"
+                                  >
+                                    <MessageCircle className="h-3 w-3" />
+                                    WhatsApp
+                                  </a>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                          {apt.status === "scheduled" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleCompleteAppointment(apt.id)}
+                            >
+                              Concluir
+                            </Button>
+                          )}
+                          {apt.status === "completed" && (
+                            <span className="text-sm text-success">✓ Concluído</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Upcoming Appointments */}
+              <UpcomingAppointments barberId={profile?.id || ""} />
+            </>
+          )}
+
+          {/* Services Page */}
+          {isServicesPage && (
            <Card className="glass-card">
              <CardHeader className="flex flex-row items-center justify-between">
                <CardTitle className="flex items-center gap-2">
