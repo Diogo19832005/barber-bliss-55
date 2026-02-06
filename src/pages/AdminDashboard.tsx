@@ -74,6 +74,7 @@ interface Barber {
 interface Admin {
   id: string;
   user_id: string;
+  role: string;
   created_at: string;
   email?: string;
 }
@@ -85,7 +86,7 @@ const navItems = [
 ];
  
  const AdminDashboard = () => {
-   const { profile, user, isAdmin, isLoading: authLoading } = useAuth();
+   const { profile, user, isAdmin, isChiefAdmin, isLoading: authLoading } = useAuth();
    const { toast } = useToast();
    const [barbers, setBarbers] = useState<Barber[]>([]);
    const [admins, setAdmins] = useState<Admin[]>([]);
@@ -93,6 +94,7 @@ const navItems = [
    const [processingId, setProcessingId] = useState<string | null>(null);
     const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
     const [newAdminEmail, setNewAdminEmail] = useState("");
+    const [newAdminRole, setNewAdminRole] = useState<"admin" | "collaborator_admin">("collaborator_admin");
     const [isAddingAdmin, setIsAddingAdmin] = useState(false);
      const [filterMonth, setFilterMonth] = useState<string>("all");
      const [filterYear, setFilterYear] = useState<string>(new Date().getFullYear().toString());
@@ -137,13 +139,25 @@ const navItems = [
          setBarbers(barbersWithEmails);
        }
  
-     // Fetch admins
-     const { data: adminsData } = await supabase
-       .from("user_roles")
-       .select("id, user_id, created_at")
-       .eq("role", "admin");
- 
-     if (adminsData) setAdmins(adminsData);
+    // Fetch admins
+    const { data: adminsData } = await supabase
+      .from("user_roles")
+      .select("id, user_id, role, created_at")
+      .in("role", ["admin", "collaborator_admin"] as any);
+
+    if (adminsData) {
+      // Fetch emails for admins
+      const adminsWithEmails = await Promise.all(
+        adminsData.map(async (admin) => {
+          const { data: email } = await supabase.rpc(
+            'get_user_email_by_id' as any,
+            { target_user_id: admin.user_id }
+          );
+          return { ...admin, role: admin.role as string, email: email as string | undefined };
+        })
+      );
+      setAdmins(adminsWithEmails);
+    }
  
      setIsLoading(false);
    };
@@ -280,7 +294,7 @@ const navItems = [
 
     const { error } = await supabase
       .from("user_roles")
-      .insert([{ user_id: userId, role: "admin" as const }]);
+      .insert([{ user_id: userId, role: newAdminRole as any }]);
 
     if (error) {
       toast({
@@ -324,7 +338,25 @@ const navItems = [
        toast({ title: "Administrador removido" });
        fetchData();
      }
-   };
+  };
+
+  const handleChangeAdminRole = async (adminId: string, newRole: string) => {
+    const { error } = await supabase
+      .from("user_roles")
+      .update({ role: newRole as any })
+      .eq("id", adminId);
+
+    if (error) {
+      toast({
+        title: "Erro ao alterar função",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: newRole === 'admin' ? "Promovido a Administrador Chefe!" : "Alterado para Colaborador" });
+      fetchData();
+    }
+  };
  
    const getStatusBadge = (status: string) => {
      switch (status) {
@@ -832,14 +864,16 @@ const navItems = [
                <Shield className="h-5 w-5 text-primary" />
                Administradores
              </CardTitle>
-             <Button
-               variant="gold"
-               size="sm"
-               onClick={() => setIsAddAdminOpen(true)}
-             >
-               <UserPlus className="mr-2 h-4 w-4" />
-               Adicionar
-             </Button>
+             {isChiefAdmin && (
+               <Button
+                 variant="gold"
+                 size="sm"
+                 onClick={() => setIsAddAdminOpen(true)}
+               >
+                 <UserPlus className="mr-2 h-4 w-4" />
+                 Adicionar
+               </Button>
+             )}
            </CardHeader>
            <CardContent>
              <div className="space-y-3">
@@ -849,27 +883,52 @@ const navItems = [
                    className="flex items-center justify-between rounded-xl border border-border p-4"
                  >
                    <div className="flex items-center gap-3">
-                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
-                       <Shield className="h-5 w-5 text-primary" />
+                     <div className={cn(
+                       "flex h-10 w-10 items-center justify-center rounded-full",
+                       admin.role === 'admin' ? "bg-primary/20" : "bg-secondary"
+                     )}>
+                       <Shield className={cn("h-5 w-5", admin.role === 'admin' ? "text-primary" : "text-muted-foreground")} />
                      </div>
                      <div>
-                       <p className="font-medium">
-                         {admin.user_id === user?.id ? "Você" : `Admin ${admin.id.slice(0, 8)}`}
-                       </p>
+                       <div className="flex items-center gap-2">
+                         <p className="font-medium">
+                           {admin.email || (admin.user_id === user?.id ? "Você" : `Admin ${admin.id.slice(0, 8)}`)}
+                         </p>
+                         <Badge variant="outline" className={admin.role === 'admin' ? "border-primary text-primary" : "border-muted-foreground text-muted-foreground"}>
+                           {admin.role === 'admin' ? 'Chefe' : 'Colaborador'}
+                         </Badge>
+                         {admin.user_id === user?.id && (
+                           <Badge variant="secondary" className="text-xs">Você</Badge>
+                         )}
+                       </div>
                        <p className="text-sm text-muted-foreground">
                          Desde {new Date(admin.created_at).toLocaleDateString("pt-BR")}
                        </p>
                      </div>
                    </div>
-                   {admin.user_id !== user?.id && (
-                     <Button
-                       size="sm"
-                       variant="ghost"
-                       className="text-destructive hover:text-destructive"
-                       onClick={() => handleRemoveAdmin(admin.id, admin.user_id)}
-                     >
-                       <XCircle className="h-4 w-4" />
-                     </Button>
+                   {isChiefAdmin && admin.user_id !== user?.id && (
+                     <div className="flex gap-2">
+                       <Select
+                         value={admin.role}
+                         onValueChange={(value) => handleChangeAdminRole(admin.id, value)}
+                       >
+                         <SelectTrigger className="w-[140px] bg-secondary/50">
+                           <SelectValue />
+                         </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="admin">Chefe</SelectItem>
+                           <SelectItem value="collaborator_admin">Colaborador</SelectItem>
+                         </SelectContent>
+                       </Select>
+                       <Button
+                         size="sm"
+                         variant="ghost"
+                         className="text-destructive hover:text-destructive"
+                         onClick={() => handleRemoveAdmin(admin.id, admin.user_id)}
+                       >
+                         <XCircle className="h-4 w-4" />
+                       </Button>
+                     </div>
                    )}
                  </div>
                ))}
@@ -903,6 +962,18 @@ const navItems = [
                     className="bg-secondary/50 pl-10"
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Tipo de Administrador</Label>
+                <Select value={newAdminRole} onValueChange={(v) => setNewAdminRole(v as any)}>
+                  <SelectTrigger className="bg-secondary/50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Chefe — acesso total, pode gerenciar admins</SelectItem>
+                    <SelectItem value="collaborator_admin">Colaborador — acesso ao painel, sem gerenciar admins</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
            <DialogFooter>
