@@ -41,6 +41,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { CalendarIcon } from "lucide-react";
+import type { DateRange } from "react-day-picker";
 import SubscriptionManager from "@/components/admin/SubscriptionManager";
 
 interface BarberSubscription {
@@ -87,8 +94,10 @@ const navItems = [
     const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
     const [newAdminEmail, setNewAdminEmail] = useState("");
     const [isAddingAdmin, setIsAddingAdmin] = useState(false);
-    const [filterMonth, setFilterMonth] = useState<string>("all");
-    const [filterYear, setFilterYear] = useState<string>(new Date().getFullYear().toString());
+     const [filterMonth, setFilterMonth] = useState<string>("all");
+     const [filterYear, setFilterYear] = useState<string>(new Date().getFullYear().toString());
+     const [filterMode, setFilterMode] = useState<"month" | "dateRange">("month");
+     const [dateRange, setDateRange] = useState<DateRange | undefined>();
  
    useEffect(() => {
      if (isAdmin) {
@@ -356,13 +365,24 @@ const navItems = [
       return Array.from(years).sort((a, b) => b - a);
     }, [barbers]);
 
-    const filteredBarbers = useMemo(() => {
-      if (filterMonth === "all") return barbers;
-      return barbers.filter(b => {
-        const d = new Date(b.created_at);
-        return d.getMonth() === parseInt(filterMonth) && d.getFullYear() === parseInt(filterYear);
-      });
-    }, [barbers, filterMonth, filterYear]);
+     const isFilterActive = filterMode === "month" ? filterMonth !== "all" : !!(dateRange?.from && dateRange?.to);
+
+     const filteredBarbers = useMemo(() => {
+       if (filterMode === "dateRange") {
+         if (!dateRange?.from || !dateRange?.to) return barbers;
+         const from = dateRange.from;
+         const to = dateRange.to;
+         return barbers.filter(b => {
+           const d = new Date(b.created_at);
+           return d >= from && d <= new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59);
+         });
+       }
+       if (filterMonth === "all") return barbers;
+       return barbers.filter(b => {
+         const d = new Date(b.created_at);
+         return d.getMonth() === parseInt(filterMonth) && d.getFullYear() === parseInt(filterYear);
+       });
+     }, [barbers, filterMonth, filterYear, filterMode, dateRange]);
 
     const planStats = useMemo(() => {
       const filtered = filteredBarbers;
@@ -529,75 +549,148 @@ const navItems = [
                 Filtrar por Período de Cadastro
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-3">
-                <div className="w-48">
-                  <Label className="text-xs text-muted-foreground">Mês</Label>
-                  <Select value={filterMonth} onValueChange={setFilterMonth}>
-                    <SelectTrigger className="bg-secondary/50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {months.map(m => (
-                        <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {filterMonth !== "all" && (
-                  <div className="w-32">
-                    <Label className="text-xs text-muted-foreground">Ano</Label>
-                    <Select value={filterYear} onValueChange={setFilterYear}>
-                      <SelectTrigger className="bg-secondary/50">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableYears.map(y => (
-                          <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
+             <CardContent className="space-y-4">
+               {/* Filter mode toggle */}
+               <div className="flex gap-2">
+                 <Button
+                   size="sm"
+                   variant={filterMode === "month" ? "default" : "outline"}
+                   onClick={() => setFilterMode("month")}
+                 >
+                   Por Mês
+                 </Button>
+                 <Button
+                   size="sm"
+                   variant={filterMode === "dateRange" ? "default" : "outline"}
+                   onClick={() => setFilterMode("dateRange")}
+                 >
+                   Por Datas
+                 </Button>
+               </div>
 
-              {filterMonth !== "all" && (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <div className="rounded-lg border border-border bg-secondary/30 p-3 text-center">
-                    <p className="text-2xl font-bold">{planStats.total}</p>
-                    <p className="text-xs text-muted-foreground">Cadastrados no período</p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-secondary/30 p-3 text-center">
-                    <p className="text-2xl font-bold text-success">{planStats.paid}</p>
-                    <p className="text-xs text-muted-foreground">Com plano ativo (pago)</p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-secondary/30 p-3 text-center">
-                    <p className="text-2xl font-bold text-warning">{planStats.trial}</p>
-                    <p className="text-xs text-muted-foreground">Em período de teste</p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-secondary/30 p-3 text-center">
-                    <p className="text-2xl font-bold text-muted-foreground">{planStats.noSub}</p>
-                    <p className="text-xs text-muted-foreground">Sem assinatura</p>
-                  </div>
-                </div>
-              )}
+               {filterMode === "month" ? (
+                 <div className="flex flex-wrap gap-3">
+                   <div className="w-48">
+                     <Label className="text-xs text-muted-foreground">Mês</Label>
+                     <Select value={filterMonth} onValueChange={setFilterMonth}>
+                       <SelectTrigger className="bg-secondary/50">
+                         <SelectValue />
+                       </SelectTrigger>
+                       <SelectContent>
+                         {months.map(m => (
+                           <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                         ))}
+                       </SelectContent>
+                     </Select>
+                   </div>
+                   {filterMonth !== "all" && (
+                     <div className="w-32">
+                       <Label className="text-xs text-muted-foreground">Ano</Label>
+                       <Select value={filterYear} onValueChange={setFilterYear}>
+                         <SelectTrigger className="bg-secondary/50">
+                           <SelectValue />
+                         </SelectTrigger>
+                         <SelectContent>
+                           {availableYears.map(y => (
+                             <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
+                     </div>
+                   )}
+                 </div>
+               ) : (
+                 <div className="flex flex-wrap gap-3 items-end">
+                   <div>
+                     <Label className="text-xs text-muted-foreground">Período</Label>
+                     <Popover>
+                       <PopoverTrigger asChild>
+                         <Button
+                           variant="outline"
+                           className={cn(
+                             "w-[280px] justify-start text-left font-normal bg-secondary/50",
+                             !dateRange && "text-muted-foreground"
+                           )}
+                         >
+                           <CalendarIcon className="mr-2 h-4 w-4" />
+                           {dateRange?.from ? (
+                             dateRange.to ? (
+                               <>
+                                 {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
+                                 {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
+                               </>
+                             ) : (
+                               format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
+                             )
+                           ) : (
+                             <span>Selecione o período</span>
+                           )}
+                         </Button>
+                       </PopoverTrigger>
+                       <PopoverContent className="w-auto p-0" align="start">
+                         <Calendar
+                           initialFocus
+                           mode="range"
+                           defaultMonth={dateRange?.from}
+                           selected={dateRange}
+                           onSelect={setDateRange}
+                           numberOfMonths={2}
+                           locale={ptBR}
+                           className="pointer-events-auto"
+                         />
+                       </PopoverContent>
+                     </Popover>
+                   </div>
+                   {dateRange?.from && (
+                     <Button
+                       size="sm"
+                       variant="ghost"
+                       onClick={() => setDateRange(undefined)}
+                       className="text-muted-foreground"
+                     >
+                       Limpar
+                     </Button>
+                   )}
+                 </div>
+               )}
 
-              {filterMonth !== "all" && (
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="gap-1">
-                    <BarChart3 className="h-3 w-3" />
-                    Mensal: {planStats.monthly}
-                  </Badge>
-                  <Badge variant="outline" className="gap-1">
-                    Trimestral: {planStats.quarterly}
-                  </Badge>
-                  <Badge variant="outline" className="gap-1">
-                    Semestral: {planStats.semiannual}
-                  </Badge>
-                  <Badge variant="outline" className="gap-1">
-                    Anual: {planStats.yearly}
-                  </Badge>
-                </div>
+               {isFilterActive && (
+                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                   <div className="rounded-lg border border-border bg-secondary/30 p-3 text-center">
+                     <p className="text-2xl font-bold">{planStats.total}</p>
+                     <p className="text-xs text-muted-foreground">Cadastrados no período</p>
+                   </div>
+                   <div className="rounded-lg border border-border bg-secondary/30 p-3 text-center">
+                     <p className="text-2xl font-bold text-success">{planStats.paid}</p>
+                     <p className="text-xs text-muted-foreground">Com plano ativo (pago)</p>
+                   </div>
+                   <div className="rounded-lg border border-border bg-secondary/30 p-3 text-center">
+                     <p className="text-2xl font-bold text-warning">{planStats.trial}</p>
+                     <p className="text-xs text-muted-foreground">Em período de teste</p>
+                   </div>
+                   <div className="rounded-lg border border-border bg-secondary/30 p-3 text-center">
+                     <p className="text-2xl font-bold text-muted-foreground">{planStats.noSub}</p>
+                     <p className="text-xs text-muted-foreground">Sem assinatura</p>
+                   </div>
+                 </div>
+               )}
+
+               {isFilterActive && (
+                 <div className="flex flex-wrap gap-2">
+                   <Badge variant="outline" className="gap-1">
+                     <BarChart3 className="h-3 w-3" />
+                     Mensal: {planStats.monthly}
+                   </Badge>
+                   <Badge variant="outline" className="gap-1">
+                     Trimestral: {planStats.quarterly}
+                   </Badge>
+                   <Badge variant="outline" className="gap-1">
+                     Semestral: {planStats.semiannual}
+                   </Badge>
+                   <Badge variant="outline" className="gap-1">
+                     Anual: {planStats.yearly}
+                   </Badge>
+                 </div>
               )}
             </CardContent>
           </Card>
@@ -605,12 +698,12 @@ const navItems = [
           {/* All Barbers (filtered) */}
           <Card className="glass-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                {filterMonth !== "all"
-                  ? `Barbeiros — ${months.find(m => m.value === filterMonth)?.label} ${filterYear} (${filteredBarbers.length})`
-                  : `Todos os Barbeiros (${barbers.length})`}
-              </CardTitle>
+               <CardTitle className="flex items-center gap-2">
+                 <Users className="h-5 w-5 text-primary" />
+                 {isFilterActive
+                   ? `Barbeiros no período (${filteredBarbers.length})`
+                   : `Todos os Barbeiros (${barbers.length})`}
+               </CardTitle>
             </CardHeader>
             <CardContent>
               {filteredBarbers.length === 0 ? (
