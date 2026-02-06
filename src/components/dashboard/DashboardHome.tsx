@@ -57,6 +57,10 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
   const [linkCopied, setLinkCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const today = new Date();
+  const formattedDate = format(today, "EEEE, d 'de' MMMM", { locale: ptBR });
+  const displayName = profile?.nome_exibido || profile?.full_name || "Barbeiro";
+
   useEffect(() => {
     if (barberId) {
       fetchData();
@@ -178,6 +182,27 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
 
   return (
     <div className="space-y-6">
+      {/* Greeting Section */}
+      <div className="flex items-center gap-4">
+        {profile?.avatar_url ? (
+          <img
+            src={profile.avatar_url}
+            alt={displayName}
+            className="h-14 w-14 rounded-full object-cover border-2 border-primary/30"
+          />
+        ) : (
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/20 text-primary font-bold text-xl">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div>
+          <h1 className="text-2xl font-bold">
+            Olá, {displayName}! 👋
+          </h1>
+          <p className="text-muted-foreground capitalize">{formattedDate}</p>
+        </div>
+      </div>
+
       {/* Public Link */}
       {publicLink && widgets.includes("public_link") && (
         <Card className="glass-card border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
