@@ -88,11 +88,7 @@ interface Admin {
 
 type AdminSection = "barbeiros" | "mensalidades" | "receita" | "historico" | "administradores";
 
-const navItems = [
-  { label: "Barbeiros", href: "/admin", icon: <Users className="h-4 w-4" /> },
-  { label: "Mensalidades", href: "/admin/subscriptions", icon: <CreditCard className="h-4 w-4" /> },
-  { label: "Administradores", href: "/admin/admins", icon: <Shield className="h-4 w-4" /> },
-];
+const navItems: { label: string; href: string; icon: React.ReactNode }[] = [];
 
 const AdminDashboard = () => {
   const { profile, user, isAdmin, isChiefAdmin, isLoading: authLoading } = useAuth();
