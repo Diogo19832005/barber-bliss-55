@@ -318,40 +318,42 @@ const PublicBooking = () => {
     const passwordToUse = authMode === "register" ? registerPassword : loginPassword;
     const phoneToUse = authMode === "register" ? registerPhone.trim() : "";
 
-    // Validate based on auth mode
-    if (authMode === "register") {
-      if (!nameToUse || !emailToUse) {
-        toast({
-          title: "Erro",
-          description: "Nome e email são obrigatórios",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (passwordToUse.length < 6) {
-        toast({
-          title: "Erro",
-          description: "A senha deve ter pelo menos 6 caracteres",
-          variant: "destructive",
-        });
-        return;
-      }
-    } else if (authMode === "login") {
-      if (!emailToUse) {
-        toast({
-          title: "Erro",
-          description: "Email é obrigatório",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!passwordToUse) {
-        toast({
-          title: "Erro",
-          description: "Senha é obrigatória",
-          variant: "destructive",
-        });
-        return;
+    // Only validate auth fields if user is NOT already logged in
+    if (!user) {
+      if (authMode === "register") {
+        if (!nameToUse || !emailToUse) {
+          toast({
+            title: "Erro",
+            description: "Nome e email são obrigatórios",
+            variant: "destructive",
+          });
+          return;
+        }
+        if (passwordToUse.length < 6) {
+          toast({
+            title: "Erro",
+            description: "A senha deve ter pelo menos 6 caracteres",
+            variant: "destructive",
+          });
+          return;
+        }
+      } else if (authMode === "login") {
+        if (!emailToUse) {
+          toast({
+            title: "Erro",
+            description: "Email é obrigatório",
+            variant: "destructive",
+          });
+          return;
+        }
+        if (!passwordToUse) {
+          toast({
+            title: "Erro",
+            description: "Senha é obrigatória",
+            variant: "destructive",
+          });
+          return;
+        }
       }
     }
 
