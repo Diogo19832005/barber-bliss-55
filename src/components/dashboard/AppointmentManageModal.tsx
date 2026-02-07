@@ -88,7 +88,7 @@ const AppointmentManageModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { setConfirmCancel(false); onClose(); } }}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle>Gerenciar Agendamento</DialogTitle>
           <DialogDescription>
@@ -111,7 +111,7 @@ const AppointmentManageModal = ({
               </SelectContent>
             </Select>
             <Button
-              onClick={handleSavePayment}
+              onClick={(e) => { e.stopPropagation(); handleSavePayment(); }}
               disabled={isSaving || paymentStatus === appointment.paymentStatus}
               className="w-full"
               size="sm"
