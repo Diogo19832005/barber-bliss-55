@@ -271,17 +271,14 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
 
   // Top 10 ranking (always based on all-time data, not filtered by month)
   const top10Map = useMemo(() => {
-    const ranked = [...clients]
-      .sort((a, b) => b.completedAppointments - a.completedAppointments)
-      .slice(0, 10);
     const map = new Map<string, number>();
-    ranked.forEach((c, i) => {
+    processedClients.slice(0, 10).forEach((c, i) => {
       if (c.completedAppointments > 0) {
         map.set(c.id, i + 1);
       }
     });
     return map;
-  }, [clients]);
+  }, [processedClients]);
 
   const formatMonthLabel = (monthStr: string) => {
     const [year, month] = monthStr.split("-");
@@ -463,7 +460,7 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
                 onToggle={() =>
                   setExpandedClient(expandedClient === client.id ? null : client.id)
                 }
-                rankPosition={sortBy === "most_cuts" ? top10Map.get(client.id) : undefined}
+                rankPosition={top10Map.get(client.id)}
               />
             ))}
           </div>
