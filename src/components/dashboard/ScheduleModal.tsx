@@ -58,13 +58,17 @@ const ScheduleModal = ({
       breakStart: string;
       breakEnd: string;
       breakToleranceEnabled: boolean;
-      breakToleranceMinutes: number;
+      breakToleranceMinutes: number | string;
+      toleranceMode: "minutes" | "time";
+      toleranceHours: string;
+      toleranceMinutesPartial: string;
     }>
   >([]);
 
   useEffect(() => {
     const initial = [0, 1, 2, 3, 4, 5, 6].map((day) => {
       const existing = schedules.find((s) => s.day_of_week === day);
+      const mins = (existing as any)?.break_tolerance_minutes || 0;
       return {
         day,
         start: existing?.start_time?.slice(0, 5) || "09:00",
@@ -74,7 +78,10 @@ const ScheduleModal = ({
         breakStart: (existing as any)?.break_start?.slice(0, 5) || "12:00",
         breakEnd: (existing as any)?.break_end?.slice(0, 5) || "13:00",
         breakToleranceEnabled: (existing as any)?.break_tolerance_enabled ?? false,
-        breakToleranceMinutes: (existing as any)?.break_tolerance_minutes || "",
+        breakToleranceMinutes: mins || "",
+        toleranceMode: "minutes" as const,
+        toleranceHours: mins ? String(Math.floor(mins / 60)) : "",
+        toleranceMinutesPartial: mins ? String(mins % 60) : "",
       };
     });
     setLocalSchedules(initial);
@@ -231,20 +238,93 @@ const ScheduleModal = ({
                         const breakStartMinutes = parseInt(schedule.breakStart.split(":")[0]) * 60 + parseInt(schedule.breakStart.split(":")[1]);
                         const breakEndMinutes = parseInt(schedule.breakEnd.split(":")[0]) * 60 + parseInt(schedule.breakEnd.split(":")[1]);
                         const maxTolerance = Math.max(0, breakEndMinutes - breakStartMinutes);
+                        const maxH = Math.floor(maxTolerance / 60);
+                        const maxM = maxTolerance % 60;
                         return (
-                          <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Tolerância máxima (minutos) — máx: {maxTolerance}</Label>
-                            <Input
-                              type="number"
-                              min={1}
-                              max={maxTolerance}
-                              value={schedule.breakToleranceMinutes}
-                              onChange={(e) =>
-                                handleUpdate(schedule.day, "breakToleranceMinutes", e.target.value === "" ? "" : Math.min(maxTolerance, Number(e.target.value)))
-                              }
-                              className="bg-secondary/50"
-                              placeholder={`Ex: ${Math.min(15, maxTolerance)}`}
-                            />
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleUpdate(schedule.day, "toleranceMode", "minutes")}
+                                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${schedule.toleranceMode === "minutes" ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground"}`}
+                              >
+                                Minutos
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdate(schedule.day, "toleranceMode", "time")}
+                                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${schedule.toleranceMode === "time" ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground"}`}
+                              >
+                                Horas e minutos
+                              </button>
+                            </div>
+
+                            {schedule.toleranceMode === "minutes" ? (
+                              <div className="space-y-1">
+                                <Label className="text-xs text-muted-foreground">Tolerância máxima (minutos) — máx: {maxTolerance}</Label>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  max={maxTolerance}
+                                  value={schedule.breakToleranceMinutes}
+                                  onChange={(e) => {
+                                    const val = e.target.value === "" ? "" : Math.min(maxTolerance, Number(e.target.value));
+                                    handleUpdate(schedule.day, "breakToleranceMinutes", val);
+                                    if (val !== "") {
+                                      handleUpdate(schedule.day, "toleranceHours", String(Math.floor(Number(val) / 60)));
+                                      handleUpdate(schedule.day, "toleranceMinutesPartial", String(Number(val) % 60));
+                                    } else {
+                                      handleUpdate(schedule.day, "toleranceHours", "");
+                                      handleUpdate(schedule.day, "toleranceMinutesPartial", "");
+                                    }
+                                  }}
+                                  className="bg-secondary/50"
+                                  placeholder={`Ex: ${Math.min(15, maxTolerance)}`}
+                                />
+                              </div>
+                            ) : (
+                              <div className="space-y-1">
+                                <Label className="text-xs text-muted-foreground">Tolerância máxima — máx: {maxH}h{maxM > 0 ? `${maxM}min` : ""}</Label>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">Horas</Label>
+                                    <Input
+                                      type="number"
+                                      min={0}
+                                      max={maxH}
+                                      value={schedule.toleranceHours}
+                                      onChange={(e) => {
+                                        const h = e.target.value === "" ? "" : Math.min(maxH, Math.max(0, Number(e.target.value)));
+                                        handleUpdate(schedule.day, "toleranceHours", h === "" ? "" : String(h));
+                                        const m = Number(schedule.toleranceMinutesPartial) || 0;
+                                        const total = h === "" ? (m || "") : Math.min(maxTolerance, Number(h) * 60 + m);
+                                        handleUpdate(schedule.day, "breakToleranceMinutes", total);
+                                      }}
+                                      className="bg-secondary/50"
+                                      placeholder="0"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">Minutos</Label>
+                                    <Input
+                                      type="number"
+                                      min={0}
+                                      max={59}
+                                      value={schedule.toleranceMinutesPartial}
+                                      onChange={(e) => {
+                                        const m = e.target.value === "" ? "" : Math.min(59, Math.max(0, Number(e.target.value)));
+                                        handleUpdate(schedule.day, "toleranceMinutesPartial", m === "" ? "" : String(m));
+                                        const h = Number(schedule.toleranceHours) || 0;
+                                        const total = m === "" && !h ? "" : Math.min(maxTolerance, h * 60 + (m === "" ? 0 : Number(m)));
+                                        handleUpdate(schedule.day, "breakToleranceMinutes", total);
+                                      }}
+                                      className="bg-secondary/50"
+                                      placeholder="0"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       })()}
