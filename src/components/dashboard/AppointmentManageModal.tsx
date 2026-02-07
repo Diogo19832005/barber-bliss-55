@@ -108,8 +108,8 @@ const AppointmentManageModal = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pending">Pagamento Pendente</SelectItem>
-                <SelectItem value="prepaid">Pagamento Antecipado</SelectItem>
+                <SelectItem value="pending">Aguardando Pagamento</SelectItem>
+                <SelectItem value="prepaid">Pagamento Feito</SelectItem>
               </SelectContent>
             </Select>
             <Button
