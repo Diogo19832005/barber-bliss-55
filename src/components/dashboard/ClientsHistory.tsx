@@ -463,7 +463,7 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
                 onToggle={() =>
                   setExpandedClient(expandedClient === client.id ? null : client.id)
                 }
-                rankPosition={top10Map.get(client.id)}
+                rankPosition={sortBy === "most_cuts" ? top10Map.get(client.id) : undefined}
               />
             ))}
           </div>
