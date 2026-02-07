@@ -63,6 +63,32 @@ const BookingModal = ({
     }
   }, [selectedService, selectedDate]);
 
+  // Realtime: auto-refresh slots when appointments change
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+    const channel = supabase
+      .channel(`booking-modal-${barber.id}-${dateStr}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+          filter: `barber_id=eq.${barber.id}`,
+        },
+        () => {
+          fetchAvailableSlots();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isOpen, barber.id, selectedDate, selectedService]);
+
   const fetchAvailableSlots = async () => {
     if (!selectedService) return;
 

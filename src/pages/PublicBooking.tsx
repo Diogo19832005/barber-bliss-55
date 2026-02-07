@@ -136,6 +136,33 @@ const PublicBooking = () => {
     }
   }, [selectedDate, selectedServices, selectedBarber]);
 
+  // Realtime: auto-refresh slots when appointments change
+  useEffect(() => {
+    if (!selectedBarber || !selectedDate) return;
+
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+    const channel = supabase
+      .channel(`appointments-${selectedBarber.id}-${dateStr}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+          filter: `barber_id=eq.${selectedBarber.id}`,
+        },
+        (payload) => {
+          // Re-fetch slots when any appointment changes for this barber
+          fetchAvailableSlots();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedBarber, selectedDate, selectedServices]);
+
   // Calculate total duration for multi-service
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0);
   const totalPrice = selectedServices.reduce((sum, s) => sum + Number(s.price), 0);
