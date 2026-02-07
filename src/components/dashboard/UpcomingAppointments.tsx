@@ -195,7 +195,7 @@ const UpcomingAppointments = ({ barberId }: UpcomingAppointmentsProps) => {
                                  {apt.client?.full_name || apt.client_name || "Cliente avulso"}
                                </span>
                                {apt.created_by && (
-                                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Manual</Badge>
+                                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Feito por você</Badge>
                                )}
                              </div>
                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
