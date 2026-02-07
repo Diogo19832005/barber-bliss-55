@@ -193,7 +193,7 @@ const BarberCreateAppointmentModal = ({
       if (!isDuringBreak) {
         slots.push({ time: timeStr, available: !isBooked && !isPast });
       }
-      current = addMinutes(current, 15);
+      current = addMinutes(current, 5);
     }
 
     setAvailableSlots(slots);
