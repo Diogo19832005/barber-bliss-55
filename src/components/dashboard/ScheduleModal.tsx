@@ -227,22 +227,27 @@ const ScheduleModal = ({
                         />
                       </div>
 
-                      {schedule.breakToleranceEnabled && (
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Tolerância máxima (minutos)</Label>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={120}
-                            value={schedule.breakToleranceMinutes}
-                            onChange={(e) =>
-                              handleUpdate(schedule.day, "breakToleranceMinutes", e.target.value === "" ? "" : Math.min(120, Number(e.target.value)))
-                            }
-                            className="bg-secondary/50"
-                            placeholder="Ex: 15"
-                          />
-                        </div>
-                      )}
+                      {schedule.breakToleranceEnabled && (() => {
+                        const breakStartMinutes = parseInt(schedule.breakStart.split(":")[0]) * 60 + parseInt(schedule.breakStart.split(":")[1]);
+                        const breakEndMinutes = parseInt(schedule.breakEnd.split(":")[0]) * 60 + parseInt(schedule.breakEnd.split(":")[1]);
+                        const maxTolerance = Math.max(0, breakEndMinutes - breakStartMinutes);
+                        return (
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Tolerância máxima (minutos) — máx: {maxTolerance}</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={maxTolerance}
+                              value={schedule.breakToleranceMinutes}
+                              onChange={(e) =>
+                                handleUpdate(schedule.day, "breakToleranceMinutes", e.target.value === "" ? "" : Math.min(maxTolerance, Number(e.target.value)))
+                              }
+                              className="bg-secondary/50"
+                              placeholder={`Ex: ${Math.min(15, maxTolerance)}`}
+                            />
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
