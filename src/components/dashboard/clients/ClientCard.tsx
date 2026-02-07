@@ -131,10 +131,16 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
               )}
             </div>
             {client.phone && (
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <a
+                href={`https://wa.me/${client.phone.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
                 <Phone className="h-3 w-3" />
-                <span>{client.phone}</span>
-              </div>
+                <span className="underline">{client.phone}</span>
+              </a>
             )}
             {client.lastAppointmentDate && (
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
