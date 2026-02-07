@@ -516,7 +516,7 @@ const BarberDashboard = () => {
                                   <div className="flex items-center gap-2">
                                     <p className="font-medium">{apt.client?.full_name || apt.client_name || "Cliente avulso"}</p>
                                     {apt.created_by && (
-                                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Manual</Badge>
+                                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Feito por você</Badge>
                                     )}
                                     {apt.client?.phone && (
                                       <a
