@@ -164,7 +164,8 @@ const UpcomingAppointments = ({ barberId }: UpcomingAppointmentsProps) => {
                       <div
                         key={apt.id}
                         className="flex flex-col gap-3 rounded-xl border border-border bg-card/50 p-4 sm:flex-row sm:items-center sm:justify-between cursor-pointer hover:border-primary/40 transition-colors"
-                        onClick={() =>
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedAppointment({
                             id: apt.id,
                             clientName: apt.client?.full_name || apt.client_name || "Cliente avulso",
@@ -172,8 +173,8 @@ const UpcomingAppointments = ({ barberId }: UpcomingAppointmentsProps) => {
                             startTime: apt.start_time,
                             date: format(new Date(apt.appointment_date + "T00:00:00"), "d/MM", { locale: ptBR }),
                             paymentStatus: apt.payment_status,
-                          })
-                        }
+                          });
+                        }}
                       >
                         <div className="flex items-start gap-4">
                           {/* Time block */}
