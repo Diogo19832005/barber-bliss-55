@@ -99,6 +99,7 @@ export type Database = {
           end_time: string
           id: string
           notes: string | null
+          payment_status: string
           service_id: string
           start_time: string
           status: string
@@ -116,6 +117,7 @@ export type Database = {
           end_time: string
           id?: string
           notes?: string | null
+          payment_status?: string
           service_id: string
           start_time: string
           status?: string
@@ -133,6 +135,7 @@ export type Database = {
           end_time?: string
           id?: string
           notes?: string | null
+          payment_status?: string
           service_id?: string
           start_time?: string
           status?: string
@@ -331,6 +334,8 @@ export type Database = {
           nome_exibido: string | null
           pais: string | null
           phone: string | null
+          pix_key: string | null
+          pix_qr_code: string | null
           public_id: number | null
           role: Database["public"]["Enums"]["user_role"]
           slug_final: string | null
@@ -364,6 +369,8 @@ export type Database = {
           nome_exibido?: string | null
           pais?: string | null
           phone?: string | null
+          pix_key?: string | null
+          pix_qr_code?: string | null
           public_id?: number | null
           role?: Database["public"]["Enums"]["user_role"]
           slug_final?: string | null
@@ -397,6 +404,8 @@ export type Database = {
           nome_exibido?: string | null
           pais?: string | null
           phone?: string | null
+          pix_key?: string | null
+          pix_qr_code?: string | null
           public_id?: number | null
           role?: Database["public"]["Enums"]["user_role"]
           slug_final?: string | null

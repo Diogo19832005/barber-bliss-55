@@ -31,6 +31,9 @@ export interface Profile {
   hero_animation_speed: number | null;
   hero_services_title: string | null;
   dashboard_home_widgets: string[] | null;
+  appointment_message: string | null;
+  pix_key: string | null;
+  pix_qr_code: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -66,6 +69,7 @@ export interface Appointment {
   start_time: string;
   end_time: string;
   status: 'scheduled' | 'completed' | 'cancelled';
+  payment_status: string;
   notes: string | null;
   created_at: string;
   updated_at: string;

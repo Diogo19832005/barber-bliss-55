@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, Palette, Store, X, MapPin, Phone, Sparkles, Home, Calendar } from "lucide-react";
+import { Loader2, Upload, Palette, Store, X, MapPin, Phone, Sparkles, Home, Calendar, QrCode } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import DashboardHomeSettings from "./DashboardHomeSettings";
 
@@ -39,6 +39,8 @@ interface SettingsModalProps {
     hero_services_title: string | null;
     dashboard_home_widgets?: string[] | null;
     appointment_message?: string | null;
+    pix_key?: string | null;
+    pix_qr_code?: string | null;
   };
 }
  
@@ -76,8 +78,11 @@ interface SettingsModalProps {
   const [appointmentMessage, setAppointmentMessage] = useState(
     profile.appointment_message || "Esse aqui é seu horário, fique atento."
   );
+  const [pixKey, setPixKey] = useState(profile.pix_key || "");
+  const [pixQrCode, setPixQrCode] = useState(profile.pix_qr_code || "");
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const pixQrInputRef = useRef<HTMLInputElement>(null);
 
    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
      const file = e.target.files?.[0];
@@ -186,6 +191,8 @@ interface SettingsModalProps {
         hero_services_title: heroServicesTitle.trim() || "Meus Serviços",
         dashboard_home_widgets: dashboardHomeWidgets,
         appointment_message: appointmentMessage.trim() || "Esse aqui é seu horário, fique atento.",
+        pix_key: pixKey.trim() || null,
+        pix_qr_code: pixQrCode.trim() || null,
       })
       .eq("id", profile.id);
  
@@ -577,6 +584,44 @@ interface SettingsModalProps {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* PIX Payment Settings */}
+            <div className="space-y-4 border-t border-border pt-6">
+              <Label className="flex items-center gap-2 text-base">
+                <QrCode className="h-4 w-4" />
+                Pagamento via PIX
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Configure sua chave PIX para receber pagamentos antecipados dos clientes
+              </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="pixKey" className="text-sm text-muted-foreground">Chave PIX</Label>
+                <Input
+                  id="pixKey"
+                  value={pixKey}
+                  onChange={(e) => setPixKey(e.target.value)}
+                  placeholder="CPF, email, telefone ou chave aleatória"
+                  className="bg-secondary/50"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="pixQrCode" className="text-sm text-muted-foreground">
+                  QR Code PIX (opcional)
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Cole o link da imagem do QR Code ou o código copia e cola do PIX
+                </p>
+                <Input
+                  id="pixQrCode"
+                  value={pixQrCode}
+                  onChange={(e) => setPixQrCode(e.target.value)}
+                  placeholder="URL da imagem ou código copia e cola"
+                  className="bg-secondary/50"
+                />
+              </div>
             </div>
 
             {/* Appointment Message Settings */}

@@ -13,6 +13,7 @@ import {
   Loader2,
   MessageCircle,
 } from "lucide-react";
+import PaymentStatusBadge from "@/components/pix/PaymentStatusBadge";
 import { format, addDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -31,6 +32,7 @@ interface Appointment {
   start_time: string;
   end_time: string;
   status: string;
+  payment_status: string;
   client_name: string | null;
   client_phone: string | null;
   client: { full_name: string; phone: string | null } | null;
@@ -57,7 +59,7 @@ const TeamBarberAgenda = ({ isOpen, onClose, barber }: TeamBarberAgendaProps) =>
       supabase
         .from("appointments")
         .select(`
-          id, appointment_date, start_time, end_time, status,
+          id, appointment_date, start_time, end_time, status, payment_status,
           client_name, client_phone,
           client:profiles!appointments_client_id_fkey(full_name, phone),
           service:services(name, price)
@@ -68,7 +70,7 @@ const TeamBarberAgenda = ({ isOpen, onClose, barber }: TeamBarberAgendaProps) =>
       supabase
         .from("appointments")
         .select(`
-          id, appointment_date, start_time, end_time, status,
+          id, appointment_date, start_time, end_time, status, payment_status,
           client_name, client_phone,
           client:profiles!appointments_client_id_fkey(full_name, phone),
           service:services(name, price)
@@ -132,7 +134,10 @@ const TeamBarberAgenda = ({ isOpen, onClose, barber }: TeamBarberAgendaProps) =>
             </p>
           </div>
         </div>
-        {getStatusBadge(apt.status)}
+        <div className="flex flex-col items-end gap-1">
+          {getStatusBadge(apt.status)}
+          <PaymentStatusBadge status={apt.payment_status} />
+        </div>
       </div>
     );
   };
