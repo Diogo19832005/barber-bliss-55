@@ -74,7 +74,7 @@ const ScheduleModal = ({
         breakStart: (existing as any)?.break_start?.slice(0, 5) || "12:00",
         breakEnd: (existing as any)?.break_end?.slice(0, 5) || "13:00",
         breakToleranceEnabled: (existing as any)?.break_tolerance_enabled ?? false,
-        breakToleranceMinutes: (existing as any)?.break_tolerance_minutes ?? 15,
+        breakToleranceMinutes: (existing as any)?.break_tolerance_minutes || "",
       };
     });
     setLocalSchedules(initial);
@@ -104,7 +104,7 @@ const ScheduleModal = ({
       break_start: s.hasBreak ? s.breakStart : null,
       break_end: s.hasBreak ? s.breakEnd : null,
       break_tolerance_enabled: s.hasBreak ? s.breakToleranceEnabled : false,
-      break_tolerance_minutes: s.hasBreak && s.breakToleranceEnabled ? s.breakToleranceMinutes : 0,
+      break_tolerance_minutes: s.hasBreak && s.breakToleranceEnabled ? (Number(s.breakToleranceMinutes) || 0) : 0,
     }));
 
     const { error } = await supabase.from("barber_schedules").insert(toInsert);
@@ -236,7 +236,7 @@ const ScheduleModal = ({
                             max={120}
                             value={schedule.breakToleranceMinutes}
                             onChange={(e) =>
-                              handleUpdate(schedule.day, "breakToleranceMinutes", Math.max(1, Math.min(120, Number(e.target.value) || 1)))
+                              handleUpdate(schedule.day, "breakToleranceMinutes", e.target.value === "" ? "" : Math.min(120, Number(e.target.value)))
                             }
                             className="bg-secondary/50"
                             placeholder="Ex: 15"
