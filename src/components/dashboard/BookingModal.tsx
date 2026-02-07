@@ -179,12 +179,11 @@ const BookingModal = ({
     });
 
     if (hasConflict) {
-      // Refresh available slots to show updated availability
       await fetchAvailableSlots();
       setIsLoading(false);
       toast({
         title: "Horário indisponível",
-        description: "Este horário acabou de ser reservado. Por favor, escolha outro.",
+        description: `Desculpa, esse horário já foi agendado, mas ${barber.full_name} gostaria muito de cortar o seu cabelo. Marque por gentileza outro horário.`,
         variant: "destructive",
       });
       setSelectedTime(null);
@@ -203,11 +202,21 @@ const BookingModal = ({
     setIsLoading(false);
 
     if (error) {
-      toast({
-        title: "Erro ao agendar",
-        description: error.message,
-        variant: "destructive",
-      });
+      if (error.message.includes("unique_barber_appointment_slot")) {
+        await fetchAvailableSlots();
+        toast({
+          title: "Horário indisponível",
+          description: `Desculpa, esse horário já foi agendado, mas ${barber.full_name} gostaria muito de cortar o seu cabelo. Marque por gentileza outro horário.`,
+          variant: "destructive",
+        });
+        setSelectedTime(null);
+      } else {
+        toast({
+          title: "Erro ao agendar",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     } else {
       toast({
         title: "Agendado com sucesso! 🎉",

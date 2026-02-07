@@ -464,9 +464,8 @@ const PublicBooking = () => {
       });
 
       if (hasConflict) {
-        // Refresh available slots to show updated availability
         await fetchAvailableSlots();
-        throw new Error("Este horário acabou de ser reservado. Por favor, escolha outro horário.");
+        throw new Error(`Desculpa, esse horário já foi agendado, mas ${selectedBarber.full_name} gostaria muito de cortar o seu cabelo. Marque por gentileza outro horário.`);
       }
 
       // Create one appointment per service, sequentially
@@ -489,6 +488,10 @@ const PublicBooking = () => {
           });
 
         if (appointmentError) {
+          if (appointmentError.message.includes("unique_barber_appointment_slot")) {
+            await fetchAvailableSlots();
+            throw new Error(`Desculpa, esse horário já foi agendado, mas ${selectedBarber.full_name} gostaria muito de cortar o seu cabelo. Marque por gentileza outro horário.`);
+          }
           throw new Error(appointmentError.message);
         }
 
