@@ -40,6 +40,7 @@ export interface ClientData {
   completedAppointments: number;
   firstAppointmentDate: string | null;
   lastAppointmentDate: string | null;
+  totalSpent: number;
 }
 
 interface ClientsHistoryProps {
@@ -121,6 +122,7 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
           completedAppointments: 0,
           firstAppointmentDate: null,
           lastAppointmentDate: null,
+          totalSpent: 0,
         });
       }
 
@@ -135,6 +137,10 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
       clientData.totalAppointments++;
       if (apt.status === "completed") {
         clientData.completedAppointments++;
+        const service = apt.service as { name: string; price: number } | null;
+        if (service?.price) {
+          clientData.totalSpent += service.price;
+        }
       }
 
       // Track first and last appointment dates
