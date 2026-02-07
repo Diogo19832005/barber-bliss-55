@@ -6,12 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Scissors, Clock, Calendar as CalendarIcon, User, ArrowLeft, Loader2, Check, Eye, EyeOff, Phone, MapPin, MessageCircle } from "lucide-react";
+import { Scissors, Clock, Calendar as CalendarIcon, User, ArrowLeft, Loader2, Check, Eye, EyeOff, Phone, MapPin, MessageCircle, CreditCard } from "lucide-react";
 import { format, addMinutes, parse, isBefore, isAfter, parseISO, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import HeroSection from "@/components/public-booking/HeroSection";
+import PaymentChoiceStep from "@/components/pix/PaymentChoiceStep";
+import PixPaymentScreen from "@/components/pix/PixPaymentScreen";
 
 interface Service {
   id: string;
@@ -41,6 +43,8 @@ interface Barber {
   hero_button_color: string | null;
   hero_animation_speed: number | null;
   hero_services_title: string | null;
+  pix_key: string | null;
+  pix_qr_code: string | null;
 }
 
 interface TeamMember {
@@ -100,6 +104,10 @@ const PublicBooking = () => {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [successType, setSuccessType] = useState<"booking" | "register">("booking");
   const [bookedServicesInfo, setBookedServicesInfo] = useState<{ names: string[], total: number } | null>(null);
+  
+  // Payment states
+  const [paymentStep, setPaymentStep] = useState<"choice" | "pix" | null>(null);
+  const [pendingAppointmentIds, setPendingAppointmentIds] = useState<string[]>([]);
 
   // Auth states
   const [authMode, setAuthMode] = useState<"login" | "register">("register");
@@ -138,7 +146,7 @@ const PublicBooking = () => {
     // Fetch barber by slug_final
     const { data: barberData, error } = await supabase
       .from("profiles")
-      .select("id, full_name, avatar_url, public_id, slug_final, nome_exibido, logo_url, cor_primaria, cor_secundaria, phone, endereco, cidade, estado, hero_enabled, hero_button_text, hero_button_color, hero_animation_speed, hero_services_title")
+      .select("id, full_name, avatar_url, public_id, slug_final, nome_exibido, logo_url, cor_primaria, cor_secundaria, phone, endereco, cidade, estado, hero_enabled, hero_button_text, hero_button_color, hero_animation_speed, hero_services_title, pix_key, pix_qr_code")
       .eq("slug_final", slugFinal)
       .eq("role", "barber")
       .eq("barber_status", "approved")
@@ -469,13 +477,14 @@ const PublicBooking = () => {
       }
 
       // Create one appointment per service, sequentially
+      const createdIds: string[] = [];
       for (const service of selectedServices) {
         const serviceEndTime = format(
           addMinutes(parse(currentStartTime, "HH:mm", new Date()), service.duration_minutes),
           "HH:mm"
         );
 
-        const { error: appointmentError } = await supabase
+        const { data: appointmentData, error: appointmentError } = await supabase
           .from("appointments")
           .insert({
             client_id: clientProfileId,
@@ -485,7 +494,10 @@ const PublicBooking = () => {
             start_time: currentStartTime,
             end_time: serviceEndTime,
             notes: `Email: ${emailToUse}${phoneToUse ? `, Tel: ${phoneToUse}` : ""}`,
-          });
+            payment_status: "pending",
+          })
+          .select("id")
+          .single();
 
         if (appointmentError) {
           if (appointmentError.message.includes("unique_barber_appointment_slot")) {
@@ -494,6 +506,8 @@ const PublicBooking = () => {
           }
           throw new Error(appointmentError.message);
         }
+
+        if (appointmentData) createdIds.push(appointmentData.id);
 
         // Next service starts when this one ends
         currentStartTime = serviceEndTime;
@@ -504,12 +518,20 @@ const PublicBooking = () => {
         names: selectedServices.map(s => s.name),
         total: totalPrice
       });
-      setSuccessType("booking");
-      setBookingSuccess(true);
-      toast({
-        title: "Agendamento confirmado!",
-        description: `${format(selectedDate, "dd/MM/yyyy")} às ${selectedTime}`,
-      });
+      setPendingAppointmentIds(createdIds);
+
+      // If barber has PIX key configured, show payment choice
+      if (barber?.pix_key) {
+        setPaymentStep("choice");
+      } else {
+        // No PIX configured, go directly to success
+        setSuccessType("booking");
+        setBookingSuccess(true);
+        toast({
+          title: "Agendamento confirmado!",
+          description: `${format(selectedDate, "dd/MM/yyyy")} às ${selectedTime}`,
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Erro ao agendar",
@@ -567,6 +589,94 @@ const PublicBooking = () => {
             Voltar ao início
           </Button>
         </Link>
+      </div>
+    );
+  }
+
+  // Payment step screens
+  if (paymentStep === "choice") {
+    const primaryColor = barber?.cor_primaria || "#D97706";
+    
+    const handlePayNow = () => {
+      // Update appointments to "awaiting" status
+      pendingAppointmentIds.forEach(async (id) => {
+        await supabase
+          .from("appointments")
+          .update({ payment_status: "awaiting" })
+          .eq("id", id);
+      });
+      setPaymentStep("pix");
+    };
+
+    const handlePayLater = () => {
+      // Keep as "pending"
+      setPaymentStep(null);
+      setSuccessType("booking");
+      setBookingSuccess(true);
+      toast({
+        title: "Agendamento confirmado!",
+        description: `Pagamento pendente — pague no momento do atendimento`,
+      });
+    };
+
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
+        <div className="max-w-md w-full">
+          <h1 className="text-xl font-bold text-center mb-6">Forma de Pagamento</h1>
+          <PaymentChoiceStep
+            totalPrice={bookedServicesInfo?.total || totalPrice}
+            primaryColor={primaryColor}
+            onPayNow={handlePayNow}
+            onPayLater={handlePayLater}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (paymentStep === "pix" && barber?.pix_key) {
+    const primaryColor = barber?.cor_primaria || "#D97706";
+
+    const handleConfirmPixPayment = async () => {
+      // Update all appointments to "prepaid"
+      for (const id of pendingAppointmentIds) {
+        await supabase
+          .from("appointments")
+          .update({ payment_status: "prepaid" })
+          .eq("id", id);
+      }
+      setPaymentStep(null);
+      setSuccessType("booking");
+      setBookingSuccess(true);
+      toast({
+        title: "Pagamento confirmado! 🎉",
+        description: "Seu agendamento está confirmado com pagamento antecipado.",
+      });
+    };
+
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
+        <div className="max-w-md w-full">
+          <h1 className="text-xl font-bold text-center mb-6">Pagamento via PIX</h1>
+          <PixPaymentScreen
+            totalPrice={bookedServicesInfo?.total || totalPrice}
+            pixKey={barber.pix_key}
+            pixQrCode={barber.pix_qr_code}
+            barberName={barber.nome_exibido || barber.full_name}
+            primaryColor={primaryColor}
+            onConfirmPayment={handleConfirmPixPayment}
+            onBack={() => {
+              // Go to success with "awaiting" status
+              setPaymentStep(null);
+              setSuccessType("booking");
+              setBookingSuccess(true);
+              toast({
+                title: "Agendamento confirmado!",
+                description: "Aguardando confirmação de pagamento.",
+              });
+            }}
+          />
+        </div>
       </div>
     );
   }

@@ -3,6 +3,7 @@
  import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, User, Scissors, UserPlus } from "lucide-react";
+import PaymentStatusBadge from "@/components/pix/PaymentStatusBadge";
  import { format, isToday, isTomorrow, addDays, startOfDay } from "date-fns";
  import { ptBR } from "date-fns/locale";
  
@@ -12,6 +13,7 @@ interface UpcomingAppointment {
   start_time: string;
   end_time: string;
   status: string;
+  payment_status: string;
   created_by: string | null;
   client_name: string | null;
   client: { full_name: string } | null;
@@ -48,16 +50,17 @@ interface UpcomingAppointment {
       const { data, error } = await supabase
         .from("appointments")
        .select(`
-          id,
-          appointment_date,
-          start_time,
-          end_time,
-          status,
-          created_by,
-          client_name,
-          client:profiles!appointments_client_id_fkey(full_name),
-          service:services(name, duration_minutes, price)
-        `)
+           id,
+           appointment_date,
+           start_time,
+           end_time,
+           status,
+           payment_status,
+           created_by,
+           client_name,
+           client:profiles!appointments_client_id_fkey(full_name),
+           service:services(name, duration_minutes, price)
+         `)
         .eq("barber_id", barberId)
         .neq("status", "completed")
         .neq("status", "cancelled")
@@ -192,10 +195,11 @@ interface UpcomingAppointment {
                          </div>
                        </div>
                        
-                       {/* Status badge */}
-                       <div className="flex items-center gap-2 self-start sm:self-center">
-                         {getStatusBadge(apt.status)}
-                       </div>
+                        {/* Status and Payment badges */}
+                        <div className="flex flex-col items-end gap-1 self-start sm:self-center">
+                          {getStatusBadge(apt.status)}
+                          <PaymentStatusBadge status={apt.payment_status} />
+                        </div>
                      </div>
                    ))}
                  </div>

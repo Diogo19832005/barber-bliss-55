@@ -20,6 +20,7 @@ import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-f
 import { getLocaleByCountry } from "@/lib/dateLocales";
 import UpcomingAppointments from "./UpcomingAppointments";
 import EarningsChart from "./EarningsChart";
+import PaymentStatusBadge from "@/components/pix/PaymentStatusBadge";
 
 interface DashboardHomeProps {
   barberId: string;
@@ -43,6 +44,7 @@ interface Appointment {
   start_time: string;
   end_time: string;
   status: string;
+  payment_status: string;
   client: { full_name: string; phone: string | null } | null;
   service: { name: string; price: number } | null;
 }
@@ -343,6 +345,7 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
                             <p className="text-sm text-muted-foreground">
                               {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
                             </p>
+                            <PaymentStatusBadge status={apt.payment_status} />
                           </div>
                         </div>
                         {apt.status === "scheduled" && (

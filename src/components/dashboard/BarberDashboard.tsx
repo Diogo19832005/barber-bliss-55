@@ -43,6 +43,7 @@ import DashboardHome from "./DashboardHome";
 import DataExport from "./DataExport";
 import ClientsHistory from "./ClientsHistory";
 import ServiceHistory from "./ServiceHistory";
+import PaymentStatusBadge from "@/components/pix/PaymentStatusBadge";
 
 interface Service {
   id: string;
@@ -60,6 +61,7 @@ interface Appointment {
   start_time: string;
   end_time: string;
   status: string;
+  payment_status: string;
   created_by: string | null;
   client_name: string | null;
   client_phone: string | null;
@@ -534,6 +536,7 @@ const BarberDashboard = () => {
                                   <p className="text-sm text-muted-foreground">
                                     {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
                                   </p>
+                                  <PaymentStatusBadge status={apt.payment_status} />
                                 </div>
                               </div>
                               {apt.status === "scheduled" && (
@@ -737,10 +740,13 @@ const BarberDashboard = () => {
              hero_button_text: profile.hero_button_text || "Agendar agora mesmo",
              hero_button_color: profile.hero_button_color || "#D97706",
              hero_animation_speed: profile.hero_animation_speed ?? 1.0,
-             hero_services_title: profile.hero_services_title || "Meus Serviços",
-             dashboard_home_widgets: profile.dashboard_home_widgets || ["today_appointments", "upcoming_appointments", "services"],
-           }}
-         />
+              hero_services_title: profile.hero_services_title || "Meus Serviços",
+              dashboard_home_widgets: profile.dashboard_home_widgets || ["today_appointments", "upcoming_appointments", "services"],
+              appointment_message: profile.appointment_message,
+              pix_key: profile.pix_key,
+              pix_qr_code: profile.pix_qr_code,
+            }}
+          />
        )}
 
         {/* Barber Create Appointment Modal */}
