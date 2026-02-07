@@ -39,6 +39,7 @@ export interface ClientData {
   totalAppointments: number;
   completedAppointments: number;
   firstAppointmentDate: string | null;
+  lastAppointmentDate: string | null;
 }
 
 interface ClientsHistoryProps {
@@ -117,6 +118,7 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
           totalAppointments: 0,
           completedAppointments: 0,
           firstAppointmentDate: null,
+          lastAppointmentDate: null,
         });
       }
 
@@ -133,9 +135,12 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
         clientData.completedAppointments++;
       }
 
-      // Track first appointment date (appointments are desc, so last processed is earliest)
+      // Track first and last appointment dates
       if (!clientData.firstAppointmentDate || apt.appointment_date < clientData.firstAppointmentDate) {
         clientData.firstAppointmentDate = apt.appointment_date;
+      }
+      if (!clientData.lastAppointmentDate || apt.appointment_date > clientData.lastAppointmentDate) {
+        clientData.lastAppointmentDate = apt.appointment_date;
       }
     });
 

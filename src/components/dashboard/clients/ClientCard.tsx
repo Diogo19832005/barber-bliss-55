@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ChevronDown, ChevronUp, Phone, Medal, Trophy } from "lucide-react";
-import { format } from "date-fns";
+import { Calendar, ChevronDown, ChevronUp, Phone, Medal, Trophy, Clock } from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type { ClientData } from "../ClientsHistory";
@@ -134,6 +134,15 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Phone className="h-3 w-3" />
                 <span>{client.phone}</span>
+              </div>
+            )}
+            {client.lastAppointmentDate && (
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                <span>
+                  Último corte: {format(new Date(client.lastAppointmentDate + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
+                  {" "}({formatDistanceToNow(new Date(client.lastAppointmentDate + "T00:00:00"), { addSuffix: true, locale: ptBR })})
+                </span>
               </div>
             )}
           </div>
