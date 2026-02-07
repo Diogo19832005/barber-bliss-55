@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN appointment_message TEXT DEFAULT 'Esse aqui é seu horário, fique atento.';

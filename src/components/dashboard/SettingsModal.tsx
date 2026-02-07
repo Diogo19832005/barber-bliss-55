@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, Palette, Store, X, MapPin, Phone, Sparkles, Home } from "lucide-react";
+import { Loader2, Upload, Palette, Store, X, MapPin, Phone, Sparkles, Home, Calendar } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import DashboardHomeSettings from "./DashboardHomeSettings";
 
@@ -38,6 +38,7 @@ interface SettingsModalProps {
     hero_animation_speed: number | null;
     hero_services_title: string | null;
     dashboard_home_widgets?: string[] | null;
+    appointment_message?: string | null;
   };
 }
  
@@ -71,6 +72,9 @@ interface SettingsModalProps {
   const [heroServicesTitle, setHeroServicesTitle] = useState(profile.hero_services_title || "Meus Serviços");
   const [dashboardHomeWidgets, setDashboardHomeWidgets] = useState<string[]>(
     (profile.dashboard_home_widgets as string[]) || ["today_appointments", "upcoming_appointments", "services"]
+  );
+  const [appointmentMessage, setAppointmentMessage] = useState(
+    profile.appointment_message || "Esse aqui é seu horário, fique atento."
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -181,6 +185,7 @@ interface SettingsModalProps {
         hero_animation_speed: heroAnimationSpeed,
         hero_services_title: heroServicesTitle.trim() || "Meus Serviços",
         dashboard_home_widgets: dashboardHomeWidgets,
+        appointment_message: appointmentMessage.trim() || "Esse aqui é seu horário, fique atento.",
       })
       .eq("id", profile.id);
  
@@ -572,6 +577,51 @@ interface SettingsModalProps {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Appointment Message Settings */}
+            <div className="space-y-4 border-t border-border pt-6">
+              <Label className="flex items-center gap-2 text-base">
+                <Calendar className="h-4 w-4" />
+                Mensagem para o Cliente
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Mensagem exibida nos agendamentos do cliente
+              </p>
+
+              <div className="space-y-2">
+                {[
+                  "Esse aqui é seu horário, fique atento.",
+                  "Você fez esse agendamento.",
+                  "Esse aqui é seu agendamento.",
+                ].map((msg) => (
+                  <button
+                    key={msg}
+                    type="button"
+                    onClick={() => setAppointmentMessage(msg)}
+                    className={`w-full rounded-xl border p-3 text-left text-sm transition-colors ${
+                      appointmentMessage === msg
+                        ? "border-primary/50 bg-primary/5 text-foreground"
+                        : "border-border hover:border-muted-foreground/50 text-muted-foreground"
+                    }`}
+                  >
+                    {msg}
+                  </button>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="customMessage" className="text-sm text-muted-foreground">
+                  Ou escreva sua própria mensagem
+                </Label>
+                <Input
+                  id="customMessage"
+                  value={appointmentMessage}
+                  onChange={(e) => setAppointmentMessage(e.target.value)}
+                  placeholder="Digite uma mensagem personalizada"
+                  className="bg-secondary/50"
+                />
+              </div>
             </div>
 
             {/* Dashboard Home Settings */}
