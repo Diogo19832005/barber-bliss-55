@@ -46,15 +46,17 @@ interface ClientsHistoryProps {
   barberId: string;
 }
 
-type SortOption = "alphabetical" | "newest" | "oldest" | "most_cuts" | "least_cuts";
+type SortOption = "alphabetical" | "newest" | "oldest" | "most_cuts" | "least_cuts" | "recent_cut" | "old_cut";
 type FilterMode = "month" | "period";
 
 const SORT_LABELS: Record<SortOption, string> = {
   alphabetical: "Ordem alfabética",
-  newest: "Mais recente",
-  oldest: "Mais antigo",
+  newest: "Mais recente (cadastro)",
+  oldest: "Mais antigo (cadastro)",
   most_cuts: "Mais cortes",
   least_cuts: "Menos cortes",
+  recent_cut: "Último corte recente",
+  old_cut: "Último corte antigo",
 };
 
 const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
@@ -249,6 +251,12 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
           }
           return a.full_name.localeCompare(b.full_name);
         });
+        break;
+      case "recent_cut":
+        sorted.sort((a, b) => (b.lastAppointmentDate || "").localeCompare(a.lastAppointmentDate || ""));
+        break;
+      case "old_cut":
+        sorted.sort((a, b) => (a.lastAppointmentDate || "9999").localeCompare(b.lastAppointmentDate || "9999"));
         break;
     }
 
