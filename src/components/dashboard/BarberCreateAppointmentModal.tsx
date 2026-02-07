@@ -187,9 +187,24 @@ const BarberCreateAppointmentModal = ({
 
       const slotEndStr = format(slotEnd, "HH:mm");
 
-      const isDuringBreak = (schedule as any).has_break && (schedule as any).break_start && (schedule as any).break_end
-        ? (timeStr < (schedule as any).break_end.slice(0, 5) && slotEndStr > (schedule as any).break_start.slice(0, 5))
-        : false;
+      let isDuringBreak = false;
+      if ((schedule as any).has_break && (schedule as any).break_start && (schedule as any).break_end) {
+        const breakStartStr = (schedule as any).break_start.slice(0, 5);
+        const breakEndStr = (schedule as any).break_end.slice(0, 5);
+        const overlapsBreak = timeStr < breakEndStr && slotEndStr > breakStartStr;
+        
+        if (overlapsBreak) {
+          if ((schedule as any).break_tolerance_enabled && (schedule as any).break_tolerance_minutes > 0) {
+            const toleranceMinutes = (schedule as any).break_tolerance_minutes;
+            const breakStartDate = new Date(selectedDate);
+            breakStartDate.setHours(parseInt(breakStartStr.split(":")[0]), parseInt(breakStartStr.split(":")[1]), 0, 0);
+            const maxEnd = format(addMinutes(breakStartDate, toleranceMinutes), "HH:mm");
+            isDuringBreak = timeStr >= breakStartStr || slotEndStr > maxEnd;
+          } else {
+            isDuringBreak = true;
+          }
+        }
+      }
 
       const isBooked = appointments?.some((apt) => {
         const aptStart = apt.start_time.slice(0, 5);

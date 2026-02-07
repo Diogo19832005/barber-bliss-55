@@ -57,6 +57,8 @@ const ScheduleModal = ({
       hasBreak: boolean;
       breakStart: string;
       breakEnd: string;
+      breakToleranceEnabled: boolean;
+      breakToleranceMinutes: number;
     }>
   >([]);
 
@@ -71,12 +73,14 @@ const ScheduleModal = ({
         hasBreak: (existing as any)?.has_break ?? false,
         breakStart: (existing as any)?.break_start?.slice(0, 5) || "12:00",
         breakEnd: (existing as any)?.break_end?.slice(0, 5) || "13:00",
+        breakToleranceEnabled: (existing as any)?.break_tolerance_enabled ?? false,
+        breakToleranceMinutes: (existing as any)?.break_tolerance_minutes ?? 15,
       };
     });
     setLocalSchedules(initial);
   }, [schedules]);
 
-  const handleUpdate = (day: number, field: string, value: string | boolean) => {
+  const handleUpdate = (day: number, field: string, value: string | boolean | number) => {
     setLocalSchedules((prev) =>
       prev.map((s) => (s.day === day ? { ...s, [field]: value } : s))
     );
@@ -99,6 +103,8 @@ const ScheduleModal = ({
       has_break: s.hasBreak,
       break_start: s.hasBreak ? s.breakStart : null,
       break_end: s.hasBreak ? s.breakEnd : null,
+      break_tolerance_enabled: s.hasBreak ? s.breakToleranceEnabled : false,
+      break_tolerance_minutes: s.hasBreak && s.breakToleranceEnabled ? s.breakToleranceMinutes : 0,
     }));
 
     const { error } = await supabase.from("barber_schedules").insert(toInsert);
@@ -184,29 +190,62 @@ const ScheduleModal = ({
                   </div>
 
                   {schedule.hasBreak && (
-                    <div className="grid grid-cols-2 gap-3 rounded-lg border border-border/50 bg-secondary/10 p-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Início do intervalo</Label>
-                        <Input
-                          type="time"
-                          value={schedule.breakStart}
-                          onChange={(e) =>
-                            handleUpdate(schedule.day, "breakStart", e.target.value)
+                    <div className="space-y-3 rounded-lg border border-border/50 bg-secondary/10 p-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Início do intervalo</Label>
+                          <Input
+                            type="time"
+                            value={schedule.breakStart}
+                            onChange={(e) =>
+                              handleUpdate(schedule.day, "breakStart", e.target.value)
+                            }
+                            className="bg-secondary/50"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Fim do intervalo</Label>
+                          <Input
+                            type="time"
+                            value={schedule.breakEnd}
+                            onChange={(e) =>
+                              handleUpdate(schedule.day, "breakEnd", e.target.value)
+                            }
+                            className="bg-secondary/50"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Break tolerance */}
+                      <div className="flex items-center justify-between rounded-lg border border-border/30 bg-secondary/20 px-3 py-2">
+                        <Label className="text-xs text-muted-foreground">Permitir ultrapassar pausa</Label>
+                        <Switch
+                          checked={schedule.breakToleranceEnabled}
+                          onCheckedChange={(checked) =>
+                            handleUpdate(schedule.day, "breakToleranceEnabled", checked)
                           }
-                          className="bg-secondary/50"
                         />
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Fim do intervalo</Label>
-                        <Input
-                          type="time"
-                          value={schedule.breakEnd}
-                          onChange={(e) =>
-                            handleUpdate(schedule.day, "breakEnd", e.target.value)
-                          }
-                          className="bg-secondary/50"
-                        />
-                      </div>
+
+                      {schedule.breakToleranceEnabled && (
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Tolerância máxima (minutos)</Label>
+                          <div className="flex gap-2">
+                            {[5, 10, 15, 20, 30].map((min) => (
+                              <Button
+                                key={min}
+                                type="button"
+                                variant={schedule.breakToleranceMinutes === min ? "default" : "outline"}
+                                size="sm"
+                                className="flex-1 text-xs"
+                                onClick={() => handleUpdate(schedule.day, "breakToleranceMinutes", min)}
+                              >
+                                {min} min
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

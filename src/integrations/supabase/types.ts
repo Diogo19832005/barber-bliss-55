@@ -212,6 +212,8 @@ export type Database = {
           barber_id: string
           break_end: string | null
           break_start: string | null
+          break_tolerance_enabled: boolean
+          break_tolerance_minutes: number
           created_at: string
           day_of_week: number
           end_time: string
@@ -224,6 +226,8 @@ export type Database = {
           barber_id: string
           break_end?: string | null
           break_start?: string | null
+          break_tolerance_enabled?: boolean
+          break_tolerance_minutes?: number
           created_at?: string
           day_of_week: number
           end_time: string
@@ -236,6 +240,8 @@ export type Database = {
           barber_id?: string
           break_end?: string | null
           break_start?: string | null
+          break_tolerance_enabled?: boolean
+          break_tolerance_minutes?: number
           created_at?: string
           day_of_week?: number
           end_time?: string
