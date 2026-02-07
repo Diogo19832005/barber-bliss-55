@@ -44,6 +44,7 @@ const ClientDashboard = () => {
   const { toast } = useToast();
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointmentMessage, setAppointmentMessage] = useState("Esse aqui é seu horário, fique atento.");
   const [selectedBarber, setSelectedBarber] = useState<Barber | null>(null);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
 
@@ -61,11 +62,15 @@ const ClientDashboard = () => {
       // Fetch the barbershop owner
       const { data: ownerData } = await supabase
         .from("profiles")
-        .select("id, full_name, avatar_url")
+        .select("id, full_name, avatar_url, appointment_message")
         .eq("id", lastBarbershopId)
         .eq("role", "barber")
         .eq("barber_status", "approved")
         .maybeSingle();
+
+      if (ownerData?.appointment_message) {
+        setAppointmentMessage(ownerData.appointment_message);
+      }
 
       // Fetch team members of this barbershop
       const { data: teamData } = await supabase
@@ -158,6 +163,9 @@ const ClientDashboard = () => {
                 <Calendar className="h-5 w-5 text-primary" />
                 Próximos Agendamentos
               </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {appointmentMessage}
+              </p>
             </CardHeader>
             <CardContent className="space-y-3">
               {appointments

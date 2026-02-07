@@ -306,6 +306,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          appointment_message: string | null
           avatar_url: string | null
           barber_status: string | null
           barbershop_owner_id: string | null
@@ -338,6 +339,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          appointment_message?: string | null
           avatar_url?: string | null
           barber_status?: string | null
           barbershop_owner_id?: string | null
@@ -370,6 +372,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          appointment_message?: string | null
           avatar_url?: string | null
           barber_status?: string | null
           barbershop_owner_id?: string | null
