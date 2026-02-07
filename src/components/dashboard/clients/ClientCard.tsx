@@ -132,7 +132,10 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
             </div>
             {client.phone && (
               <a
-                href={`https://wa.me/${client.phone.replace(/\D/g, "")}`}
+                href={`https://wa.me/${(() => {
+                  const digits = client.phone!.replace(/\D/g, "");
+                  return digits.startsWith("55") ? digits : `55${digits}`;
+                })()}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
