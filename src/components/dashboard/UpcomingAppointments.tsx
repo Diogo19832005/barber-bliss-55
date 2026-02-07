@@ -185,13 +185,15 @@ interface UpcomingAppointment {
                                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Manual</Badge>
                               )}
                             </div>
-                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                             <Scissors className="h-3.5 w-3.5" />
-                             <span>{apt.service?.name || "Serviço não especificado"}</span>
-                             <span className="text-xs">•</span>
-                             <Clock className="h-3.5 w-3.5" />
-                             <span>{apt.service?.duration_minutes || 0} min</span>
-                           </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Scissors className="h-3.5 w-3.5" />
+                              <span>{apt.service?.name || "Serviço não especificado"}</span>
+                              <span className="text-xs">•</span>
+                              <Clock className="h-3.5 w-3.5" />
+                              <span>{apt.service?.duration_minutes || 0} min</span>
+                              <span className="text-xs">•</span>
+                              <span className="font-medium text-foreground">R$ {apt.service?.price?.toFixed(2) || "0.00"}</span>
+                            </div>
                          </div>
                        </div>
                        
