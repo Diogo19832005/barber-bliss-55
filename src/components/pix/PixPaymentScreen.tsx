@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Copy, QrCode, DollarSign } from "lucide-react";
+import { Check, Copy, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { QRCodeSVG } from "qrcode.react";
 
 interface PixPaymentScreenProps {
   totalPrice: number;
@@ -27,6 +28,7 @@ const PixPaymentScreen = ({
 }: PixPaymentScreenProps) => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const handleCopyKey = () => {
     navigator.clipboard.writeText(pixKey);
@@ -34,6 +36,18 @@ const PixPaymentScreen = ({
     toast({ title: "Chave PIX copiada!" });
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleCopyCode = () => {
+    if (!pixQrCode) return;
+    navigator.clipboard.writeText(pixQrCode);
+    setCopiedCode(true);
+    toast({ title: "Código PIX copiado!" });
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  // Check if pixQrCode is an EMV code (starts with "0002") or a URL
+  const isEmvCode = pixQrCode && !pixQrCode.startsWith("http");
+  const isImageUrl = pixQrCode && pixQrCode.startsWith("http");
 
   return (
     <div className="space-y-6">
@@ -51,36 +65,49 @@ const PixPaymentScreen = ({
         </CardContent>
       </Card>
 
-      {/* QR Code */}
-      {pixQrCode && (
+      {/* QR Code rendered from EMV code */}
+      {isEmvCode && (
+        <Card className="glass-card">
+          <CardContent className="flex flex-col items-center p-6">
+            <p className="text-sm font-medium mb-4">QR Code PIX</p>
+            <div className="bg-white p-4 rounded-xl">
+              <QRCodeSVG
+                value={pixQrCode}
+                size={240}
+                level="M"
+                includeMargin
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-4 mb-2 text-center">Pix Copia e Cola</p>
+            <p className="text-xs text-muted-foreground text-center break-all max-w-[280px] font-mono bg-secondary/50 p-2 rounded">
+              {pixQrCode}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={handleCopyCode}
+            >
+              {copiedCode ? (
+                <><Check className="mr-1 h-3 w-3" /> Copiado</>
+              ) : (
+                <><Copy className="mr-1 h-3 w-3" /> Copiar código PIX</>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* QR Code from image URL */}
+      {isImageUrl && (
         <Card className="glass-card">
           <CardContent className="flex flex-col items-center p-6">
             <p className="text-sm font-medium mb-3">QR Code PIX</p>
-            {pixQrCode.startsWith("http") ? (
-              <img
-                src={pixQrCode}
-                alt="QR Code PIX"
-                className="h-48 w-48 rounded-lg object-contain"
-              />
-            ) : (
-              <div className="flex flex-col items-center gap-2">
-                <QrCode className="h-16 w-16 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground text-center break-all max-w-[280px]">
-                  {pixQrCode}
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(pixQrCode);
-                    toast({ title: "Código copiado!" });
-                  }}
-                >
-                  <Copy className="mr-2 h-3 w-3" />
-                  Copiar código
-                </Button>
-              </div>
-            )}
+            <img
+              src={pixQrCode}
+              alt="QR Code PIX"
+              className="h-48 w-48 rounded-lg object-contain"
+            />
           </CardContent>
         </Card>
       )}
@@ -99,15 +126,9 @@ const PixPaymentScreen = ({
                 className="shrink-0"
               >
                 {copied ? (
-                  <>
-                    <Check className="mr-1 h-3 w-3" />
-                    Copiado
-                  </>
+                  <><Check className="mr-1 h-3 w-3" /> Copiado</>
                 ) : (
-                  <>
-                    <Copy className="mr-1 h-3 w-3" />
-                    Copiar chave PIX
-                  </>
+                  <><Copy className="mr-1 h-3 w-3" /> Copiar chave PIX</>
                 )}
               </Button>
             </div>
