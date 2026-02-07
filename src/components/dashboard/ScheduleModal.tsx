@@ -230,20 +230,17 @@ const ScheduleModal = ({
                       {schedule.breakToleranceEnabled && (
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Tolerância máxima (minutos)</Label>
-                          <div className="flex gap-2">
-                            {[5, 10, 15, 20, 30].map((min) => (
-                              <Button
-                                key={min}
-                                type="button"
-                                variant={schedule.breakToleranceMinutes === min ? "default" : "outline"}
-                                size="sm"
-                                className="flex-1 text-xs"
-                                onClick={() => handleUpdate(schedule.day, "breakToleranceMinutes", min)}
-                              >
-                                {min} min
-                              </Button>
-                            ))}
-                          </div>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={120}
+                            value={schedule.breakToleranceMinutes}
+                            onChange={(e) =>
+                              handleUpdate(schedule.day, "breakToleranceMinutes", Math.max(1, Math.min(120, Number(e.target.value) || 1)))
+                            }
+                            className="bg-secondary/50"
+                            placeholder="Ex: 15"
+                          />
                         </div>
                       )}
                     </div>
