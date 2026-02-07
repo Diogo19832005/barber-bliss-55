@@ -138,6 +138,11 @@ const BookingModal = ({
       const timeStr = format(current, "HH:mm");
       const slotEndStr = format(slotEnd, "HH:mm");
 
+      // Check if slot overlaps with break time
+      const isDuringBreak = (schedule as any).has_break && (schedule as any).break_start && (schedule as any).break_end
+        ? (timeStr < (schedule as any).break_end.slice(0, 5) && slotEndStr > (schedule as any).break_start.slice(0, 5))
+        : false;
+
       // Check if slot overlaps with existing appointments
       const isBooked = appointments?.some((apt) => {
         const aptStart = apt.start_time.slice(0, 5);
@@ -158,10 +163,12 @@ const BookingModal = ({
       );
       const isPast = slotDateTime < now;
 
-      slots.push({
-        time: timeStr,
-        available: !isBooked && !isPast,
-      });
+      if (!isDuringBreak) {
+        slots.push({
+          time: timeStr,
+          available: !isBooked && !isPast,
+        });
+      }
 
       current = addMinutes(current, 30); // 30-minute intervals
     }

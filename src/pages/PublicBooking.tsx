@@ -226,7 +226,7 @@ const PublicBooking = () => {
     if (allBarbers.length === 1) {
       const { data: schedulesData } = await supabase
         .from("barber_schedules")
-        .select("day_of_week, start_time, end_time, is_active")
+        .select("day_of_week, start_time, end_time, is_active, has_break, break_start, break_end")
         .eq("barber_id", barberData.id)
         .eq("is_active", true);
 
@@ -239,7 +239,7 @@ const PublicBooking = () => {
   const fetchBarberSchedules = async (barberId: string) => {
     const { data: schedulesData } = await supabase
       .from("barber_schedules")
-      .select("day_of_week, start_time, end_time, is_active")
+      .select("day_of_week, start_time, end_time, is_active, has_break, break_start, break_end")
       .eq("barber_id", barberId)
       .eq("is_active", true);
 
@@ -290,6 +290,11 @@ const PublicBooking = () => {
       const slotStart = format(currentSlot, "HH:mm");
       const slotEnd = format(addMinutes(currentSlot, serviceDuration), "HH:mm");
 
+      // Check if slot overlaps with break time
+      const isDuringBreak = (schedule as any).has_break && (schedule as any).break_start && (schedule as any).break_end
+        ? (slotStart < (schedule as any).break_end.slice(0, 5) && slotEnd > (schedule as any).break_start.slice(0, 5))
+        : false;
+
       // Check if slot conflicts with existing appointments
       const hasConflict = bookedAppointments.some((apt) => {
         const aptStart = apt.start_time.slice(0, 5);
@@ -304,8 +309,8 @@ const PublicBooking = () => {
         new Date()
       );
 
-      // Only add slots that are NOT in the past
-      if (!isPast) {
+      // Only add slots that are NOT in the past and NOT during break
+      if (!isPast && !isDuringBreak) {
         slots.push({
           time: slotStart,
           available: !hasConflict,
