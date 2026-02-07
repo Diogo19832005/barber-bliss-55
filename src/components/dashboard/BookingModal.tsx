@@ -186,10 +186,11 @@ const BookingModal = ({
       const now = new Date();
       const isPast = current < now;
 
-      if (!isDuringBreak) {
+      // Client view: only show truly available slots
+      if (!isDuringBreak && !isBooked && !isPast) {
         slots.push({
           time: timeStr,
-          available: !isBooked && !isPast,
+          available: true,
         });
       }
     }
@@ -406,15 +407,12 @@ const BookingModal = ({
                     <button
                       key={slot.time}
                       type="button"
-                      disabled={!slot.available}
                       onClick={() => setSelectedTime(slot.time)}
                       className={cn(
                         "rounded-lg py-2 text-sm font-medium transition-colors",
                         selectedTime === slot.time
                           ? "bg-primary text-primary-foreground"
-                          : slot.available
-                          ? "bg-secondary hover:bg-secondary/80"
-                          : "bg-secondary/50 text-muted-foreground/50"
+                          : "bg-secondary hover:bg-secondary/80"
                       )}
                     >
                       {slot.time}

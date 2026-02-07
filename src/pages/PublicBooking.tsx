@@ -342,11 +342,12 @@ const PublicBooking = () => {
       const isTodayCheck = format(selectedDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
       const isPast = isTodayCheck && isBefore(parse(slotStart, "HH:mm", new Date()), new Date());
 
-      if (!isPast && !isDuringBreak) {
+      // Client view: only show truly available slots
+      if (!isPast && !isDuringBreak && !hasConflict) {
         slots.push({
           time: slotStart,
-          available: !hasConflict,
-          isBooked: hasConflict,
+          available: true,
+          isBooked: false,
         });
       }
     }
@@ -965,28 +966,20 @@ const PublicBooking = () => {
                     {allSlots.map((slot) => (
                       <button
                         key={slot.time}
-                        onClick={() => slot.available && setSelectedTime(slot.time)}
-                        disabled={!slot.available}
+                        onClick={() => setSelectedTime(slot.time)}
                         className={`rounded-lg border p-2 text-center transition-all ${
                           selectedTime === slot.time
                             ? "text-white"
-                            : slot.available
-                            ? "border-border hover:border-primary/50"
-                            : "cursor-not-allowed border-border/30 opacity-40"
+                            : "border-border hover:border-primary/50"
                         }`}
                         style={selectedTime === slot.time ? { 
                           backgroundColor: primaryColor, 
                           borderColor: primaryColor 
                         } : {}}
                       >
-                        <span className={`text-sm font-medium ${slot.isBooked ? "text-muted-foreground/50" : ""}`}>
+                        <span className="text-sm font-medium">
                           {slot.time}
                         </span>
-                        {slot.isBooked && (
-                          <span className="block text-[10px] text-muted-foreground/50">
-                            Já ocupado
-                          </span>
-                        )}
                       </button>
                     ))}
                   </div>
