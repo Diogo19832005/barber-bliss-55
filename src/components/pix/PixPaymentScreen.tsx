@@ -86,32 +86,34 @@ const PixPaymentScreen = ({
       )}
 
       {/* Chave PIX */}
-      <Card className="glass-card">
-        <CardContent className="p-4">
-          <p className="text-sm font-medium mb-2">Chave PIX</p>
-          <div className="flex items-center gap-2 rounded-lg bg-secondary/50 p-3">
-            <p className="flex-1 text-sm font-mono break-all">{pixKey}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopyKey}
-              className="shrink-0"
-            >
-              {copied ? (
-                <>
-                  <Check className="mr-1 h-3 w-3" />
-                  Copiado
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-1 h-3 w-3" />
-                  Copiar chave PIX
-                </>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {pixKey && (
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <p className="text-sm font-medium mb-2">Chave PIX</p>
+            <div className="flex items-center gap-2 rounded-lg bg-secondary/50 p-3">
+              <p className="flex-1 text-sm font-mono break-all">{pixKey}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyKey}
+                className="shrink-0"
+              >
+                {copied ? (
+                  <>
+                    <Check className="mr-1 h-3 w-3" />
+                    Copiado
+                  </>
+                ) : (
+                  <>
+                    <Copy className="mr-1 h-3 w-3" />
+                    Copiar chave PIX
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Confirmar pagamento */}
       <Button
