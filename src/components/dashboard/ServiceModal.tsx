@@ -43,7 +43,8 @@ const ServiceModal = ({
   const [isUploading, setIsUploading] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [duration, setDuration] = useState("30");
+  const [durationHours, setDurationHours] = useState("0");
+  const [durationMinutes, setDurationMinutes] = useState("30");
   const [price, setPrice] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -53,14 +54,18 @@ const ServiceModal = ({
     if (service) {
       setName(service.name);
       setDescription(service.description || "");
-      setDuration(String(service.duration_minutes));
+      const hours = Math.floor(service.duration_minutes / 60);
+      const mins = service.duration_minutes % 60;
+      setDurationHours(String(hours));
+      setDurationMinutes(String(mins));
       setPrice(String(service.price));
       setImageUrl(service.image_url || null);
       setImagePreview(service.image_url || null);
     } else {
       setName("");
       setDescription("");
-      setDuration("30");
+      setDurationHours("0");
+      setDurationMinutes("30");
       setPrice("");
       setImageUrl(null);
       setImagePreview(null);
@@ -141,10 +146,22 @@ const ServiceModal = ({
     e.preventDefault();
     setIsLoading(true);
 
+    const totalMinutes = (parseInt(durationHours) || 0) * 60 + (parseInt(durationMinutes) || 0);
+    
+    if (totalMinutes < 15) {
+      toast({
+        title: "Erro",
+        description: "A duração mínima é de 15 minutos.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     const data = {
       name,
       description: description || null,
-      duration_minutes: parseInt(duration),
+      duration_minutes: totalMinutes,
       price: parseFloat(price),
       barber_id: barberId,
       image_url: imageUrl,
@@ -269,34 +286,49 @@ const ServiceModal = ({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="duration">Duração (min)</Label>
-              <Input
-                id="duration"
-                type="number"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                min="15"
-                step="15"
-                required
-                className="bg-secondary/50"
-              />
+          <div className="space-y-2">
+            <Label>Duração</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="durationHours" className="text-xs text-muted-foreground">Horas</Label>
+                <Input
+                  id="durationHours"
+                  type="number"
+                  value={durationHours}
+                  onChange={(e) => setDurationHours(e.target.value)}
+                  min="0"
+                  max="8"
+                  className="bg-secondary/50"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="durationMinutes" className="text-xs text-muted-foreground">Minutos</Label>
+                <Input
+                  id="durationMinutes"
+                  type="number"
+                  value={durationMinutes}
+                  onChange={(e) => setDurationMinutes(e.target.value)}
+                  min="0"
+                  max="59"
+                  step="5"
+                  className="bg-secondary/50"
+                />
+              </div>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="price">Preço (R$)</Label>
-              <Input
-                id="price"
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                min="0"
-                step="0.01"
-                required
-                className="bg-secondary/50"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="price">Preço (R$)</Label>
+            <Input
+              id="price"
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              min="0"
+              step="0.01"
+              required
+              className="bg-secondary/50"
+            />
           </div>
 
           <div className="flex gap-3 pt-4">
