@@ -54,6 +54,9 @@ const ScheduleModal = ({
       start: string;
       end: string;
       active: boolean;
+      hasBreak: boolean;
+      breakStart: string;
+      breakEnd: string;
     }>
   >([]);
 
@@ -65,6 +68,9 @@ const ScheduleModal = ({
         start: existing?.start_time?.slice(0, 5) || "09:00",
         end: existing?.end_time?.slice(0, 5) || "18:00",
         active: existing?.is_active ?? (day >= 1 && day <= 5),
+        hasBreak: (existing as any)?.has_break ?? false,
+        breakStart: (existing as any)?.break_start?.slice(0, 5) || "12:00",
+        breakEnd: (existing as any)?.break_end?.slice(0, 5) || "13:00",
       };
     });
     setLocalSchedules(initial);
@@ -90,6 +96,9 @@ const ScheduleModal = ({
       start_time: s.start,
       end_time: s.end,
       is_active: s.active,
+      has_break: s.hasBreak,
+      break_start: s.hasBreak ? s.breakStart : null,
+      break_end: s.hasBreak ? s.breakEnd : null,
     }));
 
     const { error } = await supabase.from("barber_schedules").insert(toInsert);
@@ -135,31 +144,71 @@ const ScheduleModal = ({
               </div>
 
               {schedule.active && (
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">
-                      Início
-                    </Label>
-                    <Input
-                      type="time"
-                      value={schedule.start}
-                      onChange={(e) =>
-                        handleUpdate(schedule.day, "start", e.target.value)
+                <div className="mt-3 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">
+                        Início
+                      </Label>
+                      <Input
+                        type="time"
+                        value={schedule.start}
+                        onChange={(e) =>
+                          handleUpdate(schedule.day, "start", e.target.value)
+                        }
+                        className="bg-secondary/50"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Fim</Label>
+                      <Input
+                        type="time"
+                        value={schedule.end}
+                        onChange={(e) =>
+                          handleUpdate(schedule.day, "end", e.target.value)
+                        }
+                        className="bg-secondary/50"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Break toggle */}
+                  <div className="flex items-center justify-between rounded-lg border border-border/50 bg-secondary/20 px-3 py-2">
+                    <Label className="text-xs text-muted-foreground">Intervalo</Label>
+                    <Switch
+                      checked={schedule.hasBreak}
+                      onCheckedChange={(checked) =>
+                        handleUpdate(schedule.day, "hasBreak", checked)
                       }
-                      className="bg-secondary/50"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Fim</Label>
-                    <Input
-                      type="time"
-                      value={schedule.end}
-                      onChange={(e) =>
-                        handleUpdate(schedule.day, "end", e.target.value)
-                      }
-                      className="bg-secondary/50"
-                    />
-                  </div>
+
+                  {schedule.hasBreak && (
+                    <div className="grid grid-cols-2 gap-3 rounded-lg border border-border/50 bg-secondary/10 p-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Início do intervalo</Label>
+                        <Input
+                          type="time"
+                          value={schedule.breakStart}
+                          onChange={(e) =>
+                            handleUpdate(schedule.day, "breakStart", e.target.value)
+                          }
+                          className="bg-secondary/50"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Fim do intervalo</Label>
+                        <Input
+                          type="time"
+                          value={schedule.breakEnd}
+                          onChange={(e) =>
+                            handleUpdate(schedule.day, "breakEnd", e.target.value)
+                          }
+                          className="bg-secondary/50"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
