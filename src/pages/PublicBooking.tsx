@@ -520,8 +520,8 @@ const PublicBooking = () => {
       });
       setPendingAppointmentIds(createdIds);
 
-      // If barber has PIX key configured, show payment choice
-      if (barber?.pix_key) {
+      // If barber has PIX key or QR code configured, show payment choice
+      if (barber?.pix_key || barber?.pix_qr_code) {
         setPaymentStep("choice");
       } else {
         // No PIX configured, go directly to success
@@ -634,7 +634,7 @@ const PublicBooking = () => {
     );
   }
 
-  if (paymentStep === "pix" && barber?.pix_key) {
+  if (paymentStep === "pix" && (barber?.pix_key || barber?.pix_qr_code)) {
     const primaryColor = barber?.cor_primaria || "#D97706";
 
     const handleConfirmPixPayment = async () => {
@@ -660,7 +660,7 @@ const PublicBooking = () => {
           <h1 className="text-xl font-bold text-center mb-6">Pagamento via PIX</h1>
           <PixPaymentScreen
             totalPrice={bookedServicesInfo?.total || totalPrice}
-            pixKey={barber.pix_key}
+            pixKey={barber.pix_key || ""}
             pixQrCode={barber.pix_qr_code}
             barberName={barber.nome_exibido || barber.full_name}
             primaryColor={primaryColor}
