@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ChevronDown, ChevronUp, Phone, Medal, Trophy, Clock } from "lucide-react";
+import { Calendar, ChevronDown, ChevronUp, Phone, Medal, Trophy, Clock, DollarSign } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -164,6 +164,12 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
             <p className="text-xs text-muted-foreground">
               {client.completedAppointments === 1 ? "corte" : "cortes"}
             </p>
+            {client.totalSpent > 0 && (
+              <p className="text-xs text-emerald-500 font-medium flex items-center justify-end gap-0.5 mt-0.5">
+                <DollarSign className="h-3 w-3" />
+                {client.totalSpent.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </p>
+            )}
           </div>
           {isExpanded ? (
             <ChevronUp className="h-5 w-5 text-muted-foreground" />
