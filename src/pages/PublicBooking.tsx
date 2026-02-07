@@ -318,7 +318,7 @@ const PublicBooking = () => {
         });
       }
 
-      currentSlot = addMinutes(currentSlot, 30);
+      currentSlot = addMinutes(currentSlot, 15);
     }
 
     setAllSlots(slots);

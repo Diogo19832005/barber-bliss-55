@@ -170,7 +170,7 @@ const BookingModal = ({
         });
       }
 
-      current = addMinutes(current, 30); // 30-minute intervals
+      current = addMinutes(current, 15);
     }
 
     setAvailableSlots(slots);
