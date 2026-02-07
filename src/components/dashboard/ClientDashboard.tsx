@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import DashboardLayout from "./DashboardLayout";
-import { Calendar, Scissors, Clock, User, X } from "lucide-react";
+import { Calendar, Scissors, Clock, User, X, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, parseISO } from "date-fns";
@@ -10,6 +10,7 @@ import { ptBR } from "date-fns/locale";
 import BookingModal from "./BookingModal";
 import { useToast } from "@/hooks/use-toast";
 
+// ... keep existing code (interfaces)
 interface Barber {
   id: string;
   full_name: string;
@@ -34,6 +35,13 @@ interface Appointment {
   service: { name: string; price: number } | null;
 }
 
+interface BarberStats {
+  barberId: string;
+  barberName: string;
+  avatarUrl: string | null;
+  completedCount: number;
+}
+
 const navItems = [
   { label: "Início", href: "/dashboard", icon: <Scissors className="h-4 w-4" /> },
   { label: "Meus Agendamentos", href: "/dashboard/appointments", icon: <Calendar className="h-4 w-4" /> },
@@ -47,6 +55,7 @@ const ClientDashboard = () => {
   const [appointmentMessage, setAppointmentMessage] = useState("Esse aqui é seu horário, fique atento.");
   const [selectedBarber, setSelectedBarber] = useState<Barber | null>(null);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [barberStats, setBarberStats] = useState<BarberStats[]>([]);
 
   useEffect(() => {
     if (profile?.id) {
@@ -55,11 +64,9 @@ const ClientDashboard = () => {
   }, [profile?.id]);
 
   const fetchData = async () => {
-    // Get the barbershop context from last visited public link
     const lastBarbershopId = localStorage.getItem("last_barbershop_id");
 
     if (lastBarbershopId) {
-      // Fetch the barbershop owner
       const { data: ownerData } = await supabase
         .from("profiles")
         .select("id, full_name, avatar_url, appointment_message")
@@ -72,7 +79,6 @@ const ClientDashboard = () => {
         setAppointmentMessage(ownerData.appointment_message);
       }
 
-      // Fetch team members of this barbershop
       const { data: teamData } = await supabase
         .from("profiles")
         .select("id, full_name, avatar_url")
@@ -85,10 +91,8 @@ const ClientDashboard = () => {
         ...(teamData || []),
       ];
 
-      // Fetch services for each barber
       const barbersWithServices = await Promise.all(
         allBarbers.map(async (barber) => {
-          // For team members, use the owner's services
           const serviceOwnerId = barber.id === lastBarbershopId ? barber.id : lastBarbershopId;
           const { data: services } = await supabase
             .from("services")
@@ -101,8 +105,37 @@ const ClientDashboard = () => {
       );
 
       setBarbers(barbersWithServices);
+
+      // Fetch completed appointments per barber for stats
+      if (profile?.id) {
+        const barberIds = allBarbers.map(b => b.id);
+        const { data: completedData } = await supabase
+          .from("appointments")
+          .select("barber_id")
+          .eq("client_id", profile.id)
+          .eq("status", "completed")
+          .in("barber_id", barberIds);
+
+        if (completedData) {
+          const counts: Record<string, number> = {};
+          completedData.forEach(a => {
+            counts[a.barber_id] = (counts[a.barber_id] || 0) + 1;
+          });
+
+          const stats: BarberStats[] = allBarbers
+            .map(b => ({
+              barberId: b.id,
+              barberName: b.full_name,
+              avatarUrl: b.avatar_url,
+              completedCount: counts[b.id] || 0,
+            }))
+            .filter(s => s.completedCount > 0)
+            .sort((a, b) => b.completedCount - a.completedCount);
+
+          setBarberStats(stats);
+        }
+      }
     } else {
-      // No barbershop context - don't fetch any barbers
       setBarbers([]);
     }
 
@@ -154,6 +187,49 @@ const ClientDashboard = () => {
             Escolha um barbeiro e agende seu horário
           </p>
         </div>
+
+        {/* My Stats - cortes realizados */}
+        {barberStats.length > 0 && (
+          <Card className="glass-card border-primary/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Trophy className="h-5 w-5 text-primary" />
+                Meus Cortes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                {barberStats.map((stat) => (
+                  <div
+                    key={stat.barberId}
+                    className="flex items-center gap-3 rounded-xl border border-border bg-secondary/30 px-4 py-3"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
+                      {stat.avatarUrl ? (
+                        <img
+                          src={stat.avatarUrl}
+                          alt={stat.barberName}
+                          className="h-full w-full rounded-full object-cover"
+                        />
+                      ) : (
+                        <User className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{stat.barberName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {stat.completedCount} {stat.completedCount === 1 ? "corte" : "cortes"}
+                      </p>
+                    </div>
+                    <span className="ml-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                      {stat.completedCount}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* My Appointments */}
         {appointments.filter((a) => a.status === "scheduled").length > 0 && (
