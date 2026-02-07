@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Dialog,
@@ -38,10 +38,17 @@ const AppointmentManageModal = ({
   appointment,
   onUpdated,
 }: AppointmentManageModalProps) => {
-  const [paymentStatus, setPaymentStatus] = useState(appointment?.paymentStatus || "pending");
+  const [paymentStatus, setPaymentStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+
+  useEffect(() => {
+    if (appointment) {
+      setPaymentStatus(appointment.paymentStatus);
+      setConfirmCancel(false);
+    }
+  }, [appointment?.id]);
 
   const handleSavePayment = async () => {
     if (!appointment) return;
@@ -79,10 +86,6 @@ const AppointmentManageModal = ({
     }
   };
 
-  // Sync local state when appointment changes
-  if (appointment && paymentStatus !== appointment.paymentStatus && !isSaving) {
-    setPaymentStatus(appointment.paymentStatus);
-  }
 
   if (!appointment) return null;
 
