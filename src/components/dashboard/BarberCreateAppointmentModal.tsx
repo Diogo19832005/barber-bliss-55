@@ -152,25 +152,41 @@ const BarberCreateAppointmentModal = ({
       .eq("appointment_date", dateStr)
       .neq("status", "cancelled");
 
+    // Generate time slots - hourly by default + extra slots after appointments end
     const slots: TimeSlot[] = [];
     const startHour = parseInt(schedule.start_time.split(":")[0]);
     const startMin = parseInt(schedule.start_time.split(":")[1]);
     const endHour = parseInt(schedule.end_time.split(":")[0]);
     const endMin = parseInt(schedule.end_time.split(":")[1]);
 
-    let current = new Date(selectedDate);
-    current.setHours(startHour, startMin, 0, 0);
-    const endTime = new Date(selectedDate);
-    endTime.setHours(endHour, endMin, 0, 0);
+    const schedStart = new Date(selectedDate);
+    schedStart.setHours(startHour, startMin, 0, 0);
+    const schedEnd = new Date(selectedDate);
+    schedEnd.setHours(endHour, endMin, 0, 0);
 
-    while (current < endTime) {
+    const candidateTimes = new Set<string>();
+
+    let hourly = new Date(schedStart);
+    while (hourly < schedEnd) {
+      candidateTimes.add(format(hourly, "HH:mm"));
+      hourly = addMinutes(hourly, 60);
+    }
+
+    appointments?.forEach((apt) => {
+      candidateTimes.add(apt.end_time.slice(0, 5));
+    });
+
+    const sortedTimes = Array.from(candidateTimes).sort();
+
+    for (const timeStr of sortedTimes) {
+      const current = new Date(selectedDate);
+      current.setHours(parseInt(timeStr.split(":")[0]), parseInt(timeStr.split(":")[1]), 0, 0);
       const slotEnd = addMinutes(current, selectedService.duration_minutes);
-      if (slotEnd > endTime) break;
 
-      const timeStr = format(current, "HH:mm");
+      if (slotEnd > schedEnd) continue;
+
       const slotEndStr = format(slotEnd, "HH:mm");
 
-      // Check if slot overlaps with break time
       const isDuringBreak = (schedule as any).has_break && (schedule as any).break_start && (schedule as any).break_end
         ? (timeStr < (schedule as any).break_end.slice(0, 5) && slotEndStr > (schedule as any).break_start.slice(0, 5))
         : false;
@@ -186,14 +202,11 @@ const BarberCreateAppointmentModal = ({
       });
 
       const now = new Date();
-      const slotDateTime = new Date(selectedDate);
-      slotDateTime.setHours(parseInt(timeStr.split(":")[0]), parseInt(timeStr.split(":")[1]));
-      const isPast = slotDateTime < now;
+      const isPast = current < now;
 
       if (!isDuringBreak) {
         slots.push({ time: timeStr, available: !isBooked && !isPast });
       }
-      current = addMinutes(current, 5);
     }
 
     setAvailableSlots(slots);

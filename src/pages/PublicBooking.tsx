@@ -275,20 +275,39 @@ const PublicBooking = () => {
 
     const bookedAppointments = appointmentsData || [];
 
-    // Generate all time slots with availability status
+    // Generate time slots - hourly by default + extra slots after appointments end
     const slots: { time: string; available: boolean; isBooked: boolean }[] = [];
     const startTime = parse(schedule.start_time, "HH:mm:ss", new Date());
     const endTime = parse(schedule.end_time, "HH:mm:ss", new Date());
     
-    // Use total duration for multi-service
     const serviceDuration = totalDuration;
 
-    let currentSlot = startTime;
+    // Collect candidate slot times: hourly + end times of existing appointments
+    const candidateTimes = new Set<string>();
 
-    while (isBefore(addMinutes(currentSlot, serviceDuration), endTime) || 
-           format(addMinutes(currentSlot, serviceDuration), "HH:mm") === format(endTime, "HH:mm")) {
-      const slotStart = format(currentSlot, "HH:mm");
-      const slotEnd = format(addMinutes(currentSlot, serviceDuration), "HH:mm");
+    // Add hourly slots
+    let hourlySlot = startTime;
+    while (isBefore(hourlySlot, endTime)) {
+      candidateTimes.add(format(hourlySlot, "HH:mm"));
+      hourlySlot = addMinutes(hourlySlot, 60);
+    }
+
+    // Add slots right after each existing appointment ends
+    bookedAppointments.forEach((apt) => {
+      const aptEndStr = apt.end_time.slice(0, 5);
+      candidateTimes.add(aptEndStr);
+    });
+
+    // Sort and generate slots
+    const sortedTimes = Array.from(candidateTimes).sort();
+
+    for (const slotStart of sortedTimes) {
+      const slotStartDate = parse(slotStart, "HH:mm", new Date());
+      const slotEndDate = addMinutes(slotStartDate, serviceDuration);
+      const slotEnd = format(slotEndDate, "HH:mm");
+
+      // Skip if service doesn't fit before end of day
+      if (isBefore(endTime, slotEndDate) && format(slotEndDate, "HH:mm") !== format(endTime, "HH:mm")) continue;
 
       // Check if slot overlaps with break time
       const isDuringBreak = (schedule as any).has_break && (schedule as any).break_start && (schedule as any).break_end
@@ -303,13 +322,9 @@ const PublicBooking = () => {
       });
 
       // Check if slot is in the past (for today)
-      const isToday = format(selectedDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
-      const isPast = isToday && isBefore(
-        parse(slotStart, "HH:mm", new Date()),
-        new Date()
-      );
+      const isTodayCheck = format(selectedDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+      const isPast = isTodayCheck && isBefore(parse(slotStart, "HH:mm", new Date()), new Date());
 
-      // Only add slots that are NOT in the past and NOT during break
       if (!isPast && !isDuringBreak) {
         slots.push({
           time: slotStart,
@@ -317,8 +332,6 @@ const PublicBooking = () => {
           isBooked: hasConflict,
         });
       }
-
-      currentSlot = addMinutes(currentSlot, 5);
     }
 
     setAllSlots(slots);
