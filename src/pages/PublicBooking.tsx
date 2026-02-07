@@ -226,7 +226,7 @@ const PublicBooking = () => {
     if (allBarbers.length === 1) {
       const { data: schedulesData } = await supabase
         .from("barber_schedules")
-        .select("day_of_week, start_time, end_time, is_active, has_break, break_start, break_end")
+        .select("day_of_week, start_time, end_time, is_active, has_break, break_start, break_end, break_tolerance_enabled, break_tolerance_minutes")
         .eq("barber_id", barberData.id)
         .eq("is_active", true);
 
@@ -239,7 +239,7 @@ const PublicBooking = () => {
   const fetchBarberSchedules = async (barberId: string) => {
     const { data: schedulesData } = await supabase
       .from("barber_schedules")
-      .select("day_of_week, start_time, end_time, is_active, has_break, break_start, break_end")
+      .select("day_of_week, start_time, end_time, is_active, has_break, break_start, break_end, break_tolerance_enabled, break_tolerance_minutes")
       .eq("barber_id", barberId)
       .eq("is_active", true);
 
@@ -309,10 +309,27 @@ const PublicBooking = () => {
       // Skip if service doesn't fit before end of day
       if (isBefore(endTime, slotEndDate) && format(slotEndDate, "HH:mm") !== format(endTime, "HH:mm")) continue;
 
-      // Check if slot overlaps with break time
-      const isDuringBreak = (schedule as any).has_break && (schedule as any).break_start && (schedule as any).break_end
-        ? (slotStart < (schedule as any).break_end.slice(0, 5) && slotEnd > (schedule as any).break_start.slice(0, 5))
-        : false;
+      // Check if slot overlaps with break time (with tolerance support)
+      let isDuringBreak = false;
+      if ((schedule as any).has_break && (schedule as any).break_start && (schedule as any).break_end) {
+        const breakStartStr = (schedule as any).break_start.slice(0, 5);
+        const breakEndStr = (schedule as any).break_end.slice(0, 5);
+        const overlapsBreak = slotStart < breakEndStr && slotEnd > breakStartStr;
+        
+        if (overlapsBreak) {
+          if ((schedule as any).break_tolerance_enabled && (schedule as any).break_tolerance_minutes > 0) {
+            // Allow if slot starts before break and ends within tolerance
+            const toleranceMinutes = (schedule as any).break_tolerance_minutes;
+            const breakStartDate = parse(breakStartStr, "HH:mm", new Date());
+            const maxEndDate = addMinutes(breakStartDate, toleranceMinutes);
+            const maxEnd = format(maxEndDate, "HH:mm");
+            // Block if: slot starts during/after break, OR slot ends beyond tolerance
+            isDuringBreak = slotStart >= breakStartStr || slotEnd > maxEnd;
+          } else {
+            isDuringBreak = true;
+          }
+        }
+      }
 
       // Check if slot conflicts with existing appointments
       const hasConflict = bookedAppointments.some((apt) => {
