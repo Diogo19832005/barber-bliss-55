@@ -245,32 +245,32 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
 
       {/* Earnings Cards */}
       {widgets.includes("earnings") && (
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2 md:gap-4">
           <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Hoje</CardTitle>
-              <DollarSign className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">R$ {earnings.daily.toFixed(2)}</p>
+            <CardContent className="p-3 md:p-6">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-medium text-muted-foreground">Hoje</p>
+                <DollarSign className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <p className="text-base md:text-2xl font-bold">R$ {earnings.daily.toFixed(2)}</p>
             </CardContent>
           </Card>
           <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Esta Semana</CardTitle>
-              <TrendingUp className="h-4 w-4 text-success" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">R$ {earnings.weekly.toFixed(2)}</p>
+            <CardContent className="p-3 md:p-6">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-medium text-muted-foreground">Semana</p>
+                <TrendingUp className="h-3.5 w-3.5 text-success" />
+              </div>
+              <p className="text-base md:text-2xl font-bold">R$ {earnings.weekly.toFixed(2)}</p>
             </CardContent>
           </Card>
           <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Este Mês</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">R$ {earnings.monthly.toFixed(2)}</p>
+            <CardContent className="p-3 md:p-6">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-medium text-muted-foreground">Mês</p>
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <p className="text-base md:text-2xl font-bold">R$ {earnings.monthly.toFixed(2)}</p>
             </CardContent>
           </Card>
         </div>
