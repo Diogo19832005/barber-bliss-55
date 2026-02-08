@@ -17,8 +17,7 @@ import {
   Users,
   ArrowUpRight,
   Zap,
-  Receipt,
-  ChevronDown
+  Receipt
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, startOfDay, endOfDay } from "date-fns";
 import { getLocaleByCountry } from "@/lib/dateLocales";
@@ -42,8 +41,6 @@ export interface Appointment {
   end_time: string;
   status: string;
   payment_status: string;
-  client_name: string | null;
-  client_phone: string | null;
   client: { full_name: string; phone: string | null } | null;
   service: { name: string; price: number } | null;
 }
@@ -61,8 +58,6 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [freeSlotCount, setFreeSlotCount] = useState(0);
-  const [freeSlots, setFreeSlots] = useState<string[]>([]);
-  const [showFreeSlots, setShowFreeSlots] = useState(false);
 
   const today = new Date();
   const userLocale = getLocaleByCountry(profile?.pais);
@@ -114,6 +109,7 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
   };
 
   const calculateFreeSlots = async (todayStr: string) => {
+    // Get schedule for today's day of week
     const dayOfWeek = new Date().getDay();
     const { data: schedule } = await supabase
       .from("barber_schedules")
@@ -125,10 +121,10 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
 
     if (!schedule) {
       setFreeSlotCount(0);
-      setFreeSlots([]);
       return;
     }
 
+    // Get all appointments for today
     const { data: apts } = await supabase
       .from("appointments")
       .select("start_time, end_time")
@@ -136,19 +132,12 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
       .eq("appointment_date", todayStr)
       .neq("status", "cancelled");
 
+    // Simple estimate: count 30-min slots between schedule start/end minus booked slots
     const startMinutes = timeToMinutes(schedule.start_time);
     const endMinutes = timeToMinutes(schedule.end_time);
-    const bookedSet = new Set((apts || []).map(a => a.start_time.slice(0, 5)));
-
-    const free: string[] = [];
-    for (let m = startMinutes; m < endMinutes; m += 30) {
-      const hh = String(Math.floor(m / 60)).padStart(2, "0");
-      const mm = String(m % 60).padStart(2, "0");
-      const slot = `${hh}:${mm}`;
-      if (!bookedSet.has(slot)) free.push(slot);
-    }
-    setFreeSlots(free);
-    setFreeSlotCount(free.length);
+    const totalSlots = Math.floor((endMinutes - startMinutes) / 30);
+    const bookedSlots = apts?.length || 0;
+    setFreeSlotCount(Math.max(0, totalSlots - bookedSlots));
   };
 
   const timeToMinutes = (time: string) => {
@@ -260,26 +249,26 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
   );
 
   return (
-    <div className="space-y-6 max-w-full overflow-hidden">
+    <div className="space-y-6">
       {/* Greeting Section */}
-      <div className="glass-card flex items-center gap-4 p-5">
+      <div className="flex items-center gap-4">
         {profile?.avatar_url ? (
           <img
             src={profile.avatar_url}
             alt={displayName}
-            className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/30"
+            className="h-12 w-12 rounded-full object-cover border-2 border-primary/30"
           />
         ) : (
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20 text-primary font-bold text-lg ring-2 ring-primary/20">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20 text-primary font-bold text-lg">
             {displayName.charAt(0).toUpperCase()}
           </div>
         )}
         <div>
-          <h1 className="text-xl md:text-2xl font-bold">
-            Olá, {displayName} 👋
+          <h1 className="text-2xl font-bold">
+            Olá, {displayName}! 👋
           </h1>
           <p className="text-sm text-muted-foreground">
-            Gestão da sua barbearia • {formattedDate}
+            Resumo da sua barbearia hoje – {formattedDate}
           </p>
         </div>
       </div>
@@ -317,60 +306,69 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
         </Card>
       )}
 
-      {/* Earnings Cards */}
+      {/* Earnings Cards - Premium Design */}
       {widgets.includes("earnings") && (
-        <div className="grid grid-cols-3 gap-2 md:gap-5">
-          <Card className="glass-card border-primary/20 overflow-hidden">
-            <CardContent className="p-3 md:p-6">
-              <div className="flex items-center justify-between mb-2 md:mb-3">
-                <p className="text-[10px] md:text-xs font-medium text-muted-foreground leading-tight">Faturamento de hoje</p>
-                <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary/50 shrink-0 ml-1" />
+        <div className="grid grid-cols-3 gap-2 md:gap-4">
+          {/* Card 1: Faturamento de hoje */}
+          <Card className="glass-card overflow-hidden">
+            <CardContent className="p-3 md:p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] md:text-xs font-medium text-muted-foreground">Faturamento de hoje</p>
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15">
+                  <DollarSign className="h-3.5 w-3.5 text-primary" />
+                </div>
               </div>
-              <p className="text-base md:text-3xl font-bold tracking-tight truncate">
+              <p className="text-lg md:text-2xl font-bold tracking-tight">
                 R$ {earnings.daily.toFixed(2)}
               </p>
-              <p className="mt-1 md:mt-2 text-[10px] md:text-xs text-muted-foreground">
-                <span className="font-semibold text-foreground">{todayCompletedCount}</span> Atendimentos
+              <p className="mt-1 text-[11px] md:text-xs text-muted-foreground">
+                <span className="font-medium text-primary">{todayCompletedCount}</span> atendimentos
               </p>
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-primary/20 overflow-hidden">
-            <CardContent className="p-3 md:p-6">
-              <div className="flex items-center justify-between mb-2 md:mb-3">
-                <p className="text-[10px] md:text-xs font-medium text-muted-foreground leading-tight">Esta semana</p>
-                <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary/50 shrink-0 ml-1" />
+          {/* Card 2: Esta semana */}
+          <Card className="glass-card overflow-hidden">
+            <CardContent className="p-3 md:p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] md:text-xs font-medium text-muted-foreground">Esta semana</p>
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15">
+                  <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                </div>
               </div>
-              <p className="text-base md:text-3xl font-bold tracking-tight truncate">
+              <p className="text-lg md:text-2xl font-bold tracking-tight">
                 R$ {earnings.weekly.toFixed(2)}
               </p>
-              <p className="mt-1 md:mt-2 text-[10px] md:text-xs">
+              <p className="mt-1 text-[11px] md:text-xs">
                 {weeklyVariation >= 0 ? (
-                  <span className="inline-flex items-center gap-0.5 text-success font-semibold">
+                  <span className="inline-flex items-center gap-0.5 text-success font-medium">
                     <ArrowUpRight className="h-3 w-3" />
                     {weeklyVariation}%
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-0.5 text-destructive font-semibold">
+                  <span className="inline-flex items-center gap-0.5 text-destructive font-medium">
                     ↓ {Math.abs(weeklyVariation)}%
                   </span>
                 )}
-                <span className="text-muted-foreground ml-0.5 hidden sm:inline">vs anterior</span>
+                <span className="text-muted-foreground ml-1">vs semana passada</span>
               </p>
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-primary/20 overflow-hidden">
-            <CardContent className="p-3 md:p-6">
-              <div className="flex items-center justify-between mb-2 md:mb-3">
-                <p className="text-[10px] md:text-xs font-medium text-muted-foreground leading-tight">Este mês</p>
-                <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary/50 shrink-0 ml-1" />
+          {/* Card 3: Este mês */}
+          <Card className="glass-card overflow-hidden">
+            <CardContent className="p-3 md:p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] md:text-xs font-medium text-muted-foreground">Este mês</p>
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15">
+                  <Calendar className="h-3.5 w-3.5 text-primary" />
+                </div>
               </div>
-              <p className="text-base md:text-3xl font-bold tracking-tight truncate">
+              <p className="text-lg md:text-2xl font-bold tracking-tight">
                 R$ {earnings.monthly.toFixed(2)}
               </p>
-              <p className="mt-1 md:mt-2 text-[10px] md:text-xs text-muted-foreground">
-                <span className="font-semibold text-foreground">{monthlyCompletedCount}</span> clientes
+              <p className="mt-1 text-[11px] md:text-xs text-muted-foreground">
+                Ticket médio <span className="font-medium text-foreground">R$ {ticketMedio.toFixed(2)}</span>
               </p>
             </CardContent>
           </Card>
@@ -387,36 +385,17 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
 
       {/* Free Slots Indicator */}
       {widgets.includes("today_appointments") && (
-        <div className="rounded-2xl border border-border/50 bg-card/60 overflow-hidden">
-          <button
-            className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-muted/30"
-            onClick={() => freeSlotCount > 0 && setShowFreeSlots(!showFreeSlots)}
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <span className="text-sm text-muted-foreground flex-1">
-              {freeSlotCount > 0 ? (
-                <>
-                  <span className="font-semibold text-foreground">{freeSlotCount}</span> horários livres hoje
-                </>
-              ) : (
-                "Agenda cheia hoje"
-              )}
-            </span>
-            {freeSlotCount > 0 && (
-              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showFreeSlots ? "rotate-180" : ""}`} />
+        <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-card/50 px-4 py-2.5">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">
+            {freeSlotCount > 0 ? (
+              <>
+                <span className="font-medium text-foreground">{freeSlotCount}</span> horários livres hoje
+              </>
+            ) : (
+              "Nenhum horário livre hoje"
             )}
-          </button>
-          {showFreeSlots && freeSlots.length > 0 && (
-            <div className="border-t border-border/40 px-5 py-3 flex flex-wrap gap-2">
-              {freeSlots.map((slot) => (
-                <span key={slot} className="inline-flex items-center rounded-lg bg-muted/60 px-3 py-1.5 text-xs font-medium tabular-nums text-foreground">
-                  {slot}
-                </span>
-              ))}
-            </div>
-          )}
+          </span>
         </div>
       )}
 
