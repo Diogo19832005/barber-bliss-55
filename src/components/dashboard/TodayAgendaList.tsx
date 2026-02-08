@@ -63,7 +63,7 @@ const TodayAgendaList = ({ appointments, onComplete, onSelect }: TodayAgendaList
               return (
                 <div
                   key={apt.id}
-                  className={`relative flex items-center rounded-xl border overflow-hidden transition-all cursor-pointer hover:border-primary/40 ${
+                  className={`relative flex items-center rounded-xl border overflow-hidden transition-all cursor-pointer hover:border-primary/40 max-w-full ${
                     isNext
                       ? "border-primary/30 bg-primary/5"
                       : apt.status === "completed"

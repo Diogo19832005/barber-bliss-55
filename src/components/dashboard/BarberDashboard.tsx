@@ -488,7 +488,7 @@ const BarberDashboard = () => {
                           return (
                             <div
                               key={apt.id}
-                              className={`relative flex items-center justify-between rounded-xl border p-4 transition-all ${
+                              className={`relative flex items-center rounded-xl border overflow-hidden transition-all ${
                                 apt.status === "completed"
                                   ? "border-success/30 bg-success/5"
                                   : apt.status === "cancelled"
@@ -503,52 +503,45 @@ const BarberDashboard = () => {
                                   Próximo
                                 </span>
                               )}
-                              <div className="flex items-center gap-4">
-                                <div className="text-center">
-                                  <p className={`text-lg font-semibold ${isNext ? "text-primary" : ""}`}>
-                                    {apt.start_time.slice(0, 5)}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {apt.end_time.slice(0, 5)}
-                                  </p>
-                                </div>
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <p className="font-medium">{apt.client?.full_name || apt.client_name || "Cliente avulso"}</p>
-                                    {apt.created_by && (
-                                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Feito por você</Badge>
-                                    )}
-                                    {apt.client?.phone && (
-                                      <a
-                                        href={`https://wa.me/${apt.client.phone.replace(/\D/g, '')}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 text-xs text-success hover:bg-success/30 transition-colors"
-                                        title="Enviar mensagem no WhatsApp"
-                                      >
-                                        <MessageCircle className="h-3 w-3" />
-                                        WhatsApp
-                                      </a>
-                                    )}
+                              <div className="flex flex-1 items-center justify-between gap-2 p-3 md:p-4 min-w-0">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="text-center shrink-0 min-w-[40px]">
+                                    <p className={`text-sm md:text-lg font-semibold tabular-nums ${isNext ? "text-primary" : ""}`}>
+                                      {apt.start_time.slice(0, 5)}
+                                    </p>
+                                    <p className="text-[10px] md:text-xs text-muted-foreground tabular-nums">
+                                      {apt.end_time.slice(0, 5)}
+                                    </p>
                                   </div>
-                                  <p className="text-sm text-muted-foreground">
-                                    {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
-                                  </p>
-                                  <PaymentStatusBadge status={apt.payment_status} />
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <p className="font-medium text-xs md:text-sm truncate">{apt.client?.full_name || apt.client_name || "Cliente avulso"}</p>
+                                      {apt.created_by && (
+                                        <Badge variant="secondary" className="text-[9px] px-1.5 py-0 shrink-0">Feito por você</Badge>
+                                      )}
+                                    </div>
+                                    <p className="text-[10px] md:text-xs text-muted-foreground truncate">
+                                      {apt.service?.name} · R$ {apt.service?.price?.toFixed(2)}
+                                    </p>
+                                    <PaymentStatusBadge status={apt.payment_status} />
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-end gap-1 shrink-0">
+                                  {apt.status === "completed" && (
+                                    <span className="text-[10px] md:text-xs font-semibold text-success whitespace-nowrap">✓ Concluído</span>
+                                  )}
+                                  {apt.status === "scheduled" && (
+                                    <Button
+                                      size="sm"
+                                      variant={isNext ? "default" : "outline"}
+                                      className="h-6 text-[10px] md:h-7 md:text-xs px-2"
+                                      onClick={() => handleCompleteAppointment(apt.id)}
+                                    >
+                                      Concluir
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
-                              {apt.status === "scheduled" && (
-                                <Button
-                                  size="sm"
-                                  variant={isNext ? "default" : "outline"}
-                                  onClick={() => handleCompleteAppointment(apt.id)}
-                                >
-                                  Concluir
-                                </Button>
-                              )}
-                              {apt.status === "completed" && (
-                                <span className="text-sm text-success">✓ Concluído</span>
-                              )}
                             </div>
                           );
                         });

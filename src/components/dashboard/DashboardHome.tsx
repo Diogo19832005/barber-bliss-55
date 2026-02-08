@@ -260,7 +260,7 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full overflow-hidden">
       {/* Greeting Section */}
       <div className="glass-card flex items-center gap-4 p-5">
         {profile?.avatar_url ? (
