@@ -17,7 +17,8 @@ import {
   Users,
   ArrowUpRight,
   Zap,
-  Receipt
+  Receipt,
+  ChevronDown
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, startOfDay, endOfDay } from "date-fns";
 import { getLocaleByCountry } from "@/lib/dateLocales";
@@ -41,6 +42,8 @@ export interface Appointment {
   end_time: string;
   status: string;
   payment_status: string;
+  client_name: string | null;
+  client_phone: string | null;
   client: { full_name: string; phone: string | null } | null;
   service: { name: string; price: number } | null;
 }
@@ -58,6 +61,8 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [freeSlotCount, setFreeSlotCount] = useState(0);
+  const [freeSlots, setFreeSlots] = useState<string[]>([]);
+  const [showFreeSlots, setShowFreeSlots] = useState(false);
 
   const today = new Date();
   const userLocale = getLocaleByCountry(profile?.pais);
@@ -109,7 +114,6 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
   };
 
   const calculateFreeSlots = async (todayStr: string) => {
-    // Get schedule for today's day of week
     const dayOfWeek = new Date().getDay();
     const { data: schedule } = await supabase
       .from("barber_schedules")
@@ -121,10 +125,10 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
 
     if (!schedule) {
       setFreeSlotCount(0);
+      setFreeSlots([]);
       return;
     }
 
-    // Get all appointments for today
     const { data: apts } = await supabase
       .from("appointments")
       .select("start_time, end_time")
@@ -132,12 +136,19 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
       .eq("appointment_date", todayStr)
       .neq("status", "cancelled");
 
-    // Simple estimate: count 30-min slots between schedule start/end minus booked slots
     const startMinutes = timeToMinutes(schedule.start_time);
     const endMinutes = timeToMinutes(schedule.end_time);
-    const totalSlots = Math.floor((endMinutes - startMinutes) / 30);
-    const bookedSlots = apts?.length || 0;
-    setFreeSlotCount(Math.max(0, totalSlots - bookedSlots));
+    const bookedSet = new Set((apts || []).map(a => a.start_time.slice(0, 5)));
+
+    const free: string[] = [];
+    for (let m = startMinutes; m < endMinutes; m += 30) {
+      const hh = String(Math.floor(m / 60)).padStart(2, "0");
+      const mm = String(m % 60).padStart(2, "0");
+      const slot = `${hh}:${mm}`;
+      if (!bookedSet.has(slot)) free.push(slot);
+    }
+    setFreeSlots(free);
+    setFreeSlotCount(free.length);
   };
 
   const timeToMinutes = (time: string) => {
@@ -385,19 +396,36 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
 
       {/* Free Slots Indicator */}
       {widgets.includes("today_appointments") && (
-        <div className="flex items-center gap-3 rounded-2xl border border-border/50 bg-card/60 px-5 py-3.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <span className="text-sm text-muted-foreground">
-            {freeSlotCount > 0 ? (
-              <>
-                <span className="font-semibold text-foreground">{freeSlotCount}</span> horários livres hoje
-              </>
-            ) : (
-              "Agenda cheia hoje"
+        <div className="rounded-2xl border border-border/50 bg-card/60 overflow-hidden">
+          <button
+            className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-muted/30"
+            onClick={() => freeSlotCount > 0 && setShowFreeSlots(!showFreeSlots)}
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <span className="text-sm text-muted-foreground flex-1">
+              {freeSlotCount > 0 ? (
+                <>
+                  <span className="font-semibold text-foreground">{freeSlotCount}</span> horários livres hoje
+                </>
+              ) : (
+                "Agenda cheia hoje"
+              )}
+            </span>
+            {freeSlotCount > 0 && (
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showFreeSlots ? "rotate-180" : ""}`} />
             )}
-          </span>
+          </button>
+          {showFreeSlots && freeSlots.length > 0 && (
+            <div className="border-t border-border/40 px-5 py-3 flex flex-wrap gap-2">
+              {freeSlots.map((slot) => (
+                <span key={slot} className="inline-flex items-center rounded-lg bg-muted/60 px-3 py-1.5 text-xs font-medium tabular-nums text-foreground">
+                  {slot}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
