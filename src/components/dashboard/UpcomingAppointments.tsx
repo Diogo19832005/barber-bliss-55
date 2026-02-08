@@ -163,7 +163,7 @@ const UpcomingAppointments = ({ barberId }: UpcomingAppointmentsProps) => {
                     {group.appointments.map((apt) => (
                       <div
                         key={apt.id}
-                        className="flex flex-col gap-3 rounded-xl border border-border bg-card/50 p-4 sm:flex-row sm:items-center sm:justify-between cursor-pointer hover:border-primary/40 transition-colors"
+                        className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card/50 p-4 cursor-pointer hover:border-primary/40 transition-colors"
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedAppointment({
@@ -211,7 +211,7 @@ const UpcomingAppointments = ({ barberId }: UpcomingAppointmentsProps) => {
                         </div>
                         
                          {/* Status and Payment badges */}
-                         <div className="flex flex-col items-end gap-1 self-start sm:self-center">
+                         <div className="flex flex-col items-end gap-1 shrink-0">
                            {getStatusBadge(apt.status)}
                            <PaymentStatusBadge status={apt.payment_status} />
                          </div>
