@@ -109,7 +109,7 @@ const Login = () => {
                 </div>
                 <div className="text-left">
                   <p className="font-semibold">Sou Cliente</p>
-                  <p className="text-sm text-muted-foreground">Ver meus agendamentos</p>
+                  <p className="text-sm text-muted-foreground">Acessar minha conta de cliente</p>
                 </div>
               </button>
             </div>
