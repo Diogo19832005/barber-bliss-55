@@ -163,7 +163,7 @@ const UpcomingAppointments = ({ barberId }: UpcomingAppointmentsProps) => {
                   {group.appointments.map((apt) => (
                     <div
                       key={apt.id}
-                      className="flex items-center rounded-xl border border-border/50 bg-card/40 overflow-hidden cursor-pointer hover:border-primary/40 transition-colors"
+                      className="flex items-center rounded-xl border border-border/50 bg-card/40 overflow-hidden cursor-pointer hover:border-primary/40 transition-colors max-w-full"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedAppointment({
