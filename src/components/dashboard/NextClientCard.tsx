@@ -17,17 +17,17 @@ const NextClientCard = ({ appointment, onComplete }: NextClientCardProps) => {
 
   return (
     <Card className="glass-card border-primary/20 overflow-hidden">
-      <CardHeader className="pb-2 pt-5 px-5">
-        <CardTitle className="flex items-center gap-2.5 text-base font-semibold">
-          <Calendar className="h-5 w-5 text-primary" />
+      <CardHeader className="pb-2 pt-4 px-4 md:px-5">
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+          <Calendar className="h-4 w-4 text-primary" />
           Próximo atendimento
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-5 pb-5">
-        <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/40 bg-card/60 p-4">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-foreground font-bold text-base">
+      <CardContent className="px-4 pb-4 md:px-5 md:pb-5">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-card/60 p-3 md:p-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="relative shrink-0">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground font-bold text-sm">
                 {clientName.charAt(0).toUpperCase()}
               </div>
               {phone && (
@@ -35,25 +35,21 @@ const NextClientCard = ({ appointment, onComplete }: NextClientCardProps) => {
                   href={`https://wa.me/55${phone.replace(/\D/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-success text-success-foreground"
+                  className="absolute -bottom-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-success text-success-foreground"
                   title="WhatsApp"
                 >
-                  <MessageCircle className="h-3 w-3" />
+                  <MessageCircle className="h-2.5 w-2.5" />
                 </a>
               )}
             </div>
-            <div>
-              <p className="font-semibold text-foreground">{clientName}</p>
-              <p className="text-sm text-muted-foreground">
-                {serviceName}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Pix · R$ {price.toFixed(2)}
-              </p>
+            <div className="min-w-0">
+              <p className="font-semibold text-foreground text-sm truncate">{clientName}</p>
+              <p className="text-xs text-muted-foreground truncate">{serviceName}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Pix · R$ {price.toFixed(2)}</p>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-warning">
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-warning">
               <Zap className="h-3 w-3" />
               Aguardando
             </span>
@@ -61,9 +57,9 @@ const NextClientCard = ({ appointment, onComplete }: NextClientCardProps) => {
               size="sm"
               variant="gold"
               onClick={() => onComplete(appointment.id)}
-              className="whitespace-nowrap rounded-xl px-4"
+              className="whitespace-nowrap rounded-lg px-3 text-xs h-8"
             >
-              Iniciar atendimento
+              Iniciar
             </Button>
           </div>
         </div>
