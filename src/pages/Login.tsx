@@ -4,10 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
-import { Scissors, Eye, EyeOff, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { Scissors, Eye, EyeOff, Loader2, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+type LoginRole = "barber" | "client";
+
 const Login = () => {
+  const [selectedRole, setSelectedRole] = useState<LoginRole | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -18,6 +22,7 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedRole) return;
     setIsLoading(true);
 
     const { error } = await signIn(email, password);
@@ -25,13 +30,36 @@ const Login = () => {
     if (error) {
       toast({
         title: "Erro ao entrar",
-        description: error.message === "Invalid login credentials" 
-          ? "Email ou senha incorretos" 
+        description: error.message === "Invalid login credentials"
+          ? "Email ou senha incorretos"
           : error.message,
         variant: "destructive",
       });
       setIsLoading(false);
       return;
+    }
+
+    // Verify the user's role matches the selected login role
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, barber_status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (profile && profile.role !== selectedRole) {
+        await supabase.auth.signOut();
+        toast({
+          title: "Tipo de conta incorreto",
+          description: selectedRole === "barber"
+            ? "Esta conta não é de barbeiro. Tente entrar como cliente."
+            : "Esta conta não é de cliente. Tente entrar como barbeiro.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
     }
 
     toast({
@@ -42,17 +70,73 @@ const Login = () => {
     navigate("/dashboard");
   };
 
+  // Role selection screen
+  if (!selectedRole) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="w-full max-w-md animate-slide-up">
+          <div className="glass-card p-8">
+            <div className="mb-8 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl gradient-gold">
+                <Scissors className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <h1 className="mt-6 text-2xl font-bold">Entrar na conta</h1>
+              <p className="mt-2 text-muted-foreground">
+                Como deseja entrar?
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => setSelectedRole("barber")}
+                className="flex w-full items-center gap-4 rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary hover:bg-secondary"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg gradient-gold">
+                  <Scissors className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold">Sou Barbeiro</p>
+                  <p className="text-sm text-muted-foreground">Acessar minha barbearia</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setSelectedRole("client")}
+                className="flex w-full items-center gap-4 rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary hover:bg-secondary"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
+                  <User className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold">Sou Cliente</p>
+                  <p className="text-sm text-muted-foreground">Ver meus agendamentos</p>
+                </div>
+              </button>
+            </div>
+
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Não tem conta?{" "}
+              <Link to="/register" className="text-primary hover:underline">
+                Criar conta
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-md animate-slide-up">
         <div className="glass-card p-8">
           <div className="mb-8 text-center">
-            <Link to="/" className="inline-flex items-center gap-2">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl gradient-gold">
-                <Scissors className="h-6 w-6 text-primary-foreground" />
-              </div>
-            </Link>
-            <h1 className="mt-6 text-2xl font-bold">Entrar na conta</h1>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl gradient-gold">
+              <Scissors className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <h1 className="mt-6 text-2xl font-bold">
+              Entrar como {selectedRole === "barber" ? "Barbeiro" : "Cliente"}
+            </h1>
             <p className="mt-2 text-muted-foreground">
               Entre para acessar sua área
             </p>
@@ -120,12 +204,20 @@ const Login = () => {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Não tem conta?{" "}
-            <Link to="/register" className="text-primary hover:underline">
-              Criar conta
-            </Link>
-          </p>
+          <div className="mt-6 space-y-3 text-center">
+            <button
+              onClick={() => { setSelectedRole(null); setEmail(""); setPassword(""); }}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Voltar para escolha
+            </button>
+            <p className="text-sm text-muted-foreground">
+              Não tem conta?{" "}
+              <Link to="/register" className="text-primary hover:underline">
+                Criar conta
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
