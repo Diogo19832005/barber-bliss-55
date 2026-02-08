@@ -52,8 +52,8 @@ const TodayAgendaList = ({ appointments, onComplete, onSelect }: TodayAgendaList
             {appointments.map((apt) => {
               const isNext = nextApt?.id === apt.id;
               const status = statusConfig[apt.status] || statusConfig.scheduled;
-              const clientName = apt.client?.full_name || "Cliente";
-              const phone = apt.client?.phone;
+              const clientName = apt.client?.full_name || apt.client_name || "Sem nome";
+              const phone = apt.client?.phone || apt.client_phone;
 
               return (
                 <div
