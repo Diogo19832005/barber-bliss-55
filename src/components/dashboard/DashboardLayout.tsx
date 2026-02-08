@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { 
   Scissors, 
   Calendar, 
@@ -12,7 +13,9 @@ import {
   User,
   Menu,
   X,
-  ExternalLink
+  ExternalLink,
+  Sun,
+  Moon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -33,6 +36,7 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children, navItems, bottomTabItems }: DashboardLayoutProps) => {
   const tabs = bottomTabItems || navItems.slice(0, 5);
   const { profile, signOut, isAdmin } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -58,6 +62,9 @@ const DashboardLayout = ({ children, navItems, bottomTabItems }: DashboardLayout
           </div>
           <span className="font-semibold text-sm">Barber Office</span>
         </div>
+        <button onClick={toggleTheme} className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
       </header>
 
       {/* Mobile Menu Overlay */}
@@ -163,6 +170,14 @@ const DashboardLayout = ({ children, navItems, bottomTabItems }: DashboardLayout
                   </p>
                 </div>
               </div>
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+                onClick={toggleTheme}
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {theme === "dark" ? "Modo Claro" : "Modo Escuro"}
+              </Button>
               <Button
                 variant="ghost"
                 className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
