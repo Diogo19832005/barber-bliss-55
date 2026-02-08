@@ -21,6 +21,7 @@ import { getLocaleByCountry } from "@/lib/dateLocales";
 import UpcomingAppointments from "./UpcomingAppointments";
 import EarningsChart from "./EarningsChart";
 import PaymentStatusBadge from "@/components/pix/PaymentStatusBadge";
+import AppointmentManageModal from "@/components/dashboard/AppointmentManageModal";
 
 interface DashboardHomeProps {
   barberId: string;
@@ -58,6 +59,7 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
   const [publicLink, setPublicLink] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
   const today = new Date();
   const userLocale = getLocaleByCountry(profile?.pais);
@@ -304,7 +306,7 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
                     return (
                       <div
                         key={apt.id}
-                        className={`relative flex items-center justify-between rounded-xl border p-4 transition-all ${
+                        className={`relative flex items-center justify-between rounded-xl border p-4 transition-all cursor-pointer hover:border-primary/40 ${
                           apt.status === "completed"
                             ? "border-success/30 bg-success/5"
                             : apt.status === "cancelled"
@@ -313,6 +315,16 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
                             ? "border-primary bg-primary/10 ring-2 ring-primary/30 shadow-lg shadow-primary/10"
                             : "border-border"
                         }`}
+                        onClick={() => {
+                          setSelectedAppointment({
+                            id: apt.id,
+                            clientName: apt.client?.full_name || "Cliente",
+                            serviceName: apt.service?.name || "",
+                            startTime: apt.start_time,
+                            date: format(new Date(), "d/MM"),
+                            paymentStatus: apt.payment_status,
+                          });
+                        }}
                       >
                         {isNext && (
                           <span className="absolute -top-2.5 left-4 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
@@ -369,6 +381,13 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
           </CardContent>
         </Card>
       )}
+
+      <AppointmentManageModal
+        isOpen={!!selectedAppointment}
+        onClose={() => setSelectedAppointment(null)}
+        appointment={selectedAppointment}
+        onUpdated={fetchData}
+      />
 
       {/* Upcoming Appointments */}
       {widgets.includes("upcoming_appointments") && (
