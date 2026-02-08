@@ -319,32 +319,32 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
 
       {/* Earnings Cards */}
       {widgets.includes("earnings") && (
-        <div className="grid grid-cols-3 gap-2.5 md:gap-5">
-          <Card className="glass-card border-primary/20 overflow-hidden group">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] md:text-xs font-medium text-muted-foreground">Faturamento de hoje</p>
-                <DollarSign className="h-4 w-4 text-primary/50" />
+        <div className="grid grid-cols-3 gap-2 md:gap-5">
+          <Card className="glass-card border-primary/20 overflow-hidden">
+            <CardContent className="p-3 md:p-6">
+              <div className="flex items-center justify-between mb-2 md:mb-3">
+                <p className="text-[10px] md:text-xs font-medium text-muted-foreground leading-tight">Faturamento de hoje</p>
+                <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary/50 shrink-0 ml-1" />
               </div>
-              <p className="text-xl md:text-3xl font-bold tracking-tight">
+              <p className="text-base md:text-3xl font-bold tracking-tight truncate">
                 R$ {earnings.daily.toFixed(2)}
               </p>
-              <p className="mt-2 text-[11px] md:text-xs text-muted-foreground">
+              <p className="mt-1 md:mt-2 text-[10px] md:text-xs text-muted-foreground">
                 <span className="font-semibold text-foreground">{todayCompletedCount}</span> Atendimentos
               </p>
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-primary/20 overflow-hidden group">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] md:text-xs font-medium text-muted-foreground">Esta semana</p>
-                <Calendar className="h-4 w-4 text-primary/50" />
+          <Card className="glass-card border-primary/20 overflow-hidden">
+            <CardContent className="p-3 md:p-6">
+              <div className="flex items-center justify-between mb-2 md:mb-3">
+                <p className="text-[10px] md:text-xs font-medium text-muted-foreground leading-tight">Esta semana</p>
+                <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary/50 shrink-0 ml-1" />
               </div>
-              <p className="text-xl md:text-3xl font-bold tracking-tight">
+              <p className="text-base md:text-3xl font-bold tracking-tight truncate">
                 R$ {earnings.weekly.toFixed(2)}
               </p>
-              <p className="mt-2 text-[11px] md:text-xs">
+              <p className="mt-1 md:mt-2 text-[10px] md:text-xs">
                 {weeklyVariation >= 0 ? (
                   <span className="inline-flex items-center gap-0.5 text-success font-semibold">
                     <ArrowUpRight className="h-3 w-3" />
@@ -355,21 +355,21 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
                     ↓ {Math.abs(weeklyVariation)}%
                   </span>
                 )}
-                <span className="text-muted-foreground ml-1">vs semana passada</span>
+                <span className="text-muted-foreground ml-0.5 hidden sm:inline">vs anterior</span>
               </p>
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-primary/20 overflow-hidden group">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] md:text-xs font-medium text-muted-foreground">Este mês</p>
-                <Calendar className="h-4 w-4 text-primary/50" />
+          <Card className="glass-card border-primary/20 overflow-hidden">
+            <CardContent className="p-3 md:p-6">
+              <div className="flex items-center justify-between mb-2 md:mb-3">
+                <p className="text-[10px] md:text-xs font-medium text-muted-foreground leading-tight">Este mês</p>
+                <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary/50 shrink-0 ml-1" />
               </div>
-              <p className="text-xl md:text-3xl font-bold tracking-tight">
+              <p className="text-base md:text-3xl font-bold tracking-tight truncate">
                 R$ {earnings.monthly.toFixed(2)}
               </p>
-              <p className="mt-2 text-[11px] md:text-xs text-muted-foreground">
+              <p className="mt-1 md:mt-2 text-[10px] md:text-xs text-muted-foreground">
                 <span className="font-semibold text-foreground">{monthlyCompletedCount}</span> clientes
               </p>
             </CardContent>
