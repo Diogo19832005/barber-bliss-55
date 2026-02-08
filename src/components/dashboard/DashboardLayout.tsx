@@ -192,7 +192,7 @@ const DashboardLayout = ({ children, navItems, bottomTabItems }: DashboardLayout
 
         {/* Main Content */}
         <main className="flex-1 md:ml-64">
-          <div className="p-5 pb-24 md:p-8 md:pb-8">{children}</div>
+          <div className="px-4 py-5 pb-24 sm:p-6 sm:pb-24 md:p-8 md:pb-8">{children}</div>
         </main>
       </div>
 
