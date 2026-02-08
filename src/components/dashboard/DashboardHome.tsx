@@ -262,24 +262,24 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
   return (
     <div className="space-y-6">
       {/* Greeting Section */}
-      <div className="flex items-center gap-4">
+      <div className="glass-card flex items-center gap-4 p-5">
         {profile?.avatar_url ? (
           <img
             src={profile.avatar_url}
             alt={displayName}
-            className="h-12 w-12 rounded-full object-cover border-2 border-primary/30"
+            className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/30"
           />
         ) : (
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20 text-primary font-bold text-lg">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20 text-primary font-bold text-lg ring-2 ring-primary/20">
             {displayName.charAt(0).toUpperCase()}
           </div>
         )}
         <div>
-          <h1 className="text-2xl font-bold">
-            Olá, {displayName}! 👋
+          <h1 className="text-xl md:text-2xl font-bold">
+            Olá, {displayName} 👋
           </h1>
           <p className="text-sm text-muted-foreground">
-            Resumo da sua barbearia hoje – {formattedDate}
+            Gestão da sua barbearia • {formattedDate}
           </p>
         </div>
       </div>
@@ -317,35 +317,29 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
         </Card>
       )}
 
-      {/* Earnings Cards - Premium Design */}
+      {/* Earnings Cards */}
       {widgets.includes("earnings") && (
         <div className="grid grid-cols-3 gap-2.5 md:gap-5">
-          {/* Card 1: Faturamento de hoje */}
-          <Card className="glass-card overflow-hidden group">
+          <Card className="glass-card border-primary/20 overflow-hidden group">
             <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] md:text-xs font-medium uppercase tracking-wider text-muted-foreground">Hoje</p>
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <DollarSign className="h-4 w-4 text-primary" />
-                </div>
+                <p className="text-[11px] md:text-xs font-medium text-muted-foreground">Faturamento de hoje</p>
+                <DollarSign className="h-4 w-4 text-primary/50" />
               </div>
               <p className="text-xl md:text-3xl font-bold tracking-tight">
                 R$ {earnings.daily.toFixed(2)}
               </p>
               <p className="mt-2 text-[11px] md:text-xs text-muted-foreground">
-                <span className="font-semibold text-primary">{todayCompletedCount}</span> atendimentos
+                <span className="font-semibold text-foreground">{todayCompletedCount}</span> Atendimentos
               </p>
             </CardContent>
           </Card>
 
-          {/* Card 2: Esta semana */}
-          <Card className="glass-card overflow-hidden group">
+          <Card className="glass-card border-primary/20 overflow-hidden group">
             <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] md:text-xs font-medium uppercase tracking-wider text-muted-foreground">Semana</p>
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                </div>
+                <p className="text-[11px] md:text-xs font-medium text-muted-foreground">Esta semana</p>
+                <Calendar className="h-4 w-4 text-primary/50" />
               </div>
               <p className="text-xl md:text-3xl font-bold tracking-tight">
                 R$ {earnings.weekly.toFixed(2)}
@@ -361,25 +355,22 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
                     ↓ {Math.abs(weeklyVariation)}%
                   </span>
                 )}
-                <span className="text-muted-foreground ml-1">vs anterior</span>
+                <span className="text-muted-foreground ml-1">vs semana passada</span>
               </p>
             </CardContent>
           </Card>
 
-          {/* Card 3: Este mês */}
-          <Card className="glass-card overflow-hidden group">
+          <Card className="glass-card border-primary/20 overflow-hidden group">
             <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] md:text-xs font-medium uppercase tracking-wider text-muted-foreground">Mês</p>
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <Calendar className="h-4 w-4 text-primary" />
-                </div>
+                <p className="text-[11px] md:text-xs font-medium text-muted-foreground">Este mês</p>
+                <Calendar className="h-4 w-4 text-primary/50" />
               </div>
               <p className="text-xl md:text-3xl font-bold tracking-tight">
                 R$ {earnings.monthly.toFixed(2)}
               </p>
               <p className="mt-2 text-[11px] md:text-xs text-muted-foreground">
-                Ticket médio <span className="font-semibold text-foreground">R$ {ticketMedio.toFixed(2)}</span>
+                <span className="font-semibold text-foreground">{monthlyCompletedCount}</span> clientes
               </p>
             </CardContent>
           </Card>
