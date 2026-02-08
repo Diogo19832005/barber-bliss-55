@@ -78,19 +78,19 @@ interface Schedule {
 }
 
 const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: <Home className="h-4 w-4" /> },
+  { label: "Página Inicial", href: "/dashboard", icon: <Home className="h-4 w-4" /> },
+  { label: "Dashboard", href: "/dashboard/analytics", icon: <TrendingUp className="h-4 w-4" /> },
   { label: "Agenda", href: "/dashboard/agenda", icon: <Calendar className="h-4 w-4" /> },
+  { label: "Histórico", href: "/dashboard/history", icon: <History className="h-4 w-4" /> },
   { label: "Clientes", href: "/dashboard/clients", icon: <UserCheck className="h-4 w-4" /> },
   { label: "Serviços", href: "/dashboard/services", icon: <Scissors className="h-4 w-4" /> },
-  { label: "Equipe", href: "/dashboard/team", icon: <Users className="h-4 w-4" /> },
-  { label: "Financeiro", href: "/dashboard/analytics", icon: <DollarSign className="h-4 w-4" /> },
-  { label: "Relatórios", href: "/dashboard/history", icon: <TrendingUp className="h-4 w-4" /> },
   { label: "Horários", href: "/dashboard/schedule", icon: <Clock className="h-4 w-4" /> },
+  { label: "Equipe", href: "/dashboard/team", icon: <Users className="h-4 w-4" /> },
   { label: "Meu Perfil", href: "/dashboard/profile", icon: <User className="h-4 w-4" /> },
 ];
 
 const bottomTabItems = [
-  { label: "Dashboard", href: "/dashboard", icon: <Home className="h-4 w-4" /> },
+  { label: "Início", href: "/dashboard", icon: <Home className="h-4 w-4" /> },
   { label: "Agenda", href: "/dashboard/agenda", icon: <Calendar className="h-4 w-4" /> },
   { label: "Clientes", href: "/dashboard/clients", icon: <UserCheck className="h-4 w-4" /> },
 ];
