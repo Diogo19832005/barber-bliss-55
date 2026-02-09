@@ -305,74 +305,68 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
                     const isNext = nextApt?.id === apt.id;
                     return (
                       <div
-                        key={apt.id}
-                        className={`relative flex items-center justify-between rounded-xl border p-4 transition-all cursor-pointer hover:border-primary/40 ${
-                          apt.status === "completed"
-                            ? "border-success/30 bg-success/5"
-                            : apt.status === "cancelled"
-                            ? "border-destructive/30 bg-destructive/5"
-                            : isNext
-                            ? "border-primary bg-primary/10 ring-2 ring-primary/30 shadow-lg shadow-primary/10"
-                            : "border-border"
-                        }`}
-                        onClick={() => {
-                          setSelectedAppointment({
-                            id: apt.id,
-                            clientName: apt.client?.full_name || "Cliente",
-                            serviceName: apt.service?.name || "",
-                            startTime: apt.start_time,
-                            date: format(new Date(), "d/MM"),
-                            paymentStatus: apt.payment_status,
-                          });
-                        }}
-                      >
-                        {isNext && (
-                          <span className="absolute -top-2.5 left-4 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
-                            Próximo
-                          </span>
-                        )}
-                        <div className="flex items-center gap-4">
-                          <div className="text-center">
-                            <p className={`text-lg font-semibold ${isNext ? "text-primary" : ""}`}>
-                              {apt.start_time.slice(0, 5)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">{apt.end_time.slice(0, 5)}</p>
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium">{apt.client?.full_name}</p>
-                              {apt.client?.phone && (
-                                <a
-                                  href={`https://wa.me/${apt.client.phone.replace(/\D/g, "")}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 text-xs text-success hover:bg-success/30 transition-colors"
-                                  title="Enviar mensagem no WhatsApp"
-                                >
-                                  <MessageCircle className="h-3 w-3" />
-                                  WhatsApp
-                                </a>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
-                            </p>
-                            <PaymentStatusBadge status={apt.payment_status} />
-                          </div>
-                        </div>
-                        {apt.status === "scheduled" && (
-                          <Button
-                            size="sm"
-                            variant={isNext ? "default" : "outline"}
-                            onClick={() => handleCompleteAppointment(apt.id)}
-                          >
-                            Concluir
-                          </Button>
-                        )}
-                        {apt.status === "completed" && (
-                          <span className="text-sm text-success">✓ Concluído</span>
-                        )}
-                      </div>
+                         key={apt.id}
+                         className={`relative rounded-xl border p-4 transition-all cursor-pointer hover:border-primary/40 ${
+                           apt.status === "completed"
+                             ? "border-success/30 bg-success/5"
+                             : apt.status === "cancelled"
+                             ? "border-destructive/30 bg-destructive/5"
+                             : isNext
+                             ? "border-primary bg-primary/10 ring-2 ring-primary/30 shadow-lg shadow-primary/10"
+                             : "border-border"
+                         }`}
+                         onClick={() => {
+                           setSelectedAppointment({
+                             id: apt.id,
+                             clientName: apt.client?.full_name || "Cliente",
+                             serviceName: apt.service?.name || "",
+                             startTime: apt.start_time,
+                             date: format(new Date(), "d/MM"),
+                             paymentStatus: apt.payment_status,
+                           });
+                         }}
+                       >
+                         {isNext && (
+                           <span className="absolute -top-2.5 left-4 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
+                             Próximo
+                           </span>
+                         )}
+                         <div className="flex items-start gap-3">
+                           <div className="text-center shrink-0">
+                             <p className={`text-lg font-semibold ${isNext ? "text-primary" : ""}`}>
+                               {apt.start_time.slice(0, 5)}
+                             </p>
+                             <p className="text-xs text-muted-foreground">{apt.end_time.slice(0, 5)}</p>
+                           </div>
+                           <div className="flex-1 min-w-0">
+                             <div className="flex items-center gap-2 flex-wrap">
+                               <p className="font-medium truncate">{apt.client?.full_name}</p>
+                               {apt.client?.phone && (
+                                 <a
+                                   href={`https://wa.me/${apt.client.phone.replace(/\D/g, "")}`}
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 text-xs text-success hover:bg-success/30 transition-colors"
+                                   title="Enviar mensagem no WhatsApp"
+                                   onClick={(e) => e.stopPropagation()}
+                                 >
+                                   <MessageCircle className="h-3 w-3" />
+                                   WhatsApp
+                                 </a>
+                               )}
+                             </div>
+                             <p className="text-sm text-muted-foreground truncate">
+                               {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
+                             </p>
+                             <div className="flex items-center justify-between mt-1.5">
+                               <PaymentStatusBadge status={apt.payment_status} />
+                               {apt.status === "completed" && (
+                                 <span className="text-sm text-success">✓ Concluído</span>
+                               )}
+                             </div>
+                           </div>
+                         </div>
+                       </div>
                     );
                   });
                 })()}
@@ -416,29 +410,29 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
                 {services.slice(0, 6).map((service) => (
                   <div
                     key={service.id}
-                    className="flex items-center justify-between rounded-xl border border-border p-4"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border p-4"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       {service.image_url ? (
                         <img
                           src={service.image_url}
                           alt={service.name}
-                          className="h-12 w-12 rounded-lg object-cover border border-border"
+                          className="h-12 w-12 rounded-lg object-cover border border-border shrink-0"
                         />
                       ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary shrink-0">
                           <Scissors className="h-5 w-5 text-muted-foreground" />
                         </div>
                       )}
-                      <div>
-                        <p className="font-medium">{service.name}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{service.name}</p>
                         <p className="text-sm text-muted-foreground">
                           <Clock className="mr-1 inline h-3 w-3" />
                           {service.duration_minutes} min
                         </p>
                       </div>
                     </div>
-                    <p className="text-lg font-semibold text-primary">
+                    <p className="text-lg font-semibold text-primary whitespace-nowrap shrink-0">
                       R$ {Number(service.price).toFixed(2)}
                     </p>
                   </div>

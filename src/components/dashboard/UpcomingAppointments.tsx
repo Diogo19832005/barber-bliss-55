@@ -163,59 +163,55 @@ const UpcomingAppointments = ({ barberId }: UpcomingAppointmentsProps) => {
                     {group.appointments.map((apt) => (
                       <div
                         key={apt.id}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card/50 p-4 cursor-pointer hover:border-primary/40 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedAppointment({
-                            id: apt.id,
-                            clientName: apt.client?.full_name || apt.client_name || "Cliente avulso",
-                            serviceName: apt.service?.name || "",
-                            startTime: apt.start_time,
-                            date: format(new Date(apt.appointment_date + "T00:00:00"), "d/MM", { locale: ptBR }),
-                            paymentStatus: apt.payment_status,
-                          });
-                        }}
-                      >
-                        <div className="flex items-start gap-4">
-                          {/* Time block */}
-                          <div className="flex flex-col items-center justify-center rounded-lg bg-primary/10 px-3 py-2 text-primary">
-                            <span className="text-lg font-bold leading-tight">
-                              {apt.start_time.slice(0, 5)}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {apt.end_time.slice(0, 5)}
-                            </span>
-                          </div>
-                          
-                          {/* Details */}
-                          <div className="flex flex-col gap-1">
-                             <div className="flex items-center gap-2">
-                               <User className="h-4 w-4 text-muted-foreground" />
-                               <span className="font-medium">
-                                 {apt.client?.full_name || apt.client_name || "Cliente avulso"}
-                               </span>
-                               {apt.created_by && (
-                                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Feito por você</Badge>
-                               )}
-                             </div>
-                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                               <Scissors className="h-3.5 w-3.5" />
-                               <span>{apt.service?.name || "Serviço não especificado"}</span>
-                               <span className="text-xs">•</span>
-                               <Clock className="h-3.5 w-3.5" />
-                               <span>{apt.service?.duration_minutes || 0} min</span>
-                               <span className="text-xs">•</span>
-                               <span className="font-medium text-foreground">R$ {apt.service?.price?.toFixed(2) || "0.00"}</span>
-                             </div>
-                          </div>
-                        </div>
-                        
-                         {/* Status and Payment badges */}
-                         <div className="flex flex-col items-end gap-1 shrink-0">
-                           {getStatusBadge(apt.status)}
-                           <PaymentStatusBadge status={apt.payment_status} />
+                        className="rounded-xl border border-border bg-card/50 p-4 cursor-pointer hover:border-primary/40 transition-colors"
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setSelectedAppointment({
+                             id: apt.id,
+                             clientName: apt.client?.full_name || apt.client_name || "Cliente avulso",
+                             serviceName: apt.service?.name || "",
+                             startTime: apt.start_time,
+                             date: format(new Date(apt.appointment_date + "T00:00:00"), "d/MM", { locale: ptBR }),
+                             paymentStatus: apt.payment_status,
+                           });
+                         }}
+                       >
+                         <div className="flex items-start gap-3">
+                           {/* Time block */}
+                           <div className="flex flex-col items-center justify-center rounded-lg bg-primary/10 px-3 py-2 text-primary shrink-0">
+                             <span className="text-lg font-bold leading-tight">
+                               {apt.start_time.slice(0, 5)}
+                             </span>
+                             <span className="text-xs text-muted-foreground">
+                               {apt.end_time.slice(0, 5)}
+                             </span>
+                           </div>
+                           
+                           {/* Details */}
+                           <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <span className="font-medium truncate">
+                                  {apt.client?.full_name || apt.client_name || "Cliente avulso"}
+                                </span>
+                                {apt.created_by && (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Feito por você</Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1 flex-wrap">
+                                <Scissors className="h-3.5 w-3.5 shrink-0" />
+                                <span className="truncate">{apt.service?.name || "Serviço não especificado"}</span>
+                                <span className="text-xs">•</span>
+                                <span className="whitespace-nowrap">{apt.service?.duration_minutes || 0} min</span>
+                                <span className="text-xs">•</span>
+                                <span className="font-medium text-foreground whitespace-nowrap">R$ {apt.service?.price?.toFixed(2) || "0.00"}</span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-2">
+                                <PaymentStatusBadge status={apt.payment_status} />
+                              </div>
+                           </div>
                          </div>
-                      </div>
+                       </div>
                     ))}
                   </div>
                 </div>
