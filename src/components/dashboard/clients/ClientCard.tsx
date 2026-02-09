@@ -72,30 +72,30 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors"
+        className="w-full flex items-center justify-between p-3 md:p-4 hover:bg-secondary/30 transition-colors"
       >
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 min-w-0">
           {/* Rank Medal or Avatar */}
           {rankPosition !== undefined ? (
-            <div className="relative">
+            <div className="relative shrink-0">
               <div
                 className={cn(
-                  "flex h-12 w-12 items-center justify-center rounded-full font-bold text-lg",
+                  "flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full font-bold text-base md:text-lg",
                   isTop3
                     ? `${getMedalBg(rankPosition)} ${getMedalColor(rankPosition)}`
                     : "bg-primary/10 text-primary"
                 )}
               >
                 {isTop3 ? (
-                  <Medal className={cn("h-6 w-6", getMedalColor(rankPosition))} />
+                  <Medal className={cn("h-5 w-5 md:h-6 md:w-6", getMedalColor(rankPosition))} />
                 ) : (
-                  <span className="text-sm">#{rankPosition}</span>
+                  <span className="text-xs md:text-sm">#{rankPosition}</span>
                 )}
               </div>
               {isTop3 && (
                 <span
                   className={cn(
-                    "absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white",
+                    "absolute -top-1 -right-1 flex h-4 w-4 md:h-5 md:w-5 items-center justify-center rounded-full text-[8px] md:text-[10px] font-bold text-white",
                     rankPosition === 1
                       ? "bg-yellow-500"
                       : rankPosition === 2
@@ -108,24 +108,24 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
               )}
             </div>
           ) : (
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+            <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold shrink-0 text-sm md:text-base">
               {client.full_name.charAt(0).toUpperCase()}
             </div>
           )}
 
-          <div className="text-left">
-            <div className="flex items-center gap-2">
-              <p className="font-medium">{client.full_name}</p>
+          <div className="text-left min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="text-sm md:text-base font-medium truncate">{client.full_name}</p>
               {rankPosition !== undefined && (
                 <Badge
                   className={cn(
-                    "text-[10px] px-1.5 py-0",
+                    "text-[9px] md:text-[10px] px-1 md:px-1.5 py-0",
                     isTop3
                       ? `${getMedalBg(rankPosition)} ${getMedalColor(rankPosition)} border`
                       : "bg-primary/10 text-primary border-primary/20"
                   )}
                 >
-                  <Trophy className="h-3 w-3 mr-0.5" />
+                  <Trophy className="h-2.5 w-2.5 mr-0.5" />
                   TOP {rankPosition}
                 </Badge>
               )}
@@ -139,16 +139,16 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+                className="flex items-center gap-1 text-xs md:text-sm text-muted-foreground hover:text-primary transition-colors"
               >
                 <Phone className="h-3 w-3" />
                 <span className="underline">{client.phone}</span>
               </a>
             )}
             {client.lastAppointmentDate && (
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                <span>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3 shrink-0" />
+                <span className="truncate">
                   Último corte: {format(new Date(client.lastAppointmentDate + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
                   {" "}({formatDistanceToNow(new Date(client.lastAppointmentDate + "T00:00:00"), { addSuffix: true, locale: ptBR })})
                 </span>
@@ -156,25 +156,25 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
             )}
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 shrink-0">
           <div className="text-right">
-            <p className="text-2xl font-bold text-primary">
+            <p className="text-xl md:text-2xl font-bold text-primary">
               {client.completedAppointments}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[10px] md:text-xs text-muted-foreground">
               {client.completedAppointments === 1 ? "corte" : "cortes"}
             </p>
             {client.totalSpent > 0 && (
-              <p className="text-xs text-emerald-500 font-medium flex items-center justify-end gap-0.5 mt-0.5">
+              <p className="text-[10px] md:text-xs text-emerald-500 font-medium flex items-center justify-end gap-0.5 mt-0.5">
                 <DollarSign className="h-3 w-3" />
                 {client.totalSpent.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
               </p>
             )}
           </div>
           {isExpanded ? (
-            <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            <ChevronUp className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
           ) : (
-            <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            <ChevronDown className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
           )}
         </div>
       </button>
