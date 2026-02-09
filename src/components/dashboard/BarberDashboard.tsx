@@ -346,19 +346,20 @@ const BarberDashboard = () => {
             {/* Public Link Card */}
             {publicLink && (
               <Card className="glass-card border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
-                <CardContent className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20">
-                      <LinkIcon className="h-5 w-5 text-primary" />
+                <CardContent className="flex items-center justify-between gap-2 p-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 shrink-0">
+                      <LinkIcon className="h-4 w-4 text-primary" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Seu Link Público</p>
-                      <p className="font-mono text-sm text-foreground break-all">{publicLink}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-medium text-muted-foreground">Seu Link Público</p>
+                      <p className="font-mono text-[11px] text-foreground break-all leading-tight">{publicLink}</p>
                     </div>
                   </div>
                   <Button
                     variant="gold"
                     size="sm"
+                    className="shrink-0 h-8 text-xs px-2.5"
                     onClick={() => {
                       navigator.clipboard.writeText(publicLink);
                       setLinkCopied(true);
@@ -368,13 +369,13 @@ const BarberDashboard = () => {
                   >
                     {linkCopied ? (
                       <>
-                        <Check className="mr-2 h-4 w-4" />
+                        <Check className="mr-1 h-3.5 w-3.5" />
                         Copiado!
                       </>
                     ) : (
                       <>
-                        <Copy className="mr-2 h-4 w-4" />
-                        Copiar Link
+                        <Copy className="mr-1 h-3.5 w-3.5" />
+                        Copiar
                       </>
                     )}
                   </Button>
