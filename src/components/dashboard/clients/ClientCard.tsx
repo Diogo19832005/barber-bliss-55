@@ -80,22 +80,22 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
             <div className="relative shrink-0">
               <div
                 className={cn(
-                  "flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full font-bold text-base md:text-lg",
+                  "flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full font-bold text-sm md:text-base",
                   isTop3
                     ? `${getMedalBg(rankPosition)} ${getMedalColor(rankPosition)}`
                     : "bg-primary/10 text-primary"
                 )}
               >
                 {isTop3 ? (
-                  <Medal className={cn("h-5 w-5 md:h-6 md:w-6", getMedalColor(rankPosition))} />
+                  <Medal className={cn("h-4 w-4 md:h-5 md:w-5", getMedalColor(rankPosition))} />
                 ) : (
-                  <span className="text-xs md:text-sm">#{rankPosition}</span>
+                  <span className="text-[10px] md:text-xs">#{rankPosition}</span>
                 )}
               </div>
               {isTop3 && (
                 <span
                   className={cn(
-                    "absolute -top-1 -right-1 flex h-4 w-4 md:h-5 md:w-5 items-center justify-center rounded-full text-[8px] md:text-[10px] font-bold text-white",
+                    "absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 md:h-4 md:w-4 items-center justify-center rounded-full text-[7px] md:text-[8px] font-bold text-white",
                     rankPosition === 1
                       ? "bg-yellow-500"
                       : rankPosition === 2
@@ -108,7 +108,7 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
               )}
             </div>
           ) : (
-            <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold shrink-0 text-sm md:text-base">
+          <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold shrink-0 text-xs md:text-sm">
               {client.full_name.charAt(0).toUpperCase()}
             </div>
           )}
@@ -156,25 +156,27 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           <div className="text-right">
-            <p className="text-xl md:text-2xl font-bold text-primary">
-              {client.completedAppointments}
-            </p>
-            <p className="text-[10px] md:text-xs text-muted-foreground">
-              {client.completedAppointments === 1 ? "corte" : "cortes"}
-            </p>
+            <div className="flex items-baseline justify-end gap-1">
+              <p className="text-lg md:text-xl font-bold text-primary">
+                {client.completedAppointments}
+              </p>
+              <p className="text-[10px] md:text-xs text-muted-foreground">
+                {client.completedAppointments === 1 ? "corte" : "cortes"}
+              </p>
+            </div>
             {client.totalSpent > 0 && (
-              <p className="text-[10px] md:text-xs text-emerald-500 font-medium flex items-center justify-end gap-0.5 mt-0.5">
-                <DollarSign className="h-3 w-3" />
+              <p className="text-[10px] md:text-xs text-emerald-500 font-medium flex items-center justify-end gap-0.5">
+                <DollarSign className="h-2.5 w-2.5" />
                 {client.totalSpent.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
               </p>
             )}
           </div>
           {isExpanded ? (
-            <ChevronUp className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
           ) : (
-            <ChevronDown className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
           )}
         </div>
       </button>
