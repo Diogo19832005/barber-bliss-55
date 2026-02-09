@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2, Save, Loader2 } from "lucide-react";
+import { Trash2, Save, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface AppointmentManageModalProps {
@@ -40,13 +40,14 @@ const AppointmentManageModal = ({
 }: AppointmentManageModalProps) => {
   const [paymentStatus, setPaymentStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
-  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (appointment) {
       setPaymentStatus(appointment.paymentStatus);
-      setConfirmCancel(false);
+      setConfirmDelete(false);
     }
   }, [appointment?.id]);
 
@@ -68,29 +69,46 @@ const AppointmentManageModal = ({
     }
   };
 
-  const handleCancel = async () => {
+  const handleComplete = async () => {
     if (!appointment) return;
-    setIsCancelling(true);
+    setIsCompleting(true);
     const { error } = await supabase
       .from("appointments")
-      .update({ status: "cancelled" })
+      .update({ status: "completed" })
       .eq("id", appointment.id);
 
-    setIsCancelling(false);
+    setIsCompleting(false);
     if (error) {
-      toast.error("Erro ao cancelar agendamento");
+      toast.error("Erro ao concluir agendamento");
     } else {
-      toast.success("Agendamento cancelado");
+      toast.success("Agendamento concluído");
       onUpdated();
       onClose();
     }
   };
 
+  const handleDelete = async () => {
+    if (!appointment) return;
+    setIsDeleting(true);
+    const { error } = await supabase
+      .from("appointments")
+      .delete()
+      .eq("id", appointment.id);
+
+    setIsDeleting(false);
+    if (error) {
+      toast.error("Erro ao excluir agendamento");
+    } else {
+      toast.success("Agendamento excluído");
+      onUpdated();
+      onClose();
+    }
+  };
 
   if (!appointment) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { setConfirmCancel(false); onClose(); } }}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { setConfirmDelete(false); onClose(); } }}>
       <DialogContent className="max-w-sm" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle>Gerenciar Agendamento</DialogTitle>
@@ -123,29 +141,42 @@ const AppointmentManageModal = ({
             </Button>
           </div>
 
-          {/* Cancel */}
+          {/* Complete */}
+          <div className="border-t pt-4">
+            <Button
+              onClick={handleComplete}
+              disabled={isCompleting}
+              className="w-full bg-success hover:bg-success/90 text-success-foreground"
+              size="sm"
+            >
+              {isCompleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+              Concluir Agendamento
+            </Button>
+          </div>
+
+          {/* Delete */}
           <div className="border-t pt-4 space-y-2">
-            {!confirmCancel ? (
+            {!confirmDelete ? (
               <Button
                 variant="destructive"
                 className="w-full"
                 size="sm"
-                onClick={() => setConfirmCancel(true)}
+                onClick={() => setConfirmDelete(true)}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Cancelar Agendamento
+                Excluir Agendamento
               </Button>
             ) : (
               <div className="space-y-2">
                 <p className="text-sm text-destructive font-medium text-center">
-                  Tem certeza? Isso não pode ser desfeito.
+                  Tem certeza que deseja excluir?
                 </p>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     className="flex-1"
-                    onClick={() => setConfirmCancel(false)}
+                    onClick={() => setConfirmDelete(false)}
                   >
                     Voltar
                   </Button>
@@ -153,10 +184,10 @@ const AppointmentManageModal = ({
                     variant="destructive"
                     size="sm"
                     className="flex-1"
-                    onClick={handleCancel}
-                    disabled={isCancelling}
+                    onClick={handleDelete}
+                    disabled={isDeleting}
                   >
-                    {isCancelling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Confirmar
                   </Button>
                 </div>
