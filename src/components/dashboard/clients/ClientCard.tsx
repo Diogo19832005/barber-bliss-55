@@ -156,27 +156,24 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
             )}
           </div>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
+          {client.totalSpent > 0 && (
+            <Badge className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30 text-[10px] md:text-xs px-1.5 py-0 font-semibold whitespace-nowrap">
+              {client.totalSpent.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            </Badge>
+          )}
           <div className="text-right">
-            <div className="flex items-baseline justify-end gap-1">
-              <p className="text-lg md:text-xl font-bold text-primary">
-                {client.completedAppointments}
-              </p>
-              <p className="text-[10px] md:text-xs text-muted-foreground">
-                {client.completedAppointments === 1 ? "corte" : "cortes"}
-              </p>
-            </div>
-            {client.totalSpent > 0 && (
-              <p className="text-[10px] md:text-xs text-emerald-500 font-medium flex items-center justify-end gap-0.5">
-                <DollarSign className="h-2.5 w-2.5" />
-                {client.totalSpent.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-              </p>
-            )}
+            <p className="text-base md:text-lg font-bold text-primary leading-tight">
+              {client.completedAppointments}
+            </p>
+            <p className="text-[9px] md:text-[10px] text-muted-foreground leading-tight">
+              {client.completedAppointments === 1 ? "corte" : "cortes"}
+            </p>
           </div>
           {isExpanded ? (
-            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
           )}
         </div>
       </button>
