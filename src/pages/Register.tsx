@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/lib/supabase";
 import { Scissors, Eye, EyeOff, Loader2, User, ScissorsIcon, Phone, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { isPasswordLeaked } from "@/lib/passwordCheck";
 import {
   Select,
   SelectContent,
@@ -52,6 +53,17 @@ const Register = () => {
     }
 
     setIsLoading(true);
+
+    const leaked = await isPasswordLeaked(password);
+    if (leaked) {
+      toast({
+        title: "Senha insegura",
+        description: "Escolha uma senha mais segura para proteger sua conta.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
 
     const { error } = await signUp(email, password, fullName, role, phone, role === "barber" ? pais : undefined);
 

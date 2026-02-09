@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { Scissors, Eye, EyeOff, Loader2, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { isPasswordLeaked } from "@/lib/passwordCheck";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -70,6 +71,17 @@ const ResetPassword = () => {
     }
 
     setIsLoading(true);
+
+    const leaked = await isPasswordLeaked(password);
+    if (leaked) {
+      toast({
+        title: "Senha insegura",
+        description: "Escolha uma senha mais segura para proteger sua conta.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
 
     const { error } = await supabase.auth.updateUser({
       password: password,
