@@ -62,71 +62,56 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
   return (
     <div
       className={cn(
-        "rounded-xl border overflow-hidden transition-all",
+        "rounded-lg border overflow-hidden transition-all",
         isTop3
           ? `${getMedalBg(rankPosition!)} border`
           : "border-border bg-card/50"
       )}
     >
-      {/* Client Header */}
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-2 p-3 md:p-4 hover:bg-secondary/30 transition-colors"
+        className="w-full flex items-center gap-1.5 px-2.5 py-2 md:p-3 hover:bg-secondary/30 transition-colors"
       >
-        {/* Rank Medal or Avatar */}
+        {/* Avatar/Medal - tiny */}
         {rankPosition !== undefined ? (
           <div className="relative shrink-0">
             <div
               className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-full font-bold text-sm",
+                "flex h-7 w-7 items-center justify-center rounded-full font-bold text-xs",
                 isTop3
                   ? `${getMedalBg(rankPosition)} ${getMedalColor(rankPosition)}`
                   : "bg-primary/10 text-primary"
               )}
             >
               {isTop3 ? (
-                <Medal className={cn("h-4 w-4", getMedalColor(rankPosition))} />
+                <Medal className={cn("h-3.5 w-3.5", getMedalColor(rankPosition))} />
               ) : (
-                <span className="text-[10px]">#{rankPosition}</span>
+                <span className="text-[9px]">#{rankPosition}</span>
               )}
             </div>
-            {isTop3 && (
-              <span
-                className={cn(
-                  "absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[7px] font-bold text-white",
-                  rankPosition === 1
-                    ? "bg-yellow-500"
-                    : rankPosition === 2
-                    ? "bg-gray-400"
-                    : "bg-amber-700"
-                )}
-              >
-                {rankPosition}º
-              </span>
-            )}
           </div>
         ) : (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold shrink-0 text-xs">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold shrink-0 text-[10px]">
             {client.full_name.charAt(0).toUpperCase()}
           </div>
         )}
 
-        {/* Client info - middle, takes remaining space */}
+        {/* Client info */}
         <div className="flex-1 min-w-0 text-left">
-          <div className="flex items-center gap-1 flex-wrap">
-            <p className="text-sm font-medium truncate max-w-[120px] md:max-w-none">{client.full_name}</p>
+          <div className="flex items-center gap-1">
+            <p className="text-xs font-medium truncate">{client.full_name}</p>
             {rankPosition !== undefined && (
               <Badge
                 className={cn(
-                  "text-[9px] px-1 py-0 shrink-0",
+                  "text-[8px] px-0.5 py-0 shrink-0 leading-tight",
                   isTop3
                     ? `${getMedalBg(rankPosition)} ${getMedalColor(rankPosition)} border`
                     : "bg-primary/10 text-primary border-primary/20"
                 )}
               >
-                <Trophy className="h-2.5 w-2.5 mr-0.5" />
-                TOP {rankPosition}
+                <Trophy className="h-2 w-2 mr-0.5" />
+                {rankPosition}
               </Badge>
             )}
           </div>
@@ -139,61 +124,56 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+              className="flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-primary"
             >
               <Phone className="h-2.5 w-2.5" />
               <span className="underline truncate">{client.phone}</span>
             </a>
           )}
           {client.lastAppointmentDate && (
-            <p className="text-[10px] text-muted-foreground truncate">
-              <Clock className="h-2.5 w-2.5 inline mr-0.5" />
-              Último: {format(new Date(client.lastAppointmentDate + "T00:00:00"), "dd/MM", { locale: ptBR })}
-              {" "}({formatDistanceToNow(new Date(client.lastAppointmentDate + "T00:00:00"), { addSuffix: true, locale: ptBR })})
+            <p className="text-[9px] text-muted-foreground truncate leading-tight">
+              Últ: {format(new Date(client.lastAppointmentDate + "T00:00:00"), "dd/MM", { locale: ptBR })} ({formatDistanceToNow(new Date(client.lastAppointmentDate + "T00:00:00"), { addSuffix: true, locale: ptBR })})
             </p>
           )}
         </div>
 
-        {/* Right side - value + cortes */}
-        <div className="flex items-center gap-1 shrink-0">
-          <div className="flex flex-col items-end gap-0.5">
+        {/* Right - value + cortes */}
+        <div className="flex items-center gap-0.5 shrink-0">
+          <div className="flex flex-col items-end">
             {client.totalSpent > 0 && (
-              <Badge className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30 text-[10px] px-1.5 py-0 font-semibold whitespace-nowrap">
+              <span className="text-[10px] text-emerald-500 font-semibold whitespace-nowrap leading-tight">
                 {client.totalSpent.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-              </Badge>
+              </span>
             )}
             <div className="flex items-baseline gap-0.5">
-              <span className="text-base font-bold text-primary leading-none">
+              <span className="text-sm font-bold text-primary leading-none">
                 {client.completedAppointments}
               </span>
-              <span className="text-[9px] text-muted-foreground">
+              <span className="text-[8px] text-muted-foreground">
                 {client.completedAppointments === 1 ? "corte" : "cortes"}
               </span>
             </div>
           </div>
           {isExpanded ? (
-            <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronUp className="h-3 w-3 text-muted-foreground" />
           ) : (
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
           )}
         </div>
       </button>
 
-      {/* Appointments List (Expanded) */}
+      {/* Expanded appointments */}
       {isExpanded && (
-        <div className="border-t border-border bg-secondary/10 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-muted-foreground">
-              Histórico de agendamentos ({client.totalAppointments})
-            </span>
-          </div>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
+        <div className="border-t border-border bg-secondary/10 px-2.5 py-2 md:p-3">
+          <p className="text-[10px] font-medium text-muted-foreground mb-1.5">
+            Histórico ({client.totalAppointments})
+          </p>
+          <div className="space-y-1 max-h-48 overflow-y-auto">
             {client.appointments.map((apt) => (
               <div
                 key={apt.id}
                 className={cn(
-                  "flex items-center justify-between rounded-lg p-3",
+                  "flex items-center justify-between rounded-md px-2 py-1.5",
                   apt.status === "cancelled"
                     ? "bg-destructive/10"
                     : apt.status === "completed"
@@ -201,13 +181,13 @@ const ClientCard = ({ client, isExpanded, onToggle, rankPosition }: ClientCardPr
                     : "bg-primary/10"
                 )}
               >
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm font-medium">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium truncate">
                     {formatDate(apt.appointment_date)}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {apt.start_time.slice(0, 5)} • {apt.service?.name || "Serviço não especificado"}
-                  </span>
+                  </p>
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {apt.start_time.slice(0, 5)} • {apt.service?.name || "Serviço"}
+                  </p>
                 </div>
                 {getStatusBadge(apt.status)}
               </div>
