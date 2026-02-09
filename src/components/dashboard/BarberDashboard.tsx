@@ -457,17 +457,17 @@ const BarberDashboard = () => {
             <>
               {/* Create Appointment Button */}
               <div className="flex justify-end">
-                <Button variant="gold" onClick={() => setIsCreateAppointmentOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
+                <Button variant="gold" size="sm" className="md:size-default" onClick={() => setIsCreateAppointmentOpen(true)}>
+                  <Plus className="mr-1.5 h-4 w-4" />
                   Criar Agendamento
                 </Button>
               </div>
 
               {/* Today's Appointments */}
               <Card className="glass-card">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-primary" />
+                <CardHeader className="pb-2 md:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                    <Calendar className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                     Agenda de Hoje
                   </CardTitle>
                 </CardHeader>
@@ -477,7 +477,7 @@ const BarberDashboard = () => {
                       Nenhum agendamento para hoje
                     </p>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-2 md:space-y-3">
                       {(() => {
                         const now = format(new Date(), "HH:mm:ss");
                         const nextApt = appointments.find(
@@ -488,7 +488,7 @@ const BarberDashboard = () => {
                           return (
                             <div
                               key={apt.id}
-                              className={`relative flex items-center justify-between rounded-xl border p-4 transition-all ${
+                              className={`relative rounded-xl border p-3 md:p-4 transition-all ${
                                 apt.status === "completed"
                                   ? "border-success/30 bg-success/5"
                                   : apt.status === "cancelled"
@@ -503,18 +503,18 @@ const BarberDashboard = () => {
                                   Próximo
                                 </span>
                               )}
-                              <div className="flex items-center gap-4">
-                                <div className="text-center">
-                                  <p className={`text-lg font-semibold ${isNext ? "text-primary" : ""}`}>
+                              <div className="flex items-start gap-3">
+                                <div className="text-center shrink-0">
+                                  <p className={`text-base md:text-lg font-semibold ${isNext ? "text-primary" : ""}`}>
                                     {apt.start_time.slice(0, 5)}
                                   </p>
-                                  <p className="text-xs text-muted-foreground">
+                                  <p className="text-[10px] md:text-xs text-muted-foreground">
                                     {apt.end_time.slice(0, 5)}
                                   </p>
                                 </div>
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <p className="font-medium">{apt.client?.full_name || apt.client_name || "Cliente avulso"}</p>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="text-sm font-medium truncate">{apt.client?.full_name || apt.client_name || "Cliente avulso"}</p>
                                     {apt.created_by && (
                                       <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Feito por você</Badge>
                                     )}
@@ -531,24 +531,17 @@ const BarberDashboard = () => {
                                       </a>
                                     )}
                                   </div>
-                                  <p className="text-sm text-muted-foreground">
+                                  <p className="text-xs md:text-sm text-muted-foreground truncate">
                                     {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
                                   </p>
-                                  <PaymentStatusBadge status={apt.payment_status} />
+                                  <div className="flex items-center justify-between mt-1">
+                                    <PaymentStatusBadge status={apt.payment_status} />
+                                    {apt.status === "completed" && (
+                                      <span className="text-xs text-success">✓ Concluído</span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                              {apt.status === "scheduled" && (
-                                <Button
-                                  size="sm"
-                                  variant={isNext ? "default" : "outline"}
-                                  onClick={() => handleCompleteAppointment(apt.id)}
-                                >
-                                  Concluir
-                                </Button>
-                              )}
-                              {apt.status === "completed" && (
-                                <span className="text-sm text-success">✓ Concluído</span>
-                              )}
                             </div>
                           );
                         });
