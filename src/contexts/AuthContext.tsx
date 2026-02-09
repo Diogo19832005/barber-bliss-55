@@ -56,15 +56,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  
   useEffect(() => {
     let isMounted = true;
+    let initialized = false;
 
-    // Listener for ONGOING auth changes (does NOT control isLoading)
+    // Listener for ONGOING auth changes (skips INITIAL_SESSION to avoid duplicates)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
+      // Only react to meaningful auth changes, not token refreshes or initial load
+      if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') return;
+
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        // Fire and forget for ongoing changes
         fetchProfile(session.user.id).then(p => {
           if (isMounted) setProfile(p);
         });
@@ -86,12 +89,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          const profile = await fetchProfile(session.user.id);
+          const [profile] = await Promise.all([
+            fetchProfile(session.user.id),
+            checkAdminStatus(),
+          ]);
           if (isMounted) setProfile(profile);
-          await checkAdminStatus();
         }
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) {
+          initialized = true;
+          setIsLoading(false);
+        }
       }
     };
 
