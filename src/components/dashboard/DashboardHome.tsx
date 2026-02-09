@@ -186,25 +186,25 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Greeting Section */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {profile?.avatar_url ? (
           <img
             src={profile.avatar_url}
             alt={displayName}
-            className="h-14 w-14 rounded-full object-cover border-2 border-primary/30"
+            className="h-10 w-10 md:h-14 md:w-14 rounded-full object-cover border-2 border-primary/30"
           />
         ) : (
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/20 text-primary font-bold text-xl">
+          <div className="flex h-10 w-10 md:h-14 md:w-14 items-center justify-center rounded-full bg-primary/20 text-primary font-bold text-base md:text-xl">
             {displayName.charAt(0).toUpperCase()}
           </div>
         )}
         <div>
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-lg md:text-2xl font-bold">
             Olá, {displayName}! 👋
           </h1>
-          <p className="text-muted-foreground capitalize">{formattedDate}</p>
+          <p className="text-xs md:text-sm text-muted-foreground capitalize">{formattedDate}</p>
         </div>
       </div>
 
@@ -251,30 +251,30 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
       {widgets.includes("earnings") && (
         <div className="grid grid-cols-3 gap-2 md:gap-4">
           <Card className="glass-card">
-            <CardContent className="p-3 md:p-6">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-xs font-medium text-muted-foreground">Hoje</p>
-                <DollarSign className="h-3.5 w-3.5 text-primary" />
+            <CardContent className="p-2.5 md:p-6">
+              <div className="flex items-center justify-between mb-0.5">
+                <p className="text-[10px] md:text-xs font-medium text-muted-foreground">Hoje</p>
+                <DollarSign className="h-3 w-3 md:h-3.5 md:w-3.5 text-primary" />
               </div>
-              <p className="text-base md:text-2xl font-bold">R$ {earnings.daily.toFixed(2)}</p>
+              <p className="text-sm md:text-2xl font-bold">R$ {earnings.daily.toFixed(2)}</p>
             </CardContent>
           </Card>
           <Card className="glass-card">
-            <CardContent className="p-3 md:p-6">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-xs font-medium text-muted-foreground">Semana</p>
-                <TrendingUp className="h-3.5 w-3.5 text-success" />
+            <CardContent className="p-2.5 md:p-6">
+              <div className="flex items-center justify-between mb-0.5">
+                <p className="text-[10px] md:text-xs font-medium text-muted-foreground">Semana</p>
+                <TrendingUp className="h-3 w-3 md:h-3.5 md:w-3.5 text-success" />
               </div>
-              <p className="text-base md:text-2xl font-bold">R$ {earnings.weekly.toFixed(2)}</p>
+              <p className="text-sm md:text-2xl font-bold">R$ {earnings.weekly.toFixed(2)}</p>
             </CardContent>
           </Card>
           <Card className="glass-card">
-            <CardContent className="p-3 md:p-6">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-xs font-medium text-muted-foreground">Mês</p>
-                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+            <CardContent className="p-2.5 md:p-6">
+              <div className="flex items-center justify-between mb-0.5">
+                <p className="text-[10px] md:text-xs font-medium text-muted-foreground">Mês</p>
+                <Calendar className="h-3 w-3 md:h-3.5 md:w-3.5 text-muted-foreground" />
               </div>
-              <p className="text-base md:text-2xl font-bold">R$ {earnings.monthly.toFixed(2)}</p>
+              <p className="text-sm md:text-2xl font-bold">R$ {earnings.monthly.toFixed(2)}</p>
             </CardContent>
           </Card>
         </div>
@@ -283,9 +283,9 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
       {/* Today's Appointments */}
       {widgets.includes("today_appointments") && (
         <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
+          <CardHeader className="pb-2 md:pb-4">
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+              <Calendar className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               Agenda de Hoje
             </CardTitle>
           </CardHeader>
@@ -295,7 +295,7 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
                 Nenhum agendamento para hoje
               </p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2 md:space-y-3">
                 {(() => {
                   const now = format(new Date(), "HH:mm:ss");
                   const nextApt = todayAppointments.find(
@@ -306,7 +306,7 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
                     return (
                       <div
                          key={apt.id}
-                         className={`relative rounded-xl border p-4 transition-all cursor-pointer hover:border-primary/40 ${
+                         className={`relative rounded-xl border p-3 md:p-4 transition-all cursor-pointer hover:border-primary/40 ${
                            apt.status === "completed"
                              ? "border-success/30 bg-success/5"
                              : apt.status === "cancelled"
@@ -333,14 +333,14 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
                          )}
                          <div className="flex items-start gap-3">
                            <div className="text-center shrink-0">
-                             <p className={`text-lg font-semibold ${isNext ? "text-primary" : ""}`}>
+                             <p className={`text-base md:text-lg font-semibold ${isNext ? "text-primary" : ""}`}>
                                {apt.start_time.slice(0, 5)}
                              </p>
-                             <p className="text-xs text-muted-foreground">{apt.end_time.slice(0, 5)}</p>
+                             <p className="text-[10px] md:text-xs text-muted-foreground">{apt.end_time.slice(0, 5)}</p>
                            </div>
                            <div className="flex-1 min-w-0">
                              <div className="flex items-center gap-2 flex-wrap">
-                               <p className="font-medium truncate">{apt.client?.full_name}</p>
+                               <p className="text-sm font-medium truncate">{apt.client?.full_name}</p>
                                {apt.client?.phone && (
                                  <a
                                    href={`https://wa.me/${apt.client.phone.replace(/\D/g, "")}`}
@@ -355,7 +355,7 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
                                  </a>
                                )}
                              </div>
-                             <p className="text-sm text-muted-foreground truncate">
+                             <p className="text-xs md:text-sm text-muted-foreground truncate">
                                {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
                              </p>
                              <div className="flex items-center justify-between mt-1.5">
@@ -394,9 +394,9 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
       {/* Services */}
       {widgets.includes("services") && (
         <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Scissors className="h-5 w-5 text-primary" />
+          <CardHeader className="pb-2 md:pb-4">
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+              <Scissors className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               Meus Serviços
             </CardTitle>
           </CardHeader>
@@ -406,33 +406,33 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
                 Nenhum serviço cadastrado
               </p>
             ) : (
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-2 md:gap-3 md:grid-cols-2">
                 {services.slice(0, 6).map((service) => (
                   <div
                     key={service.id}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-border p-4"
+                    className="flex items-center justify-between gap-2 rounded-xl border border-border p-3 md:p-4"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       {service.image_url ? (
                         <img
                           src={service.image_url}
                           alt={service.name}
-                          className="h-12 w-12 rounded-lg object-cover border border-border shrink-0"
+                          className="h-10 w-10 md:h-12 md:w-12 rounded-lg object-cover border border-border shrink-0"
                         />
                       ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary shrink-0">
-                          <Scissors className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-lg bg-secondary shrink-0">
+                          <Scissors className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                         </div>
                       )}
                       <div className="min-w-0">
-                        <p className="font-medium truncate">{service.name}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm md:text-base font-medium truncate">{service.name}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground">
                           <Clock className="mr-1 inline h-3 w-3" />
                           {service.duration_minutes} min
                         </p>
                       </div>
                     </div>
-                    <p className="text-lg font-semibold text-primary whitespace-nowrap shrink-0">
+                    <p className="text-sm md:text-lg font-semibold text-primary whitespace-nowrap shrink-0">
                       R$ {Number(service.price).toFixed(2)}
                     </p>
                   </div>

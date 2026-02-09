@@ -141,29 +141,29 @@ const UpcomingAppointments = ({ barberId }: UpcomingAppointmentsProps) => {
  
    return (
      <Card className="glass-card">
-       <CardHeader>
-         <CardTitle className="flex items-center gap-2">
-           <Calendar className="h-5 w-5 text-primary" />
-           Próximos Agendamentos
-         </CardTitle>
-       </CardHeader>
+        <CardHeader className="pb-2 md:pb-4">
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+            <Calendar className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+            Próximos Agendamentos
+          </CardTitle>
+        </CardHeader>
        <CardContent>
          {groupedAppointments.length === 0 ? (
            <p className="py-8 text-center text-muted-foreground">
              Nenhum agendamento futuro
            </p>
          ) : (
-           <div className="space-y-6">
+           <div className="space-y-4 md:space-y-6">
              {groupedAppointments.map((group) => (
                <div key={group.date}>
-                 <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                   {group.label}
-                 </h3>
-                 <div className="space-y-3">
+                  <h3 className="mb-2 text-xs md:text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    {group.label}
+                  </h3>
+                  <div className="space-y-2 md:space-y-3">
                     {group.appointments.map((apt) => (
                       <div
                         key={apt.id}
-                        className="rounded-xl border border-border bg-card/50 p-4 cursor-pointer hover:border-primary/40 transition-colors"
+                        className="rounded-xl border border-border bg-card/50 p-3 md:p-4 cursor-pointer hover:border-primary/40 transition-colors"
                          onClick={(e) => {
                            e.stopPropagation();
                            setSelectedAppointment({
@@ -178,11 +178,11 @@ const UpcomingAppointments = ({ barberId }: UpcomingAppointmentsProps) => {
                        >
                          <div className="flex items-start gap-3">
                            {/* Time block */}
-                           <div className="flex flex-col items-center justify-center rounded-lg bg-primary/10 px-3 py-2 text-primary shrink-0">
-                             <span className="text-lg font-bold leading-tight">
+                           <div className="flex flex-col items-center justify-center rounded-lg bg-primary/10 px-2.5 py-1.5 md:px-3 md:py-2 text-primary shrink-0">
+                             <span className="text-base md:text-lg font-bold leading-tight">
                                {apt.start_time.slice(0, 5)}
                              </span>
-                             <span className="text-xs text-muted-foreground">
+                             <span className="text-[10px] md:text-xs text-muted-foreground">
                                {apt.end_time.slice(0, 5)}
                              </span>
                            </div>
@@ -190,23 +190,23 @@ const UpcomingAppointments = ({ barberId }: UpcomingAppointmentsProps) => {
                            {/* Details */}
                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span className="font-medium truncate">
+                                <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                <span className="text-sm font-medium truncate">
                                   {apt.client?.full_name || apt.client_name || "Cliente avulso"}
                                 </span>
                                 {apt.created_by && (
                                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Feito por você</Badge>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1 flex-wrap">
-                                <Scissors className="h-3.5 w-3.5 shrink-0" />
+                              <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground mt-0.5 flex-wrap">
+                                <Scissors className="h-3 w-3 shrink-0" />
                                 <span className="truncate">{apt.service?.name || "Serviço não especificado"}</span>
-                                <span className="text-xs">•</span>
+                                <span className="text-[10px]">•</span>
                                 <span className="whitespace-nowrap">{apt.service?.duration_minutes || 0} min</span>
-                                <span className="text-xs">•</span>
+                                <span className="text-[10px]">•</span>
                                 <span className="font-medium text-foreground whitespace-nowrap">R$ {apt.service?.price?.toFixed(2) || "0.00"}</span>
                               </div>
-                              <div className="flex items-center gap-2 mt-2">
+                              <div className="flex items-center gap-2 mt-1.5">
                                 <PaymentStatusBadge status={apt.payment_status} />
                               </div>
                            </div>
