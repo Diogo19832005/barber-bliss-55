@@ -328,10 +328,10 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2">
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-              <SelectTrigger className="w-full sm:w-[220px]">
+              <SelectTrigger className="w-full sm:w-[200px] h-9 text-xs md:text-sm">
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
               <SelectContent>
@@ -348,7 +348,7 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
               if (v === "month") { setDateFrom(undefined); setDateTo(undefined); }
               if (v === "period") { setSelectedMonth("all"); }
             }}>
-              <SelectTrigger className="w-full sm:w-[220px]">
+              <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs md:text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -356,23 +356,23 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
                 <SelectItem value="period">Filtrar por período</SelectItem>
               </SelectContent>
             </Select>
-          </div>
 
-          {filterMode === "month" && (
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-full sm:w-[220px]">
-                <SelectValue placeholder="Selecionar mês" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os meses</SelectItem>
-                {availableMonths.map((month) => (
-                  <SelectItem key={month} value={month}>
-                    {formatMonthLabel(month)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+            {filterMode === "month" && (
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="w-full col-span-2 sm:w-[200px] sm:col-span-1 h-9 text-xs md:text-sm">
+                  <SelectValue placeholder="Selecionar mês" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os meses</SelectItem>
+                  {availableMonths.map((month) => (
+                    <SelectItem key={month} value={month}>
+                      {formatMonthLabel(month)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
 
           {filterMode === "period" && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
