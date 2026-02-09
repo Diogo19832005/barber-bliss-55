@@ -306,16 +306,16 @@ const ClientsHistory = ({ barberId }: ClientsHistoryProps) => {
 
   return (
     <Card className="glass-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-primary" />
+      <CardHeader className="pb-2 md:pb-4">
+        <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+          <Users className="h-4 w-4 md:h-5 md:w-5 text-primary" />
           Meus Clientes
-          <Badge variant="secondary" className="ml-2">
+          <Badge variant="secondary" className="ml-1 text-[10px] md:text-xs">
             {processedClients.length} {processedClients.length === 1 ? "cliente" : "clientes"}
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 md:space-y-4">
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

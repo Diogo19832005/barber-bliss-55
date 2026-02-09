@@ -176,25 +176,25 @@ const ServiceHistory = ({ barberId }: ServiceHistoryProps) => {
 
   return (
     <Card className="glass-card">
-      <CardHeader>
+      <CardHeader className="pb-2 md:pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <CardTitle className="flex items-center gap-2">
-            <History className="h-5 w-5 text-primary" />
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+            <History className="h-4 w-4 md:h-5 md:w-5 text-primary" />
             Histórico de Serviços
           </CardTitle>
-          <div className="flex items-center gap-3 text-sm">
-            <Badge variant="secondary">
+          <div className="flex items-center gap-2 text-sm">
+            <Badge variant="secondary" className="text-[10px] md:text-xs">
               {processed.length} {processed.length === 1 ? "serviço" : "serviços"}
             </Badge>
             {totalRevenue > 0 && (
-              <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
+              <Badge className="bg-green-500/10 text-green-500 border-green-500/20 text-[10px] md:text-xs">
                 R$ {totalRevenue.toFixed(2)}
               </Badge>
             )}
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 md:space-y-4">
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -300,9 +300,9 @@ const ServiceHistory = ({ barberId }: ServiceHistoryProps) => {
                   {apts.map((apt) => {
                     const phone = getClientPhone(apt);
                     return (
-                      <div key={apt.id} className="flex items-center gap-3 rounded-xl bg-secondary/50 p-3">
-                        <div className="flex flex-col items-center rounded-lg bg-primary/10 px-2.5 py-1.5 min-w-[52px]">
-                          <span className="text-sm font-bold text-primary">{apt.start_time.slice(0, 5)}</span>
+                      <div key={apt.id} className="flex items-center gap-2.5 md:gap-3 rounded-xl bg-secondary/50 p-2.5 md:p-3">
+                        <div className="flex flex-col items-center rounded-lg bg-primary/10 px-2 py-1 md:px-2.5 md:py-1.5 min-w-[48px] md:min-w-[52px]">
+                          <span className="text-xs md:text-sm font-bold text-primary">{apt.start_time.slice(0, 5)}</span>
                           <span className="text-[10px] text-muted-foreground">{apt.end_time.slice(0, 5)}</span>
                         </div>
                         <div className="flex-1 min-w-0">
