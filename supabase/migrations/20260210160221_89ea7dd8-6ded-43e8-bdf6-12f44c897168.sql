@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN google_maps_url text DEFAULT NULL;

@@ -373,6 +373,7 @@ export type Database = {
           estado: string | null
           foto_apresentacao: string | null
           full_name: string
+          google_maps_url: string | null
           hero_animation_speed: number | null
           hero_button_color: string | null
           hero_button_text: string | null
@@ -408,6 +409,7 @@ export type Database = {
           estado?: string | null
           foto_apresentacao?: string | null
           full_name: string
+          google_maps_url?: string | null
           hero_animation_speed?: number | null
           hero_button_color?: string | null
           hero_button_text?: string | null
@@ -443,6 +445,7 @@ export type Database = {
           estado?: string | null
           foto_apresentacao?: string | null
           full_name?: string
+          google_maps_url?: string | null
           hero_animation_speed?: number | null
           hero_button_color?: string | null
           hero_button_text?: string | null
