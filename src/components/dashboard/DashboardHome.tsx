@@ -98,6 +98,7 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
         `)
         .eq("barber_id", barberId)
         .eq("appointment_date", today)
+        .neq("status", "cancelled")
         .order("start_time", { ascending: true });
 
       if (appointmentsData) setTodayAppointments(appointmentsData as any);
@@ -317,7 +318,7 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
                          onClick={() => {
                            setSelectedAppointment({
                              id: apt.id,
-                             clientName: apt.client?.full_name || "Cliente",
+                             clientName: apt.client?.full_name || (apt as any).client_name || "Cliente",
                              serviceName: apt.service?.name || "",
                              startTime: apt.start_time,
                              date: format(new Date(), "d/MM"),
@@ -338,25 +339,29 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
                              <p className="text-[10px] md:text-xs text-muted-foreground">{apt.end_time.slice(0, 5)}</p>
                            </div>
                            <div className="flex-1 min-w-0">
-                             <div className="flex items-center gap-2 flex-wrap">
-                               <p className="text-sm font-medium truncate">{apt.client?.full_name}</p>
-                               {apt.client?.phone && (
-                                 <a
-                                   href={`https://wa.me/${apt.client.phone.replace(/\D/g, "")}`}
-                                   target="_blank"
-                                   rel="noopener noreferrer"
-                                   className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 text-xs text-success hover:bg-success/30 transition-colors"
-                                   title="Enviar mensagem no WhatsApp"
-                                   onClick={(e) => e.stopPropagation()}
-                                 >
-                                   <MessageCircle className="h-3 w-3" />
-                                   WhatsApp
-                                 </a>
-                               )}
+                             <div className="flex flex-col gap-1">
+                               <div className="flex items-center gap-2 flex-wrap">
+                                 <p className="text-sm font-medium truncate">
+                                   {apt.client?.full_name || (apt as any).client_name || "Cliente"}
+                                 </p>
+                                 {(apt.client?.phone || (apt as any).client_phone) && (
+                                   <a
+                                     href={`https://wa.me/${(apt.client?.phone || (apt as any).client_phone || "").replace(/\D/g, "")}`}
+                                     target="_blank"
+                                     rel="noopener noreferrer"
+                                     className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 text-xs text-success hover:bg-success/30 transition-colors"
+                                     title="Enviar mensagem no WhatsApp"
+                                     onClick={(e) => e.stopPropagation()}
+                                   >
+                                     <MessageCircle className="h-3 w-3" />
+                                     WhatsApp
+                                   </a>
+                                 )}
+                               </div>
+                               <p className="text-xs md:text-sm text-muted-foreground truncate">
+                                 {apt.service?.name?.toUpperCase()} • R$ {apt.service?.price?.toFixed(2)}
+                               </p>
                              </div>
-                             <p className="text-xs md:text-sm text-muted-foreground truncate">
-                               {apt.service?.name} • R$ {apt.service?.price?.toFixed(2)}
-                             </p>
                              <div className="flex items-center justify-between mt-1.5">
                                <PaymentStatusBadge status={apt.payment_status} />
                                {apt.status === "completed" && (
