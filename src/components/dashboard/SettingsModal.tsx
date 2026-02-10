@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, Palette, Store, X, MapPin, Phone, Sparkles, Home, Calendar, QrCode } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import DashboardHomeSettings from "./DashboardHomeSettings";
+import TestimonialsManager from "./TestimonialsManager";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -584,6 +585,11 @@ interface SettingsModalProps {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Testimonials Manager */}
+            <div className="space-y-4 border-t border-border pt-6">
+              <TestimonialsManager profileId={profile.id} />
             </div>
 
             {/* PIX Payment Settings */}
