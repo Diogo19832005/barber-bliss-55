@@ -45,6 +45,7 @@ interface Barber {
   hero_services_title: string | null;
   pix_key: string | null;
   pix_qr_code: string | null;
+  google_maps_url: string | null;
 }
 
 interface TeamMember {
@@ -180,7 +181,7 @@ const PublicBooking = () => {
     // Fetch barber by slug_final
     const { data: barberData, error } = await supabase
       .from("profiles")
-      .select("id, full_name, avatar_url, public_id, slug_final, nome_exibido, logo_url, cor_primaria, cor_secundaria, phone, endereco, cidade, estado, hero_enabled, hero_button_text, hero_button_color, hero_animation_speed, hero_services_title, pix_key, pix_qr_code")
+      .select("id, full_name, avatar_url, public_id, slug_final, nome_exibido, logo_url, cor_primaria, cor_secundaria, phone, endereco, cidade, estado, hero_enabled, hero_button_text, hero_button_color, hero_animation_speed, hero_services_title, pix_key, pix_qr_code, google_maps_url")
       .eq("slug_final", slugFinal)
       .eq("role", "barber")
       .eq("barber_status", "approved")
@@ -1233,7 +1234,8 @@ const PublicBooking = () => {
           primaryColor={primaryColor}
           secondaryColor={barber?.cor_secundaria}
           phone={barber?.phone}
-          address={fullAddress || undefined}
+           address={fullAddress || undefined}
+           googleMapsUrl={barber?.google_maps_url || undefined}
           buttonText={heroButtonText}
           buttonColor={heroButtonColor}
           animationSpeed={barber?.hero_animation_speed ?? 1.0}

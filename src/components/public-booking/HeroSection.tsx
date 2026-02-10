@@ -23,6 +23,7 @@ interface HeroSectionProps {
   secondaryColor?: string | null;
   phone?: string | null;
   address?: string | null;
+  googleMapsUrl?: string | null;
   buttonText: string;
   buttonColor: string;
   animationSpeed?: number;
@@ -39,6 +40,7 @@ const HeroSection = ({
   secondaryColor,
   phone,
   address,
+  googleMapsUrl,
   buttonText,
   buttonColor,
   animationSpeed = 1.0,
@@ -117,7 +119,18 @@ const HeroSection = ({
           {address && (
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
-              <span>{address}</span>
+              {googleMapsUrl ? (
+                <a
+                  href={googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground transition-colors underline underline-offset-2"
+                >
+                  {address}
+                </a>
+              ) : (
+                <span>{address}</span>
+              )}
             </div>
           )}
           {phone && (

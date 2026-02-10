@@ -42,6 +42,7 @@ interface SettingsModalProps {
     appointment_message?: string | null;
     pix_key?: string | null;
     pix_qr_code?: string | null;
+    google_maps_url?: string | null;
   };
 }
  
@@ -81,6 +82,7 @@ interface SettingsModalProps {
   );
   const [pixKey, setPixKey] = useState(profile.pix_key || "");
   const [pixQrCode, setPixQrCode] = useState(profile.pix_qr_code || "");
+  const [googleMapsUrl, setGoogleMapsUrl] = useState(profile.google_maps_url || "");
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const pixQrInputRef = useRef<HTMLInputElement>(null);
@@ -192,8 +194,9 @@ interface SettingsModalProps {
         hero_services_title: heroServicesTitle.trim() || "Meus Serviços",
         dashboard_home_widgets: dashboardHomeWidgets,
         appointment_message: appointmentMessage.trim() || "Esse aqui é seu horário, fique atento.",
-        pix_key: pixKey.trim() || null,
-        pix_qr_code: pixQrCode.trim() || null,
+         pix_key: pixKey.trim() || null,
+         pix_qr_code: pixQrCode.trim() || null,
+         google_maps_url: googleMapsUrl.trim() || null,
       })
       .eq("id", profile.id);
  
@@ -265,16 +268,30 @@ interface SettingsModalProps {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="endereco" className="text-sm text-muted-foreground">Endereço</Label>
-              <Input
-                id="endereco"
-                value={endereco}
-                onChange={(e) => setEndereco(e.target.value)}
-                placeholder="Rua, número"
-                className="bg-secondary/50"
-              />
-            </div>
+             <div className="space-y-2">
+               <Label htmlFor="endereco" className="text-sm text-muted-foreground">Endereço</Label>
+               <Input
+                 id="endereco"
+                 value={endereco}
+                 onChange={(e) => setEndereco(e.target.value)}
+                 placeholder="Rua, número"
+                 className="bg-secondary/50"
+               />
+             </div>
+
+             <div className="space-y-2">
+               <Label htmlFor="googleMapsUrl" className="text-sm text-muted-foreground">Link do Google Maps</Label>
+               <Input
+                 id="googleMapsUrl"
+                 value={googleMapsUrl}
+                 onChange={(e) => setGoogleMapsUrl(e.target.value)}
+                 placeholder="Cole aqui o link do Google Maps"
+                 className="bg-secondary/50"
+               />
+               <p className="text-xs text-muted-foreground">
+                 Abra o Google Maps, pesquise sua localização, clique em "Compartilhar" e cole o link aqui. O cliente poderá clicar no endereço para abrir o mapa.
+               </p>
+             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
