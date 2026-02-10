@@ -66,6 +66,12 @@ interface Appointment {
   end_time: string;
 }
 
+interface Testimonial {
+  id: string;
+  client_name: string;
+  comment: string;
+}
+
 const PublicBooking = () => {
   const { slugFinal } = useParams<{ slugFinal: string }>();
   const { toast } = useToast();
@@ -78,6 +84,7 @@ const PublicBooking = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -221,6 +228,16 @@ const PublicBooking = () => {
       .order("name");
 
     if (servicesData) setServices(servicesData);
+
+    // Fetch testimonials
+    const { data: testimonialsData } = await supabase
+      .from("barber_testimonials")
+      .select("id, client_name, comment")
+      .eq("barber_id", barberData.id)
+      .order("display_order")
+      .limit(4);
+
+    if (testimonialsData) setTestimonials(testimonialsData);
 
     // If only one barber, fetch their schedules
     if (allBarbers.length === 1) {
@@ -1222,6 +1239,7 @@ const PublicBooking = () => {
           animationSpeed={barber?.hero_animation_speed ?? 1.0}
           services={services}
           servicesTitle={heroServicesTitle}
+          testimonials={testimonials}
           onContinue={() => setShowHero(false)}
         />
       </div>

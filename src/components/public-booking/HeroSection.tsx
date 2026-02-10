@@ -1,12 +1,19 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Scissors, MapPin, Phone, MessageCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import TestimonialsSection from "./TestimonialsSection";
 
 interface Service {
   id: string;
   name: string;
   image_url?: string | null;
   price: number;
+}
+
+interface Testimonial {
+  id: string;
+  client_name: string;
+  comment: string;
 }
 
 interface HeroSectionProps {
@@ -21,6 +28,7 @@ interface HeroSectionProps {
   animationSpeed?: number;
   services?: Service[];
   servicesTitle?: string;
+  testimonials?: Testimonial[];
   onContinue: () => void;
 }
 
@@ -36,6 +44,7 @@ const HeroSection = ({
   animationSpeed = 1.0,
   services = [],
   servicesTitle = "Meus Serviços",
+  testimonials = [],
   onContinue,
 }: HeroSectionProps) => {
   const [isAnimating, setIsAnimating] = useState(true);
@@ -279,6 +288,9 @@ const HeroSection = ({
           </div>
         </section>
       )}
+
+      {/* Testimonials Section */}
+      <TestimonialsSection testimonials={testimonials} primaryColor={primaryColor} />
 
       {/* Footer */}
       <footer className="py-6 px-4 border-t border-border/30 mt-auto">

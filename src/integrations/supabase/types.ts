@@ -322,6 +322,41 @@ export type Database = {
           },
         ]
       }
+      barber_testimonials: {
+        Row: {
+          barber_id: string
+          client_name: string
+          comment: string
+          created_at: string
+          display_order: number
+          id: string
+        }
+        Insert: {
+          barber_id: string
+          client_name: string
+          comment: string
+          created_at?: string
+          display_order?: number
+          id?: string
+        }
+        Update: {
+          barber_id?: string
+          client_name?: string
+          comment?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_testimonials_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           appointment_message: string | null
