@@ -108,8 +108,7 @@ const RegularBarberDashboard = () => {
       if (ownerData) {
         setBarbershopOwner(ownerData);
         if (ownerData.slug_final) {
-          const baseUrl = window.location.origin;
-          setPublicLink(`${baseUrl}/${ownerData.slug_final}`);
+          setPublicLink(`https://barberoffice.online/${ownerData.slug_final}`);
         }
       }
     }

@@ -110,8 +110,7 @@ const DashboardHome = ({ barberId, widgets, onCompleteAppointment }: DashboardHo
 
     // Get public link
     if (profile?.slug_final) {
-      const baseUrl = window.location.origin;
-      setPublicLink(`${baseUrl}/${profile.slug_final}`);
+      setPublicLink(`https://barberoffice.online/${profile.slug_final}`);
     }
 
     setIsLoading(false);
